@@ -1,0 +1,5 @@
+enums\ScooterClass.class
+enums\ScooterStatus.class
+enums\TerminationReason.class
+enums\Role.class
+enums\RentalStatus.class

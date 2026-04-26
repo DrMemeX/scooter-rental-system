@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="Encoding">
+    <file url="file://$PROJECT_DIR$/auth-module/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/auth-module/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/common-module/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/common-module/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/discount-module/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/discount-module/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/fleet-module/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/fleet-module/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/maintenance-module/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/maintenance-module/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/outbox-module/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/outbox-module/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/rental-module/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/rental-module/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/security-module/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/security-module/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/user-module/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/user-module/src/main/resources" charset="UTF-8" />
+  </component>
+</project>
