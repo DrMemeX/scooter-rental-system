@@ -14,4 +14,12 @@
 
     <artifactId>fleet-module</artifactId>
 
+    <dependencies>
+        <dependency>
+            <groupId>ru.senla</groupId>
+            <artifactId>common-module</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+    </dependencies>
+
 </project>

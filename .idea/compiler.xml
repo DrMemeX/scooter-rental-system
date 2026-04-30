@@ -11,10 +11,12 @@
         <module name="fleet-module" />
         <module name="maintenance-module" />
         <module name="user-module" />
+        <module name="console-module" />
         <module name="common-module" />
         <module name="outbox-module" />
         <module name="auth-module" />
         <module name="rental-module" />
+        <module name="web-module" />
       </profile>
     </annotationProcessing>
   </component>

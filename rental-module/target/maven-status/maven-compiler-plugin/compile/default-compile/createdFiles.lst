@@ -1,0 +1,3 @@
+ru\senla\scooterrental\rental\entity\Rental.class
+ru\senla\scooterrental\rental\enums\RentalStatus.class
+ru\senla\scooterrental\rental\enums\TerminationReason.class

@@ -73,12 +73,12 @@
 Основные сущности:
 
 * `User`
-* `Rental`
-* `Scooter`
 * `ScooterModel`
 * `RentalPoint`
-* `ScooterServiceEvent`
+* `Scooter`
 * `PromoCode`
+* `Rental`
+* `ScooterServiceEvent`
 
 ---
 

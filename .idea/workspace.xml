@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="f15938d1-8e4b-457a-9d0b-3b9cd2bbce63" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/console-module/pom.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/discount-module/src/main/java/entity/PromoCode.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/fleet-module/src/main/java/ru/senla/scooterrental/fleet/entity/LocationNode.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/fleet-module/src/main/java/ru/senla/scooterrental/fleet/entity/RentalPoint.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/fleet-module/src/main/java/ru/senla/scooterrental/fleet/entity/Scooter.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/fleet-module/src/main/java/ru/senla/scooterrental/fleet/enums/LocationType.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/fleet-module/src/main/java/ru/senla/scooterrental/fleet/enums/ScooterStatus.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/fleet-module/src/main/java/ru/senla/scooterrental/fleet/exceptions/InvalidRentalPointStateException.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/fleet-module/src/main/java/ru/senla/scooterrental/fleet/exceptions/InvalidScooterStateException.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/fleet-module/src/main/java/ru/senla/scooterrental/fleet/exceptions/ScooterUnavailableException.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/fleet-module/src/main/java/ru/senla/scooterrental/fleet/factory/ScooterModelFactory.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/fleet-module/src/main/java/ru/senla/scooterrental/fleet/valueobject/ScooterModel.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/maintenance-module/src/main/java/entity/ScooterServiceEvent.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/rental-module/src/main/java/ru/senla/scooterrental/rental/entity/Rental.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/rental-module/src/main/java/ru/senla/scooterrental/rental/enums/RentalStatus.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/rental-module/src/main/java/ru/senla/scooterrental/rental/enums/TerminationReason.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/user-module/src/main/java/ru/senla/scooterrental/user/entity/User.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/user-module/src/main/java/ru/senla/scooterrental/user/enums/Role.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/web-module/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.gitignore" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/compiler.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/compiler.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/encodings.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/encodings.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auth-module/target/auth-module-1.0-SNAPSHOT.jar" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/auth-module/target/maven-archiver/pom.properties" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/auth-module/target/maven-status/maven-compiler-plugin/compile/default-compile/inputFiles.lst" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/auth-module/target/maven-status/maven-compiler-plugin/testCompile/default-testCompile/inputFiles.lst" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/common-module/src/main/java/enums/RentalStatus.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/common-module/src/main/java/enums/Role.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/common-module/src/main/java/enums/ScooterClass.java" beforeDir="false" afterPath="$PROJECT_DIR$/common-module/src/main/java/ru/senla/scooterrental/common/enums/ScooterClass.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/common-module/src/main/java/enums/ScooterStatus.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/common-module/src/main/java/enums/TerminationReason.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/common-module/target/classes/enums/RentalStatus.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/common-module/target/classes/enums/Role.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/common-module/target/classes/enums/ScooterClass.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/common-module/target/classes/enums/ScooterStatus.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/common-module/target/classes/enums/TerminationReason.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/common-module/target/common-module-1.0-SNAPSHOT.jar" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/common-module/target/maven-archiver/pom.properties" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/common-module/target/maven-status/maven-compiler-plugin/compile/default-compile/createdFiles.lst" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/common-module/target/maven-status/maven-compiler-plugin/compile/default-compile/inputFiles.lst" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/common-module/target/maven-status/maven-compiler-plugin/testCompile/default-testCompile/createdFiles.lst" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/common-module/target/maven-status/maven-compiler-plugin/testCompile/default-testCompile/inputFiles.lst" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/discount-module/target/discount-module-1.0-SNAPSHOT.jar" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/discount-module/target/maven-archiver/pom.properties" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/discount-module/target/maven-status/maven-compiler-plugin/compile/default-compile/inputFiles.lst" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/discount-module/target/maven-status/maven-compiler-plugin/testCompile/default-testCompile/inputFiles.lst" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/fleet-module/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/fleet-module/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/fleet-module/target/fleet-module-1.0-SNAPSHOT.jar" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/fleet-module/target/maven-archiver/pom.properties" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/fleet-module/target/maven-status/maven-compiler-plugin/compile/default-compile/inputFiles.lst" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/fleet-module/target/maven-status/maven-compiler-plugin/testCompile/default-testCompile/inputFiles.lst" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/maintenance-module/target/maintenance-module-1.0-SNAPSHOT.jar" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/maintenance-module/target/maven-archiver/pom.properties" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/maintenance-module/target/maven-status/maven-compiler-plugin/compile/default-compile/inputFiles.lst" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/maintenance-module/target/maven-status/maven-compiler-plugin/testCompile/default-testCompile/inputFiles.lst" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/outbox-module/target/maven-archiver/pom.properties" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/outbox-module/target/maven-status/maven-compiler-plugin/compile/default-compile/inputFiles.lst" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/outbox-module/target/maven-status/maven-compiler-plugin/testCompile/default-testCompile/inputFiles.lst" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/outbox-module/target/outbox-module-1.0-SNAPSHOT.jar" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/project-spec.md" beforeDir="false" afterPath="$PROJECT_DIR$/project-spec.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/rental-module/target/maven-archiver/pom.properties" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/rental-module/target/maven-status/maven-compiler-plugin/compile/default-compile/inputFiles.lst" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/rental-module/target/maven-status/maven-compiler-plugin/testCompile/default-testCompile/inputFiles.lst" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/rental-module/target/rental-module-1.0-SNAPSHOT.jar" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/security-module/target/maven-archiver/pom.properties" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/security-module/target/maven-status/maven-compiler-plugin/compile/default-compile/inputFiles.lst" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/security-module/target/maven-status/maven-compiler-plugin/testCompile/default-testCompile/inputFiles.lst" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/security-module/target/security-module-1.0-SNAPSHOT.jar" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/user-module/target/maven-archiver/pom.properties" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/user-module/target/maven-status/maven-compiler-plugin/compile/default-compile/inputFiles.lst" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/user-module/target/maven-status/maven-compiler-plugin/testCompile/default-testCompile/inputFiles.lst" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/user-module/target/user-module-1.0-SNAPSHOT.jar" beforeDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Enum" />
+        <option value="Exception" />
+        <option value="Class" />
+      </list>
+    </option>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 2
+}</component>
+  <component name="ProjectId" id="3CgMmkoYs67brSWWrb8c4OOaa4j" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;Maven.common-module [clean].executor&quot;: &quot;Run&quot;,
+    &quot;Maven.common-module [install].executor&quot;: &quot;Run&quot;,
+    &quot;Maven.scooter-rental-system [clean].executor&quot;: &quot;Run&quot;,
+    &quot;Maven.scooter-rental-system [install].executor&quot;: &quot;Run&quot;,
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;master&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/Users/Lenovo/Java/Projects/Senla_final_project&quot;,
+    &quot;project.structure.last.edited&quot;: &quot;Project&quot;,
+    &quot;project.structure.proportion&quot;: &quot;0.0&quot;,
+    &quot;project.structure.side.proportion&quot;: &quot;0.2&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.rainbow.brackets.root&quot;
+  }
+}</component>
+  <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\Lenovo\Java\Projects\Senla_final_project\fleet-module\src\main\java" />
+    </key>
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="f15938d1-8e4b-457a-9d0b-3b9cd2bbce63" name="Changes" comment="" />
+      <created>1776802920530</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1776802920530</updated>
+    </task>
+    <servers />
+  </component>
+</project>
