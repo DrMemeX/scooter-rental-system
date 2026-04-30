@@ -1,0 +1,11 @@
+ru\senla\scooterrental\fleet\factory\ScooterModelFactory.class
+ru\senla\scooterrental\fleet\enums\ScooterStatus.class
+ru\senla\scooterrental\fleet\exceptions\InvalidRentalPointStateException.class
+ru\senla\scooterrental\fleet\valueobject\ScooterModel.class
+ru\senla\scooterrental\fleet\entity\LocationNode.class
+ru\senla\scooterrental\fleet\exceptions\InvalidScooterStateException.class
+ru\senla\scooterrental\fleet\exceptions\ScooterUnavailableException.class
+ru\senla\scooterrental\fleet\entity\Scooter.class
+ru\senla\scooterrental\fleet\factory\ScooterModelFactory$1.class
+ru\senla\scooterrental\fleet\entity\RentalPoint.class
+ru\senla\scooterrental\fleet\enums\LocationType.class

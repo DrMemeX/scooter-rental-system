@@ -1,5 +1,1 @@
-enums\ScooterClass.class
-enums\ScooterStatus.class
-enums\TerminationReason.class
-enums\Role.class
-enums\RentalStatus.class
+ru\senla\scooterrental\common\enums\ScooterClass.class

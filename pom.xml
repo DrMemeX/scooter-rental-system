@@ -22,6 +22,8 @@
         <module>discount-module</module>
         <module>maintenance-module</module>
         <module>outbox-module</module>
+        <module>console-module</module>
+        <module>web-module</module>
     </modules>
 
     <properties>
