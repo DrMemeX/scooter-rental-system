@@ -1,6 +1,7 @@
 package ru.senla.scooterrental.fleet.entity;
 
 import ru.senla.scooterrental.fleet.enums.LocationType;
+import ru.senla.scooterrental.fleet.exceptions.FleetValidationException;
 
 public class LocationNode {
 
@@ -17,39 +18,39 @@ public class LocationNode {
                         LocationNode parent) {
 
         if (id == null || id <= 0) {
-            throw new IllegalArgumentException(
+            throw new FleetValidationException(
                     "Идентификатор локации должен быть положительным"
             );
         }
 
         if (name == null || name.isBlank()) {
-            throw new IllegalArgumentException(
+            throw new FleetValidationException(
                     "Название локации не может быть пустым"
             );
         }
 
         if (type == null) {
-            throw new IllegalArgumentException(
+            throw new FleetValidationException(
                     "Тип локации не может быть пустым"
             );
         }
 
         if (type == LocationType.CITY && parent != null) {
-            throw new IllegalArgumentException(
+            throw new FleetValidationException(
                     "Город не может иметь родительскую локацию"
             );
         }
 
         if (type == LocationType.DISTRICT &&
                 (parent == null || !parent.isCity())) {
-            throw new IllegalArgumentException(
+            throw new FleetValidationException(
                     "Район должен быть привязан к городу"
             );
         }
 
         if (type == LocationType.RENTAL_POINT &&
                 (parent == null || !parent.isDistrict())) {
-            throw new IllegalArgumentException(
+            throw new FleetValidationException(
                     "Точка проката должна быть привязана к району"
             );
         }
@@ -76,7 +77,7 @@ public class LocationNode {
     public boolean belongsTo(LocationNode possibleParent) {
 
         if (possibleParent == null) {
-            throw new IllegalArgumentException(
+            throw new FleetValidationException(
                     "Родительская локация для проверки не может быть пустой"
             );
         }

@@ -1,9 +1,9 @@
 package ru.senla.scooterrental.fleet.exceptions;
 
-public class ScooterUnavailableException
+public class FleetValidationException
         extends RuntimeException {
 
-    public ScooterUnavailableException(String message) {
+    public FleetValidationException(String message) {
         super(message);
     }
 }

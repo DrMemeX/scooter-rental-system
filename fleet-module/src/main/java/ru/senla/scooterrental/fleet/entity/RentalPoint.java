@@ -1,5 +1,6 @@
 package ru.senla.scooterrental.fleet.entity;
 
+import ru.senla.scooterrental.fleet.exceptions.FleetValidationException;
 import ru.senla.scooterrental.fleet.exceptions.InvalidRentalPointStateException;
 
 public class RentalPoint {
@@ -13,25 +14,25 @@ public class RentalPoint {
     public RentalPoint(Long id, String name, LocationNode locationNode) {
 
         if (id == null || id <= 0) {
-            throw new IllegalArgumentException(
+            throw new FleetValidationException(
                     "Идентификатор точки проката должен быть положительным"
             );
         }
 
         if (name == null || name.isBlank()) {
-            throw new IllegalArgumentException(
+            throw new FleetValidationException(
                     "Название точки проката не может быть пустым"
             );
         }
 
         if (locationNode == null) {
-            throw new IllegalArgumentException(
+            throw new FleetValidationException(
                     "Узел локации точки проката не может быть пустым"
             );
         }
 
         if (!locationNode.isRentalPoint()) {
-            throw new IllegalArgumentException(
+            throw new FleetValidationException(
                     "Точка проката должна быть привязана к узлу типа RENTAL_POINT"
             );
         }
