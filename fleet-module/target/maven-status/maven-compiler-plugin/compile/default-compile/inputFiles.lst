@@ -3,6 +3,7 @@ C:\Users\Lenovo\Java\Projects\Senla_final_project\fleet-module\src\main\java\ru\
 C:\Users\Lenovo\Java\Projects\Senla_final_project\fleet-module\src\main\java\ru\senla\scooterrental\fleet\entity\Scooter.java
 C:\Users\Lenovo\Java\Projects\Senla_final_project\fleet-module\src\main\java\ru\senla\scooterrental\fleet\enums\LocationType.java
 C:\Users\Lenovo\Java\Projects\Senla_final_project\fleet-module\src\main\java\ru\senla\scooterrental\fleet\enums\ScooterStatus.java
+C:\Users\Lenovo\Java\Projects\Senla_final_project\fleet-module\src\main\java\ru\senla\scooterrental\fleet\exceptions\FleetValidationException.java
 C:\Users\Lenovo\Java\Projects\Senla_final_project\fleet-module\src\main\java\ru\senla\scooterrental\fleet\exceptions\InvalidRentalPointStateException.java
 C:\Users\Lenovo\Java\Projects\Senla_final_project\fleet-module\src\main\java\ru\senla\scooterrental\fleet\exceptions\InvalidScooterStateException.java
 C:\Users\Lenovo\Java\Projects\Senla_final_project\fleet-module\src\main\java\ru\senla\scooterrental\fleet\exceptions\ScooterUnavailableException.java
