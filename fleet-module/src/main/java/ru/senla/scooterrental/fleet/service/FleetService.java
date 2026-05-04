@@ -212,6 +212,10 @@ public class FleetService {
         return locationNodeRepository.findAllByType(type);
     }
 
+    public Scooter getScooterById(Long scooterId) {
+        return getScooterOrThrow(scooterId);
+    }
+
     private Scooter getScooterOrThrow(Long scooterId) {
         return scooterRepository.findById(scooterId)
                 .orElseThrow(() -> new FleetEntityNotFoundException(

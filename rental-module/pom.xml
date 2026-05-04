@@ -13,5 +13,19 @@
     </parent>
 
     <artifactId>rental-module</artifactId>
+    <dependencies>
+        <dependency>
+            <groupId>ru.senla</groupId>
+            <artifactId>common-module</artifactId>
+            <version>1.0-SNAPSHOT</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>ru.senla</groupId>
+            <artifactId>fleet-module</artifactId>
+            <version>1.0-SNAPSHOT</version>
+            <scope>compile</scope>
+        </dependency>
+    </dependencies>
 
 </project>
