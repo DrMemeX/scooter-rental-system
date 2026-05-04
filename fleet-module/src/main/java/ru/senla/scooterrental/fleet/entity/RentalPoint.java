@@ -5,19 +5,14 @@ import ru.senla.scooterrental.fleet.exceptions.InvalidRentalPointStateException;
 
 public class RentalPoint {
 
-    private final Long id;
     private final String name;
     private final LocationNode locationNode;
 
+    private Long id;
+
     private boolean active;
 
-    public RentalPoint(Long id, String name, LocationNode locationNode) {
-
-        if (id == null || id <= 0) {
-            throw new FleetValidationException(
-                    "Идентификатор точки проката должен быть положительным"
-            );
-        }
+    public RentalPoint(String name, LocationNode locationNode) {
 
         if (name == null || name.isBlank()) {
             throw new FleetValidationException(
@@ -43,10 +38,25 @@ public class RentalPoint {
             );
         }
 
-        this.id = id;
         this.name = name;
         this.locationNode = locationNode;
         this.active = true;
+    }
+
+    public void assignId(Long id) {
+        if (this.id != null) {
+            throw new FleetValidationException(
+                    "ID точки проката уже назначен"
+            );
+        }
+
+        if (id == null || id <= 0) {
+            throw new FleetValidationException(
+                    "ID точки проката должен быть положительным"
+            );
+        }
+
+        this.id = id;
     }
 
     public boolean canAcceptScooter() {

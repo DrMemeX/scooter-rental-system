@@ -5,23 +5,17 @@ import ru.senla.scooterrental.fleet.exceptions.FleetValidationException;
 
 public class LocationNode {
 
-    private final Long id;
     private final String name;
     private final LocationType type;
     private final LocationNode parent;
 
+    private Long id;
+
     private boolean active;
 
-    public LocationNode(Long id,
-                        String name,
+    public LocationNode(String name,
                         LocationType type,
                         LocationNode parent) {
-
-        if (id == null || id <= 0) {
-            throw new FleetValidationException(
-                    "Идентификатор локации должен быть положительным"
-            );
-        }
 
         if (name == null || name.isBlank()) {
             throw new FleetValidationException(
@@ -55,11 +49,32 @@ public class LocationNode {
             );
         }
 
-        this.id = id;
+        if (parent != null && !parent.isActive()) {
+            throw new FleetValidationException(
+                    "Нельзя создать локацию внутри неактивной родительской локации"
+            );
+        }
+
         this.name = name;
         this.type = type;
         this.parent = parent;
         this.active = true;
+    }
+
+    public void assignId(Long id) {
+        if (this.id != null) {
+            throw new FleetValidationException(
+                    "ID локации уже назначен"
+            );
+        }
+
+        if (id == null || id <= 0) {
+            throw new FleetValidationException(
+                    "ID локации должен быть положительным"
+            );
+        }
+
+        this.id = id;
     }
 
     public boolean isCity() {
@@ -82,10 +97,16 @@ public class LocationNode {
             );
         }
 
-        LocationNode current = parent;
+        LocationNode current = this.parent;
 
         while (current != null) {
-            if (current.getId().equals(possibleParent.getId())) {
+            if (current == possibleParent) {
+                return true;
+            }
+
+            if (current.getId() != null
+                    && possibleParent.getId() != null
+                    && current.getId().equals(possibleParent.getId())) {
                 return true;
             }
 
