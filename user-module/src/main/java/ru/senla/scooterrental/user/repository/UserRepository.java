@@ -1,5 +1,6 @@
 package ru.senla.scooterrental.user.repository;
 
+import ru.senla.scooterrental.common.repository.CrudRepository;
 import ru.senla.scooterrental.user.entity.User;
 import ru.senla.scooterrental.user.enums.Role;
 import ru.senla.scooterrental.user.enums.UserStatus;

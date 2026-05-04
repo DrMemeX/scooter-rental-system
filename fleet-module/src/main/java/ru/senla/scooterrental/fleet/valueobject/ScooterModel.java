@@ -1,6 +1,7 @@
 package ru.senla.scooterrental.fleet.valueobject;
 
 import ru.senla.scooterrental.common.enums.ScooterClass;
+import ru.senla.scooterrental.fleet.exceptions.FleetValidationException;
 
 import java.math.BigDecimal;
 
@@ -26,37 +27,37 @@ public class ScooterModel {
                         int batteryCapacity) {
 
         if (scooterClass == null) {
-            throw new IllegalArgumentException(
+            throw new FleetValidationException(
                     "Класс самоката не может быть пустым"
             );
         }
 
         if (maxSpeedKmPerHour <= 0) {
-            throw new IllegalArgumentException(
+            throw new FleetValidationException(
                     "Максимальная скорость должна быть положительной"
             );
         }
 
         if (consumptionPerKm < 0) {
-            throw new IllegalArgumentException(
+            throw new FleetValidationException(
                     "Расход заряда не может быть отрицательным"
             );
         }
 
         if (pricePerMinute == null || pricePerMinute.signum() <= 0) {
-            throw new IllegalArgumentException(
+            throw new FleetValidationException(
                     "Цена за минуту должна быть положительной"
             );
         }
 
         if (pricePerHour == null || pricePerHour.signum() <= 0) {
-            throw new IllegalArgumentException(
+            throw new FleetValidationException(
                     "Цена за час должна быть положительной"
             );
         }
 
         if (batteryCapacity <= 0) {
-            throw new IllegalArgumentException(
+            throw new FleetValidationException(
                     "Емкость батареи должна быть положительной"
             );
         }

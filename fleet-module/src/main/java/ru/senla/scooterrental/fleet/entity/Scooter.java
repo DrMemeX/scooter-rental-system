@@ -11,8 +11,9 @@ public class Scooter {
 
     private static final double MIN_REQUIRED_CHARGE_FOR_RENTAL = 20;
 
-    private final Long id;
     private final ScooterModel model;
+
+    private Long id;
 
     private ScooterStatus status;
 
@@ -22,16 +23,9 @@ public class Scooter {
 
     private double totalMileageKm;
 
-    public Scooter(Long id,
-                   ScooterModel model,
+    public Scooter(ScooterModel model,
                    RentalPoint currentRentalPoint,
                    double currentCharge) {
-
-        if (id == null || id <= 0) {
-            throw new FleetValidationException(
-                    "Идентификатор самоката должен быть положительным"
-            );
-        }
 
         if (model == null) {
             throw new FleetValidationException(
@@ -63,13 +57,24 @@ public class Scooter {
             );
         }
 
-        this.id = id;
         this.model = model;
         this.currentRentalPoint = currentRentalPoint;
         this.currentCharge = currentCharge;
 
         this.status = ScooterStatus.AVAILABLE;
         this.totalMileageKm = 0;
+    }
+
+    public void assignId(Long id) {
+        if (this.id != null) {
+            throw new FleetValidationException("ID уже назначен");
+        }
+
+        if (id == null || id <= 0) {
+            throw new FleetValidationException("ID должен быть положительным");
+        }
+
+        this.id = id;
     }
 
     public boolean isAvailable() {
@@ -102,6 +107,7 @@ public class Scooter {
         }
 
         status = ScooterStatus.RENTED;
+        currentRentalPoint = null;
     }
 
     public void returnToPoint(RentalPoint point) {
@@ -126,7 +132,12 @@ public class Scooter {
         }
 
         currentRentalPoint = point;
-        status = ScooterStatus.AVAILABLE;
+
+        if (!hasEnoughChargeForRental()) {
+            status = ScooterStatus.SERVICE_REQUIRED;
+        } else {
+            status = ScooterStatus.AVAILABLE;
+        }
     }
 
     public void requireReturnVerification() {
@@ -142,11 +153,15 @@ public class Scooter {
 
     public void sendToMaintenance() {
 
-        if (status == ScooterStatus.RENTED ||
-            status == ScooterStatus.MAINTENANCE) {
-
+        if (status == ScooterStatus.RENTED) {
             throw new InvalidScooterStateException(
-                    "Нельзя отправить самокат на обслуживание"
+                    "Нельзя отправить в обслуживание самокат, который находится в аренде"
+            );
+        }
+
+        if (status == ScooterStatus.MAINTENANCE) {
+            throw new InvalidScooterStateException(
+                    "Самокат уже находится на обслуживании"
             );
         }
 
@@ -187,6 +202,10 @@ public class Scooter {
                 model.getBatteryCapacity(),
                 currentCharge + amount
         );
+
+        if (status == ScooterStatus.SERVICE_REQUIRED && hasEnoughChargeForRental()) {
+            status = ScooterStatus.AVAILABLE;
+        }
     }
 
     public void consumeCharge(double amount) {
@@ -203,10 +222,11 @@ public class Scooter {
             );
         }
 
-        currentCharge = Math.max(
-                0,
-                currentCharge - amount
-        );
+        currentCharge = Math.max(0, currentCharge - amount);
+
+        if (currentCharge == 0) {
+            status = ScooterStatus.RETURN_VERIFICATION_REQUIRED;
+        }
     }
 
     public void addMileage(double km) {
