@@ -12,5 +12,5 @@ public interface RentalRepository extends CrudRepository<Rental, Long> {
 
     List<Rental> findByScooterId(Long scooterId);
 
-    Optional<Rental> findActiveByUserId(Long userId);
+    Optional<Rental> findUnfinishedByUserId(Long userId);
 }

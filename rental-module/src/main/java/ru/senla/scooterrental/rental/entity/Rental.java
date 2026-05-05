@@ -2,6 +2,7 @@ package ru.senla.scooterrental.rental.entity;
 
 import ru.senla.scooterrental.rental.enums.RentalStatus;
 import ru.senla.scooterrental.rental.enums.TariffType;
+import ru.senla.scooterrental.rental.enums.TerminationReason;
 import ru.senla.scooterrental.rental.exceptions.InvalidRentalStateException;
 import ru.senla.scooterrental.rental.exceptions.RentalValidationException;
 
@@ -20,79 +21,67 @@ public class Rental {
     private LocalDateTime endTime;
 
     private final TariffType tariffType;
+    private final Integer plannedHours;
+    private Integer maxAllowedMinutes;
 
     private BigDecimal totalCost;
 
+    private TerminationReason terminationReason;
+
     public Rental(Long userId,
                   Long scooterId,
-                  TariffType tariffType) {
+                  TariffType tariffType,
+                  Integer plannedHours) {
 
-        if (userId == null || userId <= 0) {
-            throw new RentalValidationException(
-                    "ID пользователя должен быть положительным"
-            );
+        this.userId = requirePositiveId(userId, "ID пользователя");
+        this.scooterId = requirePositiveId(scooterId, "ID самоката");
+        this.tariffType = requireNonNull(tariffType, "Тип тарифа");
+
+        if (tariffType == TariffType.HOUR) {
+            this.plannedHours = requirePositiveInteger(plannedHours, "Количество часов");
+        } else {
+            this.plannedHours = null;
         }
-
-        if (scooterId == null || scooterId <= 0) {
-            throw new RentalValidationException(
-                    "ID самоката должен быть положительным"
-            );
-        }
-
-        if (tariffType == null) {
-            throw new RentalValidationException(
-                    "Тип тарифа не может быть пустым"
-            );
-        }
-
-        this.userId = userId;
-        this.scooterId = scooterId;
-        this.tariffType = tariffType;
 
         this.status = RentalStatus.ACTIVE;
         this.startTime = LocalDateTime.now();
         this.endTime = null;
         this.totalCost = BigDecimal.ZERO;
+        this.terminationReason = null;
     }
 
     public void assignId(Long id) {
         if (this.id != null) {
-            throw new RentalValidationException(
-                    "ID аренды уже назначен"
-            );
+            throw new RentalValidationException("ID аренды уже назначен");
         }
 
-        if (id == null || id <= 0) {
-            throw new RentalValidationException(
-                    "ID аренды должен быть положительным"
-            );
-        }
-
-        this.id = id;
+        this.id = requirePositiveId(id, "ID аренды");
     }
 
-    public void finish(BigDecimal totalCost) {
+    public void setMaxAllowedMinutes(Integer maxAllowedMinutes) {
+        if (tariffType != TariffType.MINUTE) {
+            throw new RentalValidationException(
+                    "Максимальное время поездки задаётся только для поминутного тарифа"
+            );
+        }
+
+        this.maxAllowedMinutes = requirePositiveInteger(
+                maxAllowedMinutes,
+                "Максимальное количество минут поездки"
+        );
+    }
+
+    public void finish(BigDecimal totalCost, TerminationReason terminationReason) {
         if (status != RentalStatus.ACTIVE) {
             throw new InvalidRentalStateException(
                     "Завершить можно только активную аренду"
             );
         }
 
-        if (totalCost == null) {
-            throw new RentalValidationException(
-                    "Итоговая стоимость аренды не может быть пустой"
-            );
-        }
-
-        if (totalCost.compareTo(BigDecimal.ZERO) < 0) {
-            throw new RentalValidationException(
-                    "Итоговая стоимость аренды не может быть отрицательной"
-            );
-        }
-
+        this.totalCost = requireNonNegative(totalCost, "Итоговая стоимость аренды");
+        this.terminationReason = requireNonNull(terminationReason, "Причина завершения аренды");
         this.status = RentalStatus.FINISHED;
         this.endTime = LocalDateTime.now();
-        this.totalCost = totalCost;
     }
 
     public void requestManualFinish() {
@@ -105,38 +94,16 @@ public class Rental {
         this.status = RentalStatus.PENDING_MANAGER_CONFIRMATION;
     }
 
-    public void approveManualFinish(BigDecimal totalCost) {
+    public void approveManualFinish(BigDecimal totalCost, TerminationReason terminationReason) {
         if (status != RentalStatus.PENDING_MANAGER_CONFIRMATION) {
             throw new InvalidRentalStateException(
                     "Подтвердить ручное завершение можно только для аренды, ожидающей проверки менеджера"
             );
         }
 
-        if (totalCost == null) {
-            throw new RentalValidationException(
-                    "Итоговая стоимость аренды не может быть пустой"
-            );
-        }
-
-        if (totalCost.compareTo(BigDecimal.ZERO) < 0) {
-            throw new RentalValidationException(
-                    "Итоговая стоимость аренды не может быть отрицательной"
-            );
-        }
-
+        this.totalCost = requireNonNegative(totalCost, "Итоговая стоимость аренды");
+        this.terminationReason = requireNonNull(terminationReason, "Причина завершения аренды");
         this.status = RentalStatus.FINISHED;
-        this.endTime = LocalDateTime.now();
-        this.totalCost = totalCost;
-    }
-
-    public void cancel() {
-        if (status != RentalStatus.ACTIVE) {
-            throw new InvalidRentalStateException(
-                    "Отменить можно только активную аренду"
-            );
-        }
-
-        this.status = RentalStatus.CANCELLED;
         this.endTime = LocalDateTime.now();
     }
 
@@ -180,7 +147,62 @@ public class Rental {
         return tariffType;
     }
 
+    public Integer getPlannedHours() {
+        return plannedHours;
+    }
+
+    public Integer getMaxAllowedMinutes() {
+        return maxAllowedMinutes;
+    }
+
     public BigDecimal getTotalCost() {
         return totalCost;
+    }
+
+    public TerminationReason getTerminationReason() {
+        return terminationReason;
+    }
+    private Long requirePositiveId(Long id, String name) {
+        if (id == null || id <= 0) {
+            throw new RentalValidationException(
+                    name + " должен быть положительным"
+            );
+        }
+        return id;
+    }
+
+    private <T> T requireNonNull(T obj, String name) {
+        if (obj == null) {
+            throw new RentalValidationException(
+                    name + " не задан"
+            );
+        }
+        return obj;
+    }
+
+    private BigDecimal requireNonNegative(BigDecimal value, String name) {
+        if (value == null) {
+            throw new RentalValidationException(
+                    name + " не задан"
+            );
+        }
+
+        if (value.compareTo(BigDecimal.ZERO) < 0) {
+            throw new RentalValidationException(
+                    name + " не может быть отрицательным"
+            );
+        }
+
+        return value;
+    }
+
+    private Integer requirePositiveInteger(Integer value, String name) {
+        if (value == null || value <= 0) {
+            throw new RentalValidationException(
+                    name + " должно быть положительным"
+            );
+        }
+
+        return value;
     }
 }

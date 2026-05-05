@@ -17,12 +17,7 @@ public class UserService {
     private final UserRepository userRepository;
 
     public UserService(UserRepository userRepository) {
-        if (userRepository == null) {
-            throw new UserValidationException(
-                    "Репозиторий пользователей не может быть пустым."
-            );
-        }
-        this.userRepository = userRepository;
+        this.userRepository = requireNonNull(userRepository, "Репозиторий пользователей");
     }
 
     public User registerUser(User user) {
@@ -313,5 +308,14 @@ public class UserService {
         }
 
         return userRepository.save(user);
+    }
+
+    private <T> T requireNonNull(T obj, String name) {
+        if (obj == null) {
+            throw new UserValidationException(
+                    name + " не задан."
+            );
+        }
+        return obj;
     }
 }

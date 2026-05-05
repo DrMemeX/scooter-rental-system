@@ -89,12 +89,13 @@ public class InMemoryRentalRepository implements RentalRepository {
     }
 
     @Override
-    public Optional<Rental> findActiveByUserId(Long userId) {
+    public Optional<Rental> findUnfinishedByUserId(Long userId) {
         validateId(userId, "ID пользователя");
 
         return rentals.stream()
                 .filter(rental -> rental.getUserId().equals(userId))
-                .filter(rental -> rental.getStatus() == RentalStatus.ACTIVE)
+                .filter(rental -> rental.getStatus() == RentalStatus.ACTIVE
+                        || rental.getStatus() == RentalStatus.PENDING_MANAGER_CONFIRMATION)
                 .findFirst();
     }
 
