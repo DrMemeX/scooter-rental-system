@@ -27,6 +27,7 @@ public class Rental {
     private BigDecimal totalCost;
 
     private TerminationReason terminationReason;
+    private double distanceKm;
 
     public Rental(Long userId,
                   Long scooterId,
@@ -48,6 +49,7 @@ public class Rental {
         this.endTime = null;
         this.totalCost = BigDecimal.ZERO;
         this.terminationReason = null;
+        this.distanceKm = 0;
     }
 
     public void assignId(Long id) {
@@ -68,6 +70,13 @@ public class Rental {
         this.maxAllowedMinutes = requirePositiveInteger(
                 maxAllowedMinutes,
                 "Максимальное количество минут поездки"
+        );
+    }
+
+    public void recordDistance(double distanceKm) {
+        this.distanceKm = requireNonNegativeDistance(
+                distanceKm,
+                "Дистанция поездки"
         );
     }
 
@@ -162,6 +171,11 @@ public class Rental {
     public TerminationReason getTerminationReason() {
         return terminationReason;
     }
+
+    public double getDistanceKm() {
+        return distanceKm;
+    }
+
     private Long requirePositiveId(Long id, String name) {
         if (id == null || id <= 0) {
             throw new RentalValidationException(
@@ -200,6 +214,16 @@ public class Rental {
         if (value == null || value <= 0) {
             throw new RentalValidationException(
                     name + " должно быть положительным"
+            );
+        }
+
+        return value;
+    }
+
+    private double requireNonNegativeDistance(double value, String name) {
+        if (value < 0) {
+            throw new RentalValidationException(
+                    name + " не может быть отрицательной"
             );
         }
 

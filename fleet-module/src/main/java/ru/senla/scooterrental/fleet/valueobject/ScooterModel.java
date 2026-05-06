@@ -26,48 +26,12 @@ public class ScooterModel {
                         BigDecimal pricePerHour,
                         int batteryCapacity) {
 
-        if (scooterClass == null) {
-            throw new FleetValidationException(
-                    "Класс самоката не может быть пустым"
-            );
-        }
-
-        if (maxSpeedKmPerHour <= 0) {
-            throw new FleetValidationException(
-                    "Максимальная скорость должна быть положительной"
-            );
-        }
-
-        if (consumptionPerKm < 0) {
-            throw new FleetValidationException(
-                    "Расход заряда не может быть отрицательным"
-            );
-        }
-
-        if (pricePerMinute == null || pricePerMinute.signum() <= 0) {
-            throw new FleetValidationException(
-                    "Цена за минуту должна быть положительной"
-            );
-        }
-
-        if (pricePerHour == null || pricePerHour.signum() <= 0) {
-            throw new FleetValidationException(
-                    "Цена за час должна быть положительной"
-            );
-        }
-
-        if (batteryCapacity <= 0) {
-            throw new FleetValidationException(
-                    "Емкость батареи должна быть положительной"
-            );
-        }
-
-        this.scooterClass = scooterClass;
-        this.maxSpeedKmPerHour = maxSpeedKmPerHour;
-        this.consumptionPerKm = consumptionPerKm;
-        this.pricePerMinute = pricePerMinute;
-        this.pricePerHour = pricePerHour;
-        this.batteryCapacity = batteryCapacity;
+        this.scooterClass = requireNonNull(scooterClass, "Класс самоката");
+        this.maxSpeedKmPerHour = requirePositiveDouble(maxSpeedKmPerHour, "Максимальная скорость");
+        this.consumptionPerKm = requirePositiveDouble(consumptionPerKm, "Расход заряда");
+        this.pricePerMinute = requirePositiveMoney(pricePerMinute, "Цена за минуту");
+        this.pricePerHour = requirePositiveMoney(pricePerHour, "Цена за час");
+        this.batteryCapacity = requirePositiveInt(batteryCapacity, "Емкость батареи");
     }
 
     public ScooterClass getScooterClass() {
@@ -92,5 +56,47 @@ public class ScooterModel {
 
     public int getBatteryCapacity() {
         return batteryCapacity;
+    }
+
+    private <T> T requireNonNull(T value, String name) {
+        if (value == null) {
+            throw new FleetValidationException(
+                    name + " не задан"
+            );
+        }
+
+        return value;
+    }
+
+    private double requirePositiveDouble(double value, String name) {
+        if (value <= 0) {
+            throw new FleetValidationException(
+                    name + " должен быть положительным"
+            );
+        }
+
+        return value;
+    }
+
+    private BigDecimal requirePositiveMoney(BigDecimal value, String name) {
+        requireNonNull(value, name);
+
+        if (value.signum() <= 0) {
+            throw new FleetValidationException(
+                    name + " должна быть положительной"
+            );
+        }
+
+        return value;
+    }
+
+    private int requirePositiveInt(int value, String name) {
+        if (value <= 0) {
+            throw new FleetValidationException(
+                    name + " должна быть положительной"
+            );
+        }
+
+        return value;
     }
 }

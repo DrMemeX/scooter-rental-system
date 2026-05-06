@@ -14,6 +14,8 @@ import ru.senla.scooterrental.user.entity.User;
 import ru.senla.scooterrental.user.service.UserService;
 
 import java.math.BigDecimal;
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.List;
 
 public class RentalService {
@@ -49,12 +51,20 @@ public class RentalService {
         User user = userService.getById(userId);
         Scooter scooter = fleetService.getScooterById(scooterId);
 
+        if (user.isBlocked()) {
+            throw new RentalValidationException(
+                    "Заблокированный пользователь не может начать аренду"
+            );
+        }
+
         rentalRepository.findUnfinishedByUserId(userId)
                 .ifPresent(rental -> {
                     throw new ActiveRentalAlreadyExistsException(
                             "У пользователя с ID " + userId + " уже есть незавершённая аренда"
                     );
                 });
+
+        ensureCanPayForRental(user, scooter, tariffType, plannedHours);
 
         Integer maxAllowedMinutes = null;
 
@@ -81,70 +91,116 @@ public class RentalService {
 
     public Rental finishRental(Long rentalId,
                                Long rentalPointId,
+                               double distanceKm,
                                String promoCode) {
         return finishRentalInternal(
                 rentalId,
                 rentalPointId,
+                distanceKm,
                 promoCode,
                 TerminationReason.USER_FINISHED
+        );
+    }
+
+    public Rental finishRental(Long rentalId,
+                               Long rentalPointId,
+                               String promoCode) {
+        return finishRental(rentalId, rentalPointId, 0, promoCode);
+    }
+
+    public Rental finishRental(Long rentalId, Long rentalPointId) {
+        return finishRental(rentalId, rentalPointId, 0, null);
+    }
+
+    public Rental finishDueToBatteryDepleted(Long rentalId,
+                                             Long rentalPointId,
+                                             double distanceKm,
+                                             String promoCode) {
+        return finishRentalInternal(
+                rentalId,
+                rentalPointId,
+                distanceKm,
+                promoCode,
+                TerminationReason.BATTERY_DEPLETED
         );
     }
 
     public Rental finishDueToBatteryDepleted(Long rentalId,
                                              Long rentalPointId,
                                              String promoCode) {
+        return finishDueToBatteryDepleted(rentalId, rentalPointId, 0, promoCode);
+    }
+
+    public Rental finishDueToTechnicalBreakdown(Long rentalId,
+                                                Long rentalPointId,
+                                                double distanceKm,
+                                                String promoCode) {
         return finishRentalInternal(
                 rentalId,
                 rentalPointId,
+                distanceKm,
                 promoCode,
-                TerminationReason.BATTERY_DEPLETED
+                TerminationReason.TECHNICAL_BREAKDOWN
         );
     }
 
     public Rental finishDueToTechnicalBreakdown(Long rentalId,
                                                 Long rentalPointId,
                                                 String promoCode) {
+        return finishDueToTechnicalBreakdown(rentalId, rentalPointId, 0, promoCode);
+    }
+
+    public Rental finishDueToUserDamage(Long rentalId,
+                                        Long rentalPointId,
+                                        double distanceKm,
+                                        String promoCode) {
         return finishRentalInternal(
                 rentalId,
                 rentalPointId,
+                distanceKm,
                 promoCode,
-                TerminationReason.TECHNICAL_BREAKDOWN
+                TerminationReason.USER_DAMAGE
         );
     }
 
     public Rental finishDueToUserDamage(Long rentalId,
                                         Long rentalPointId,
                                         String promoCode) {
-        return finishRentalInternal(
-                rentalId,
-                rentalPointId,
-                promoCode,
-                TerminationReason.USER_DAMAGE
-        );
+        return finishDueToUserDamage(rentalId, rentalPointId, 0, promoCode);
     }
 
     private Rental finishRentalInternal(Long rentalId,
                                         Long rentalPointId,
+                                        double distanceKm,
                                         String promoCode,
                                         TerminationReason reason) {
 
         Rental rental = getRentalOrThrow(rentalId);
         Scooter scooter = fleetService.getScooterById(rental.getScooterId());
 
+        long actualMinutes = calculateActualMinutes(rental);
+
+        validateMinuteRentalTimeLimit(rental, actualMinutes);
+        validateRideDistance(scooter, distanceKm, actualMinutes);
+
         BigDecimal totalCost = pricingService.calculate(rental, scooter);
         BigDecimal finalCost = discountService.applyDiscount(totalCost, promoCode);
+
+        if (distanceKm > 0) {
+            double chargeConsumption = calculateChargeConsumption(scooter, distanceKm);
+
+            fleetService.addMileage(rental.getScooterId(), distanceKm);
+            fleetService.consumeCharge(rental.getScooterId(), chargeConsumption);
+        }
 
         fleetService.returnScooter(rental.getScooterId(), rentalPointId);
 
         userService.subtractBalance(rental.getUserId(), finalCost);
 
+        rental.recordDistance(distanceKm);
         rental.finish(finalCost, reason);
 
         return rentalRepository.save(rental);
-    }
-
-    public Rental finishRental(Long rentalId, Long rentalPointId) {
-        return finishRental(rentalId, rentalPointId, null);
     }
 
     public Rental requestManualFinish(Long rentalId) {
@@ -159,18 +215,32 @@ public class RentalService {
 
     public Rental approveManualFinish(Long rentalId,
                                       Long rentalPointId,
+                                      double distanceKm,
                                       String promoCode) {
 
         Rental rental = getRentalOrThrow(rentalId);
         Scooter scooter = fleetService.getScooterById(rental.getScooterId());
 
+        long actualMinutes = calculateActualMinutes(rental);
+
+        validateMinuteRentalTimeLimit(rental, actualMinutes);
+        validateRideDistance(scooter, distanceKm, actualMinutes);
+
         BigDecimal totalCost = pricingService.calculate(rental, scooter);
         BigDecimal finalCost = discountService.applyDiscount(totalCost, promoCode);
+
+        if (distanceKm > 0) {
+            double chargeConsumption = calculateChargeConsumption(scooter, distanceKm);
+
+            fleetService.addMileage(rental.getScooterId(), distanceKm);
+            fleetService.consumeCharge(rental.getScooterId(), chargeConsumption);
+        }
 
         fleetService.returnScooter(rental.getScooterId(), rentalPointId);
 
         userService.subtractBalance(rental.getUserId(), finalCost);
 
+        rental.recordDistance(distanceKm);
         rental.approveManualFinish(
                 finalCost,
                 TerminationReason.MANAGER_CONFIRMED_RETURN
@@ -179,8 +249,14 @@ public class RentalService {
         return rentalRepository.save(rental);
     }
 
+    public Rental approveManualFinish(Long rentalId,
+                                      Long rentalPointId,
+                                      String promoCode) {
+        return approveManualFinish(rentalId, rentalPointId, 0, promoCode);
+    }
+
     public Rental approveManualFinish(Long rentalId, Long rentalPointId) {
-        return approveManualFinish(rentalId, rentalPointId, null);
+        return approveManualFinish(rentalId, rentalPointId, 0, null);
     }
 
     public Rental getRentalOrThrow(Long rentalId) {
@@ -204,10 +280,133 @@ public class RentalService {
         return rentalRepository.findByScooterId(scooterId);
     }
 
+    private void ensureCanPayForRental(User user,
+                                       Scooter scooter,
+                                       TariffType tariffType,
+                                       Integer plannedHours) {
+        requireNonNull(user, "Пользователь");
+        requireNonNull(scooter, "Самокат");
+        requireNonNull(scooter.getModel(), "Модель самоката");
+        requireNonNull(tariffType, "Тип тарифа");
+
+        if (tariffType == TariffType.MINUTE) {
+            BigDecimal pricePerMinute = scooter.getModel().getPricePerMinute();
+
+            if (user.getBalance().compareTo(pricePerMinute) < 0) {
+                throw new RentalValidationException(
+                        "Недостаточно средств для начала поминутной аренды"
+                );
+            }
+
+            return;
+        }
+
+        if (tariffType == TariffType.HOUR) {
+            if (plannedHours == null || plannedHours <= 0) {
+                throw new RentalValidationException(
+                        "Для почасовой аренды должно быть указано количество часов"
+                );
+            }
+
+            BigDecimal requiredAmount = scooter.getModel()
+                    .getPricePerHour()
+                    .multiply(BigDecimal.valueOf(plannedHours));
+
+            if (user.getBalance().compareTo(requiredAmount) < 0) {
+                throw new RentalValidationException(
+                        "Недостаточно средств для выбранного почасового тарифа"
+                );
+            }
+
+            return;
+        }
+
+        if (tariffType == TariffType.SUBSCRIPTION) {
+            if (!user.hasActiveSubscription()) {
+                throw new RentalValidationException(
+                        "У пользователя нет активного абонемента"
+                );
+            }
+
+            return;
+        }
+    }
+
+    private void validateMinuteRentalTimeLimit(Rental rental, long actualMinutes) {
+        if (rental.getTariffType() != TariffType.MINUTE) {
+            return;
+        }
+
+        Integer maxAllowedMinutes = rental.getMaxAllowedMinutes();
+
+        if (maxAllowedMinutes == null || maxAllowedMinutes <= 0) {
+            throw new RentalValidationException(
+                    "Для поминутного тарифа не задан лимит оплаченного времени"
+            );
+        }
+
+        if (actualMinutes > maxAllowedMinutes) {
+            throw new RentalValidationException(
+                    "Время поездки превышает оплачиваемый лимит пользователя"
+            );
+        }
+    }
+
+    private void validateRideDistance(Scooter scooter,
+                                      double distanceKm,
+                                      long actualMinutes) {
+        requireNonNull(scooter, "Самокат");
+        requireNonNull(scooter.getModel(), "Модель самоката");
+
+        if (distanceKm < 0) {
+            throw new RentalValidationException(
+                    "Дистанция поездки не может быть отрицательной"
+            );
+        }
+
+        if (distanceKm == 0) {
+            return;
+        }
+
+        double hours = actualMinutes / 60.0;
+
+        double maxDistanceBySpeed = scooter.getModel().getMaxSpeedKmPerHour() * hours;
+        double maxDistanceByCharge = scooter.getCurrentCharge()
+                / scooter.getModel().getConsumptionPerKm();
+
+        double allowedDistance = Math.min(maxDistanceBySpeed, maxDistanceByCharge);
+
+        if (distanceKm > allowedDistance) {
+            throw new RentalValidationException(
+                    "Указанная дистанция невозможна для данной длительности аренды и текущего заряда"
+            );
+        }
+    }
+
+    private long calculateActualMinutes(Rental rental) {
+        requireNonNull(rental, "Аренда");
+        requireNonNull(rental.getStartTime(), "Время начала аренды");
+
+        long minutes = Duration.between(
+                rental.getStartTime(),
+                LocalDateTime.now()
+        ).toMinutes();
+
+        return Math.max(minutes, 1);
+    }
+
+    private double calculateChargeConsumption(Scooter scooter, double distanceKm) {
+        requireNonNull(scooter, "Самокат");
+        requireNonNull(scooter.getModel(), "Модель самоката");
+
+        return Math.ceil(distanceKm * scooter.getModel().getConsumptionPerKm());
+    }
+
     private <T> T requireNonNull(T obj, String name) {
         if (obj == null) {
             throw new RentalValidationException(name + " не задан");
         }
+
         return obj;
     }
 

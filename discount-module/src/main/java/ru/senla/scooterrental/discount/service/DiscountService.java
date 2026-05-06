@@ -40,11 +40,12 @@ public class DiscountService {
     public BigDecimal applyDiscount(BigDecimal price, String code) {
         BigDecimal validPrice = requireNonNegative(price, "Цена");
 
-        if (code == null || code.isBlank()) {
+        if (code == null) {
             return validPrice;
         }
 
-        PromoCode promoCode = getByCodeOrThrow(code);
+        String normalizedCode = requireNotBlank(code, "Код промокода");
+        PromoCode promoCode = getByCodeOrThrow(normalizedCode);
 
         if (!promoCode.isActive()) {
             throw new DiscountValidationException(

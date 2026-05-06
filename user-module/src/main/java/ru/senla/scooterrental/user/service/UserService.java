@@ -14,6 +14,9 @@ import java.util.List;
 
 public class UserService {
 
+    private static final BigDecimal THREE_DAY_SUBSCRIPTION_PRICE =
+            BigDecimal.valueOf(1499);
+
     private final UserRepository userRepository;
 
     public UserService(UserRepository userRepository) {
@@ -189,6 +192,16 @@ public class UserService {
         ensureUserIsActive(user);
 
         user.addBalance(amount);
+        return userRepository.save(user);
+    }
+
+    public User buyThreeDaySubscription(Long id) {
+        User user = getById(id);
+
+        ensureUserIsActive(user);
+
+        user.buyThreeDaySubscription(THREE_DAY_SUBSCRIPTION_PRICE);
+
         return userRepository.save(user);
     }
 

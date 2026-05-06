@@ -106,6 +106,14 @@ public class FleetService {
         return scooterRepository.save(scooter);
     }
 
+    public Scooter completeMaintenance(Long scooterId) {
+        Scooter scooter = getScooterOrThrow(scooterId);
+
+        scooter.completeMaintenance();
+
+        return scooterRepository.save(scooter);
+    }
+
     public Scooter markServiceRequired(Long scooterId) {
         Scooter scooter = getScooterOrThrow(scooterId);
 
