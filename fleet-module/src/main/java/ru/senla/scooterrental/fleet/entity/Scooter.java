@@ -5,7 +5,6 @@ import ru.senla.scooterrental.fleet.exceptions.FleetValidationException;
 import ru.senla.scooterrental.fleet.exceptions.InvalidRentalPointStateException;
 import ru.senla.scooterrental.fleet.exceptions.InvalidScooterStateException;
 import ru.senla.scooterrental.fleet.exceptions.ScooterUnavailableException;
-import ru.senla.scooterrental.fleet.valueobject.ScooterModel;
 
 public class Scooter {
 

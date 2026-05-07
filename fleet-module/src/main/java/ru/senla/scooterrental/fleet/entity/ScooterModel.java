@@ -1,4 +1,4 @@
-package ru.senla.scooterrental.fleet.valueobject;
+package ru.senla.scooterrental.fleet.entity;
 
 import ru.senla.scooterrental.common.enums.ScooterClass;
 import ru.senla.scooterrental.fleet.exceptions.FleetValidationException;
@@ -6,6 +6,8 @@ import ru.senla.scooterrental.fleet.exceptions.FleetValidationException;
 import java.math.BigDecimal;
 
 public class ScooterModel {
+
+    private Long id;
 
     private final ScooterClass scooterClass;
 
@@ -32,6 +34,26 @@ public class ScooterModel {
         this.pricePerMinute = requirePositiveMoney(pricePerMinute, "Цена за минуту");
         this.pricePerHour = requirePositiveMoney(pricePerHour, "Цена за час");
         this.batteryCapacity = requirePositiveInt(batteryCapacity, "Емкость батареи");
+    }
+
+    public void assignId(Long id) {
+        if (this.id != null) {
+            throw new FleetValidationException(
+                    "ID модели уже назначен"
+            );
+        }
+
+        if (id == null || id <= 0) {
+            throw new FleetValidationException(
+                    "ID модели должен быть положительным"
+            );
+        }
+
+        this.id = id;
+    }
+
+    public Long getId() {
+        return id;
     }
 
     public ScooterClass getScooterClass() {

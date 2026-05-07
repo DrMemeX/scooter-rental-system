@@ -1,0 +1,12 @@
+package ru.senla.scooterrental.fleet.repository;
+
+import ru.senla.scooterrental.common.repository.CrudRepository;
+import ru.senla.scooterrental.common.enums.ScooterClass;
+import ru.senla.scooterrental.fleet.entity.ScooterModel;
+
+import java.util.List;
+
+public interface ScooterModelRepository extends CrudRepository<ScooterModel, Long> {
+
+    List<ScooterModel> findAllByScooterClass(ScooterClass scooterClass);
+}

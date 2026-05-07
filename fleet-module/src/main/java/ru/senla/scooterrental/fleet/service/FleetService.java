@@ -8,12 +8,13 @@ import ru.senla.scooterrental.fleet.enums.LocationType;
 import ru.senla.scooterrental.fleet.enums.ScooterStatus;
 import ru.senla.scooterrental.fleet.exceptions.FleetEntityNotFoundException;
 import ru.senla.scooterrental.fleet.exceptions.FleetValidationException;
-import ru.senla.scooterrental.fleet.factory.ScooterModelFactory;
 import ru.senla.scooterrental.fleet.repository.LocationNodeRepository;
 import ru.senla.scooterrental.fleet.repository.RentalPointRepository;
+import ru.senla.scooterrental.fleet.repository.ScooterModelRepository;
 import ru.senla.scooterrental.fleet.repository.ScooterRepository;
-import ru.senla.scooterrental.fleet.valueobject.ScooterModel;
+import ru.senla.scooterrental.fleet.entity.ScooterModel;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 public class FleetService {
@@ -21,10 +22,12 @@ public class FleetService {
     private final LocationNodeRepository locationNodeRepository;
     private final RentalPointRepository rentalPointRepository;
     private final ScooterRepository scooterRepository;
+    private final ScooterModelRepository scooterModelRepository;
 
     public FleetService(LocationNodeRepository locationNodeRepository,
                         RentalPointRepository rentalPointRepository,
-                        ScooterRepository scooterRepository) {
+                        ScooterRepository scooterRepository,
+                        ScooterModelRepository scooterModelRepository) {
         this.locationNodeRepository = requireNonNull(
                 locationNodeRepository, "Репозиторий локаций"
         );
@@ -33,6 +36,9 @@ public class FleetService {
         );
         this.scooterRepository = requireNonNull(
                 scooterRepository, "Репозиторий самокатов"
+        );
+        this.scooterModelRepository = requireNonNull(
+                scooterModelRepository, "Репозиторий моделей самокатов"
         );
     }
 
@@ -56,17 +62,29 @@ public class FleetService {
         return rentalPointRepository.save(rentalPoint);
     }
 
-    public Scooter createScooter(ScooterClass scooterClass,
+    public ScooterModel createScooterModel(ScooterClass scooterClass,
+                                           double maxSpeedKmPerHour,
+                                           double consumptionPerKm,
+                                           BigDecimal pricePerMinute,
+                                           BigDecimal pricePerHour,
+                                           int batteryCapacity) {
+        ScooterModel model = new ScooterModel(
+                scooterClass,
+                maxSpeedKmPerHour,
+                consumptionPerKm,
+                pricePerMinute,
+                pricePerHour,
+                batteryCapacity
+        );
+
+        return scooterModelRepository.save(model);
+    }
+
+    public Scooter createScooter(Long modelId,
                                  Long rentalPointId,
                                  double initialCharge) {
-        if (scooterClass == null) {
-            throw new FleetValidationException(
-                    "Класс самоката не может быть пустым"
-            );
-        }
-
+        ScooterModel model = getScooterModelOrThrow(modelId);
         RentalPoint rentalPoint = getRentalPointOrThrow(rentalPointId);
-        ScooterModel model = ScooterModelFactory.create(scooterClass);
 
         Scooter scooter = new Scooter(model, rentalPoint, initialCharge);
         return scooterRepository.save(scooter);
@@ -178,6 +196,14 @@ public class FleetService {
         return rentalPointRepository.save(rentalPoint);
     }
 
+    public ScooterModel getScooterModelById(Long modelId) {
+        return getScooterModelOrThrow(modelId);
+    }
+
+    public List<ScooterModel> findAllScooterModels() {
+        return scooterModelRepository.findAll();
+    }
+
     public List<Scooter> findAllScooters() {
         return scooterRepository.findAll();
     }
@@ -212,6 +238,13 @@ public class FleetService {
 
     public Scooter getScooterById(Long scooterId) {
         return getScooterOrThrow(scooterId);
+    }
+
+    private ScooterModel getScooterModelOrThrow(Long modelId) {
+        return scooterModelRepository.findById(modelId)
+                .orElseThrow(() -> new FleetEntityNotFoundException(
+                        "Модель самоката с ID " + modelId + " не найдена"
+                ));
     }
 
     private Scooter getScooterOrThrow(Long scooterId) {

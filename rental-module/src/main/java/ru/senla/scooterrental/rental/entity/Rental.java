@@ -25,6 +25,8 @@ public class Rental {
     private Integer maxAllowedMinutes;
 
     private BigDecimal totalCost;
+    private Long promoCodeId;
+    private BigDecimal discountAmount;
 
     private TerminationReason terminationReason;
     private double distanceKm;
@@ -48,6 +50,8 @@ public class Rental {
         this.startTime = LocalDateTime.now();
         this.endTime = null;
         this.totalCost = BigDecimal.ZERO;
+        this.promoCodeId = null;
+        this.discountAmount = BigDecimal.ZERO;
         this.terminationReason = null;
         this.distanceKm = 0;
     }
@@ -78,6 +82,23 @@ public class Rental {
                 distanceKm,
                 "Дистанция поездки"
         );
+    }
+
+    public void applyPromoCode(Long promoCodeId, BigDecimal discountAmount) {
+        if (status != RentalStatus.ACTIVE) {
+            throw new InvalidRentalStateException(
+                    "Промокод можно применить только к активной аренде"
+            );
+        }
+
+        if (this.promoCodeId != null) {
+            throw new RentalValidationException(
+                    "Промокод уже применён к аренде"
+            );
+        }
+
+        this.promoCodeId = requirePositiveId(promoCodeId, "ID промокода");
+        this.discountAmount = requireNonNegative(discountAmount, "Размер скидки");
     }
 
     public void finish(BigDecimal totalCost, TerminationReason terminationReason) {
@@ -166,6 +187,14 @@ public class Rental {
 
     public BigDecimal getTotalCost() {
         return totalCost;
+    }
+
+    public Long getPromoCodeId() {
+        return promoCodeId;
+    }
+
+    public BigDecimal getDiscountAmount() {
+        return discountAmount;
     }
 
     public TerminationReason getTerminationReason() {
