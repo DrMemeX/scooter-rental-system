@@ -1,0 +1,435 @@
+databaseChangeLog:
+  - changeSet:
+      id: 001-create-initial-schema
+      author: DrMemeX
+
+      changes:
+        - createTable:
+            tableName: users
+            columns:
+
+              - column:
+                  name: id
+                  type: bigserial
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+
+              - column:
+                  name: email
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+                    unique: true
+
+              - column:
+                  name: password
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: first_name
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: last_name
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: phone
+                  type: varchar(50)
+                  constraints:
+                    nullable: false
+                    unique: true
+
+              - column:
+                  name: role
+                  type: varchar(20)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: status
+                  type: varchar(20)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: balance
+                  type: numeric(10,2)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: subscription_purchased_at
+                  type: timestamp
+
+              - column:
+                  name: subscription_expires_at
+                  type: timestamp
+
+              - column:
+                  name: verified
+                  type: boolean
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: created_at
+                  type: timestamp
+                  constraints:
+                    nullable: false
+
+        - createTable:
+            tableName: promo_codes
+            columns:
+
+              - column:
+                  name: id
+                  type: bigserial
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+
+              - column:
+                  name: code
+                  type: varchar(50)
+                  constraints:
+                    nullable: false
+                    unique: true
+
+              - column:
+                  name: discount_type
+                  type: varchar(30)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: status
+                  type: varchar(30)
+                  constraints:
+                    nullable: false
+
+        - createTable:
+            tableName: scooter_models
+            columns:
+
+              - column:
+                  name: id
+                  type: bigserial
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+
+              - column:
+                  name: scooter_class
+                  type: varchar(30)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: max_speed_km_per_hour
+                  type: numeric(5,2)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: consumption_per_km
+                  type: numeric(5,2)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: price_per_minute
+                  type: numeric(10,2)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: price_per_hour
+                  type: numeric(10,2)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: battery_capacity
+                  type: integer
+                  constraints:
+                    nullable: false
+
+        - createTable:
+            tableName: location_nodes
+            columns:
+
+              - column:
+                  name: id
+                  type: bigserial
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+
+              - column:
+                  name: name
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: type
+                  type: varchar(30)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: parent_id
+                  type: bigint
+
+              - column:
+                  name: active
+                  type: boolean
+                  constraints:
+                    nullable: false
+
+        - createTable:
+            tableName: rental_points
+            columns:
+
+              - column:
+                  name: id
+                  type: bigserial
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+
+              - column:
+                  name: name
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: location_node_id
+                  type: bigint
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: active
+                  type: boolean
+                  constraints:
+                    nullable: false
+
+        - createTable:
+            tableName: scooters
+            columns:
+
+              - column:
+                  name: id
+                  type: bigserial
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+
+              - column:
+                  name: model_id
+                  type: bigint
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: rental_point_id
+                  type: bigint
+
+              - column:
+                  name: status
+                  type: varchar(40)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: current_charge
+                  type: numeric(10,2)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: total_mileage_km
+                  type: numeric(10,2)
+                  constraints:
+                    nullable: false
+
+        - createTable:
+            tableName: rentals
+            columns:
+
+              - column:
+                  name: id
+                  type: bigserial
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+
+              - column:
+                  name: user_id
+                  type: bigint
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: scooter_id
+                  type: bigint
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: status
+                  type: varchar(40)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: start_time
+                  type: timestamp
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: end_time
+                  type: timestamp
+
+              - column:
+                  name: tariff_type
+                  type: varchar(20)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: planned_hours
+                  type: integer
+
+              - column:
+                  name: max_allowed_minutes
+                  type: integer
+
+              - column:
+                  name: total_cost
+                  type: numeric(10,2)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: promo_code_id
+                  type: bigint
+
+              - column:
+                  name: discount_amount
+                  type: numeric(10,2)
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: termination_reason
+                  type: varchar(40)
+
+              - column:
+                  name: distance_km
+                  type: numeric(10,2)
+                  constraints:
+                    nullable: false
+
+        - createTable:
+            tableName: scooter_service_events
+            columns:
+
+              - column:
+                  name: id
+                  type: bigserial
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+
+              - column:
+                  name: scooter_id
+                  type: bigint
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: type
+                  type: varchar(40)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: description
+                  type: text
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: created_at
+                  type: timestamp
+                  constraints:
+                    nullable: false
+
+        - addForeignKeyConstraint:
+            constraintName: fk_location_nodes_parent
+            baseTableName: location_nodes
+            baseColumnNames: parent_id
+            referencedTableName: location_nodes
+            referencedColumnNames: id
+
+        - addForeignKeyConstraint:
+            constraintName: fk_rental_points_location_node
+            baseTableName: rental_points
+            baseColumnNames: location_node_id
+            referencedTableName: location_nodes
+            referencedColumnNames: id
+
+        - addForeignKeyConstraint:
+            constraintName: fk_scooters_model
+            baseTableName: scooters
+            baseColumnNames: model_id
+            referencedTableName: scooter_models
+            referencedColumnNames: id
+
+        - addForeignKeyConstraint:
+            constraintName: fk_scooters_rental_point
+            baseTableName: scooters
+            baseColumnNames: rental_point_id
+            referencedTableName: rental_points
+            referencedColumnNames: id
+
+        - addForeignKeyConstraint:
+            constraintName: fk_rentals_user
+            baseTableName: rentals
+            baseColumnNames: user_id
+            referencedTableName: users
+            referencedColumnNames: id
+
+        - addForeignKeyConstraint:
+            constraintName: fk_rentals_scooter
+            baseTableName: rentals
+            baseColumnNames: scooter_id
+            referencedTableName: scooters
+            referencedColumnNames: id
+
+        - addForeignKeyConstraint:
+            constraintName: fk_rentals_promo_code
+            baseTableName: rentals
+            baseColumnNames: promo_code_id
+            referencedTableName: promo_codes
+            referencedColumnNames: id
+
+        - addForeignKeyConstraint:
+            constraintName: fk_service_events_scooter
+            baseTableName: scooter_service_events
+            baseColumnNames: scooter_id
+            referencedTableName: scooters
+            referencedColumnNames: id

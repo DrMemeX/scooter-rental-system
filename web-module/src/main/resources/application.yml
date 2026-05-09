@@ -3,6 +3,8 @@ spring:
     url: jdbc:postgresql://localhost:5433/scooter_rental_db
     username: postgres
     password: postgres
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.yaml
 
   jpa:
     hibernate:
