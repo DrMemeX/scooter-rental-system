@@ -1,5 +1,7 @@
 package ru.senla.scooterrental.rental.service;
 
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.senla.scooterrental.discount.service.DiscountService;
 import ru.senla.scooterrental.fleet.entity.Scooter;
 import ru.senla.scooterrental.fleet.service.FleetService;
@@ -18,6 +20,8 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 
+@Service
+@Transactional
 public class RentalService {
 
     private final RentalRepository rentalRepository;
@@ -74,7 +78,7 @@ public class RentalService {
 
         fleetService.rentScooter(scooterId);
 
-        Rental rental = new Rental(userId, scooterId, tariffType, plannedHours);
+        Rental rental = new Rental(user, scooter, tariffType, plannedHours);
 
         if (tariffType == TariffType.MINUTE) {
             rental.setMaxAllowedMinutes(maxAllowedMinutes);
@@ -259,6 +263,7 @@ public class RentalService {
         return approveManualFinish(rentalId, rentalPointId, 0, null);
     }
 
+    @Transactional(readOnly = true)
     public Rental getRentalOrThrow(Long rentalId) {
         validatePositiveId(rentalId, "ID аренды");
 
@@ -268,14 +273,17 @@ public class RentalService {
                 ));
     }
 
+    @Transactional(readOnly = true)
     public List<Rental> getAllRentals() {
         return rentalRepository.findAll();
     }
 
+    @Transactional(readOnly = true)
     public List<Rental> getRentalsByUserId(Long userId) {
         return rentalRepository.findByUserId(userId);
     }
 
+    @Transactional(readOnly = true)
     public List<Rental> getRentalsByScooterId(Long scooterId) {
         return rentalRepository.findByScooterId(scooterId);
     }

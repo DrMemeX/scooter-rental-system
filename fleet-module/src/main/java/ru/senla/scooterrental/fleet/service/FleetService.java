@@ -1,5 +1,7 @@
 package ru.senla.scooterrental.fleet.service;
 
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.senla.scooterrental.common.enums.ScooterClass;
 import ru.senla.scooterrental.fleet.entity.LocationNode;
 import ru.senla.scooterrental.fleet.entity.RentalPoint;
@@ -17,6 +19,8 @@ import ru.senla.scooterrental.fleet.entity.ScooterModel;
 import java.math.BigDecimal;
 import java.util.List;
 
+@Service
+@Transactional
 public class FleetService {
 
     private final LocationNodeRepository locationNodeRepository;

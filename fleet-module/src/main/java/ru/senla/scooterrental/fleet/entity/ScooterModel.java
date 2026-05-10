@@ -1,25 +1,46 @@
 package ru.senla.scooterrental.fleet.entity;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import ru.senla.scooterrental.common.enums.ScooterClass;
 import ru.senla.scooterrental.fleet.exceptions.FleetValidationException;
 
 import java.math.BigDecimal;
 
+@Entity
+@Table(name = "scooter_models")
 public class ScooterModel {
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private final ScooterClass scooterClass;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 50)
+    private ScooterClass scooterClass;
 
-    private final double maxSpeedKmPerHour;
+    @Column(nullable = false)
+    private double maxSpeedKmPerHour;
 
-    private final double consumptionPerKm;
+    @Column(nullable = false)
+    private double consumptionPerKm;
 
-    private final BigDecimal pricePerMinute;
+    @Column(nullable = false, precision = 10, scale = 2)
+    private BigDecimal pricePerMinute;
 
-    private final BigDecimal pricePerHour;
+    @Column(nullable = false, precision = 10, scale = 2)
+    private BigDecimal pricePerHour;
 
-    private final int batteryCapacity;
+    @Column(nullable = false)
+    private int batteryCapacity;
+
+    protected ScooterModel() { }
 
     public ScooterModel(ScooterClass scooterClass,
                         double maxSpeedKmPerHour,
@@ -34,22 +55,6 @@ public class ScooterModel {
         this.pricePerMinute = requirePositiveMoney(pricePerMinute, "Цена за минуту");
         this.pricePerHour = requirePositiveMoney(pricePerHour, "Цена за час");
         this.batteryCapacity = requirePositiveInt(batteryCapacity, "Емкость батареи");
-    }
-
-    public void assignId(Long id) {
-        if (this.id != null) {
-            throw new FleetValidationException(
-                    "ID модели уже назначен"
-            );
-        }
-
-        if (id == null || id <= 0) {
-            throw new FleetValidationException(
-                    "ID модели должен быть положительным"
-            );
-        }
-
-        this.id = id;
     }
 
     public Long getId() {

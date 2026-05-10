@@ -1,5 +1,7 @@
 package ru.senla.scooterrental.user.service;
 
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.stereotype.Service;
 import ru.senla.scooterrental.user.entity.User;
 import ru.senla.scooterrental.user.enums.Role;
 import ru.senla.scooterrental.user.enums.UserStatus;
@@ -12,6 +14,8 @@ import ru.senla.scooterrental.user.repository.UserRepository;
 import java.math.BigDecimal;
 import java.util.List;
 
+@Service
+@Transactional
 public class UserService {
 
     private static final BigDecimal THREE_DAY_SUBSCRIPTION_PRICE =
@@ -252,12 +256,6 @@ public class UserService {
         validateText(user.getFirstName(), "Имя");
         validateText(user.getLastName(), "Фамилия");
         validateText(user.getPhone(), "Телефон");
-
-        if (user.getRole() == null) {
-            throw new UserValidationException(
-                    "Роль пользователя не может быть пустой."
-            );
-        }
     }
 
     private void validateId(Long id) {

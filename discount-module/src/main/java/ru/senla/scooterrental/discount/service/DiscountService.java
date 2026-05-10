@@ -1,5 +1,7 @@
 package ru.senla.scooterrental.discount.service;
 
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.senla.scooterrental.discount.entity.PromoCode;
 import ru.senla.scooterrental.discount.exceptions.DiscountValidationException;
 import ru.senla.scooterrental.discount.repository.PromoCodeRepository;
@@ -8,6 +10,8 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.Locale;
 
+@Service
+@Transactional
 public class DiscountService {
 
     private final PromoCodeRepository promoCodeRepository;
@@ -28,6 +32,7 @@ public class DiscountService {
         return promoCodeRepository.save(promoCode);
     }
 
+    @Transactional(readOnly = true)
     public PromoCode getByCodeOrThrow(String code) {
         String normalizedCode = requireNotBlank(code, "Код промокода");
 
@@ -37,6 +42,7 @@ public class DiscountService {
                 ));
     }
 
+    @Transactional(readOnly = true)
     public BigDecimal applyDiscount(BigDecimal price, String code) {
         BigDecimal validPrice = requireNonNegative(price, "Цена");
 

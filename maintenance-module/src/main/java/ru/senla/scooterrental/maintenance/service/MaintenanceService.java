@@ -1,5 +1,8 @@
 package ru.senla.scooterrental.maintenance.service;
 
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import ru.senla.scooterrental.fleet.entity.Scooter;
 import ru.senla.scooterrental.fleet.service.FleetService;
 import ru.senla.scooterrental.maintenance.entity.ScooterServiceEvent;
 import ru.senla.scooterrental.maintenance.enums.ServiceEventType;
@@ -8,6 +11,8 @@ import ru.senla.scooterrental.maintenance.repository.ServiceEventRepository;
 
 import java.util.List;
 
+@Service
+@Transactional
 public class MaintenanceService {
 
     private final ServiceEventRepository serviceEventRepository;
@@ -122,8 +127,10 @@ public class MaintenanceService {
     private ScooterServiceEvent createEvent(Long scooterId,
                                             ServiceEventType type,
                                             String description) {
+        Scooter scooter = fleetService.getScooterById(scooterId);
+
         ScooterServiceEvent event = new ScooterServiceEvent(
-                scooterId,
+                scooter,
                 type,
                 description
         );

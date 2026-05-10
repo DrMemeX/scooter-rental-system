@@ -1,5 +1,6 @@
 package ru.senla.scooterrental.rental.service;
 
+import org.springframework.stereotype.Service;
 import ru.senla.scooterrental.fleet.entity.Scooter;
 import ru.senla.scooterrental.rental.entity.Rental;
 import ru.senla.scooterrental.rental.exceptions.RentalValidationException;
@@ -8,6 +9,7 @@ import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.LocalDateTime;
 
+@Service
 public class PricingService {
 
     public BigDecimal calculate(Rental rental, Scooter scooter) {
@@ -80,6 +82,7 @@ public class PricingService {
                     name + " не задан"
             );
         }
+
         return obj;
     }
 }

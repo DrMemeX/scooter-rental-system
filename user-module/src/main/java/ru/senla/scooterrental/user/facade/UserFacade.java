@@ -1,5 +1,6 @@
 package ru.senla.scooterrental.user.facade;
 
+import org.springframework.stereotype.Component;
 import ru.senla.scooterrental.user.dto.BalanceRequest;
 import ru.senla.scooterrental.user.dto.ChangeEmailRequest;
 import ru.senla.scooterrental.user.dto.ChangePasswordRequest;
@@ -15,6 +16,7 @@ import ru.senla.scooterrental.user.service.UserService;
 
 import java.util.List;
 
+@Component
 public class UserFacade {
 
     private final UserService userService;

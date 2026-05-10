@@ -1,84 +1,65 @@
 package ru.senla.scooterrental.fleet.entity;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 import ru.senla.scooterrental.fleet.enums.ScooterStatus;
 import ru.senla.scooterrental.fleet.exceptions.FleetValidationException;
 import ru.senla.scooterrental.fleet.exceptions.InvalidRentalPointStateException;
 import ru.senla.scooterrental.fleet.exceptions.InvalidScooterStateException;
 import ru.senla.scooterrental.fleet.exceptions.ScooterUnavailableException;
 
+@Entity
+@Table(name = "scooters")
 public class Scooter {
 
     private static final double MIN_REQUIRED_CHARGE_FOR_RENTAL = 20;
 
-    private final ScooterModel model;
-
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "model_id", nullable = false)
+    private ScooterModel model;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 50)
     private ScooterStatus status;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "rental_point_id")
     private RentalPoint currentRentalPoint;
 
+    @Column(name = "current_charge", nullable = false)
     private double currentCharge;
 
+    @Column(name = "total_mileage_km", nullable = false)
     private double totalMileageKm;
+
+    protected Scooter() {
+    }
 
     public Scooter(ScooterModel model,
                    RentalPoint currentRentalPoint,
                    double currentCharge) {
+        this.model = validateModel(model);
+        this.currentRentalPoint = validateRentalPoint(currentRentalPoint);
+        validateCurrentCharge(currentCharge, model);
 
-        if (model == null) {
-            throw new FleetValidationException(
-                    "Модель самоката не может быть пустой"
-            );
-        }
-
-        if (currentRentalPoint == null) {
-            throw new FleetValidationException(
-                    "Точка проката не может быть пустой"
-            );
-        }
-
-        if (currentCharge < 0) {
-            throw new FleetValidationException(
-                    "Заряд не может быть отрицательным"
-            );
-        }
-
-        if (currentCharge > model.getBatteryCapacity()) {
-            throw new FleetValidationException(
-                    "Заряд не может превышать емкость батареи"
-            );
-        }
-
-        if (!currentRentalPoint.canAcceptScooter()) {
-            throw new InvalidRentalPointStateException(
-                    "Самокат нельзя разместить в данной точке проката"
-            );
-        }
-
-        this.model = model;
-        this.currentRentalPoint = currentRentalPoint;
         this.currentCharge = currentCharge;
-
-        if (hasEnoughChargeForRental()) {
-            this.status = ScooterStatus.AVAILABLE;
-        } else {
-            this.status = ScooterStatus.SERVICE_REQUIRED;
-        }
-
+        this.status = hasEnoughChargeForRental()
+                ? ScooterStatus.AVAILABLE
+                : ScooterStatus.SERVICE_REQUIRED;
         this.totalMileageKm = 0;
-    }
-
-    public void assignId(Long id) {
-        if (this.id != null) {
-            throw new FleetValidationException("ID уже назначен");
-        }
-
-        if (id == null || id <= 0) {
-            throw new FleetValidationException("ID должен быть положительным");
-        }
-
-        this.id = id;
     }
 
     public boolean isAvailable() {
@@ -91,7 +72,6 @@ public class Scooter {
     }
 
     public void markAsRented() {
-
         if (status != ScooterStatus.AVAILABLE) {
             throw new ScooterUnavailableException(
                     "Самокат недоступен для аренды"
@@ -104,7 +84,7 @@ public class Scooter {
             );
         }
 
-        if (!currentRentalPoint.canReleaseScooter()) {
+        if (currentRentalPoint == null || !currentRentalPoint.canReleaseScooter()) {
             throw new InvalidRentalPointStateException(
                     "Точка проката не может выдать самокат"
             );
@@ -115,7 +95,6 @@ public class Scooter {
     }
 
     public void returnToPoint(RentalPoint point) {
-
         if (point == null) {
             throw new FleetValidationException(
                     "Точка проката не может быть пустой"
@@ -128,8 +107,8 @@ public class Scooter {
             );
         }
 
-        if (status != ScooterStatus.RENTED &&
-                status != ScooterStatus.RETURN_VERIFICATION_REQUIRED) {
+        if (status != ScooterStatus.RENTED
+                && status != ScooterStatus.RETURN_VERIFICATION_REQUIRED) {
             throw new InvalidScooterStateException(
                     "Возврат возможен только для арендованного самоката или самоката на ручной проверке"
             );
@@ -137,15 +116,12 @@ public class Scooter {
 
         currentRentalPoint = point;
 
-        if (!hasEnoughChargeForRental()) {
-            status = ScooterStatus.SERVICE_REQUIRED;
-        } else {
-            status = ScooterStatus.AVAILABLE;
-        }
+        status = hasEnoughChargeForRental()
+                ? ScooterStatus.AVAILABLE
+                : ScooterStatus.SERVICE_REQUIRED;
     }
 
     public void requireReturnVerification() {
-
         if (status != ScooterStatus.RENTED) {
             throw new InvalidScooterStateException(
                     "Только арендованный самокат можно перевести на ручной возврат"
@@ -156,7 +132,6 @@ public class Scooter {
     }
 
     public void sendToMaintenance() {
-
         if (status == ScooterStatus.RENTED) {
             throw new InvalidScooterStateException(
                     "Нельзя отправить в обслуживание самокат, который находится в аренде"
@@ -173,18 +148,15 @@ public class Scooter {
     }
 
     public void completeMaintenance() {
-
         if (status != ScooterStatus.MAINTENANCE) {
             throw new InvalidScooterStateException(
                     "Завершить обслуживание можно только для самоката в ремонте"
             );
         }
 
-        if (!hasEnoughChargeForRental()) {
-            status = ScooterStatus.SERVICE_REQUIRED;
-        } else {
-            status = ScooterStatus.AVAILABLE;
-        }
+        status = hasEnoughChargeForRental()
+                ? ScooterStatus.AVAILABLE
+                : ScooterStatus.SERVICE_REQUIRED;
     }
 
     public void markServiceRequired() {
@@ -204,14 +176,14 @@ public class Scooter {
     }
 
     public void charge(double amount) {
-
         if (amount <= 0) {
             throw new FleetValidationException(
                     "Объем зарядки должен быть положительным"
             );
         }
 
-        if (status == ScooterStatus.RENTED || status == ScooterStatus.MAINTENANCE) {
+        if (status == ScooterStatus.RENTED
+                || status == ScooterStatus.MAINTENANCE) {
             throw new InvalidScooterStateException(
                     "Нельзя заряжать арендованный или находящийся в ремонте самокат"
             );
@@ -222,13 +194,13 @@ public class Scooter {
                 currentCharge + amount
         );
 
-        if (status == ScooterStatus.SERVICE_REQUIRED && hasEnoughChargeForRental()) {
+        if (status == ScooterStatus.SERVICE_REQUIRED
+                && hasEnoughChargeForRental()) {
             status = ScooterStatus.AVAILABLE;
         }
     }
 
     public void consumeCharge(double amount) {
-
         if (amount <= 0) {
             throw new FleetValidationException(
                     "Расход заряда должен быть положительным"
@@ -249,7 +221,6 @@ public class Scooter {
     }
 
     public void addMileage(double km) {
-
         if (km <= 0) {
             throw new FleetValidationException(
                     "Пробег должен быть положительным"
@@ -287,5 +258,45 @@ public class Scooter {
 
     public double getTotalMileageKm() {
         return totalMileageKm;
+    }
+
+    private ScooterModel validateModel(ScooterModel model) {
+        if (model == null) {
+            throw new FleetValidationException(
+                    "Модель самоката не может быть пустой"
+            );
+        }
+
+        return model;
+    }
+
+    private RentalPoint validateRentalPoint(RentalPoint currentRentalPoint) {
+        if (currentRentalPoint == null) {
+            throw new FleetValidationException(
+                    "Точка проката не может быть пустой"
+            );
+        }
+
+        if (!currentRentalPoint.canAcceptScooter()) {
+            throw new InvalidRentalPointStateException(
+                    "Самокат нельзя разместить в данной точке проката"
+            );
+        }
+
+        return currentRentalPoint;
+    }
+
+    private void validateCurrentCharge(double currentCharge, ScooterModel model) {
+        if (currentCharge < 0) {
+            throw new FleetValidationException(
+                    "Заряд не может быть отрицательным"
+            );
+        }
+
+        if (currentCharge > model.getBatteryCapacity()) {
+            throw new FleetValidationException(
+                    "Заряд не может превышать емкость батареи"
+            );
+        }
     }
 }
