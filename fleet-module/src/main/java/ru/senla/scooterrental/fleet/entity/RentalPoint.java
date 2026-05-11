@@ -65,6 +65,10 @@ public class RentalPoint {
         this.active = false;
     }
 
+    public void rename(String name) {
+        this.name = requireNotBlank(name, "Название точки проката");
+    }
+
     public Long getId() {
         return id;
     }

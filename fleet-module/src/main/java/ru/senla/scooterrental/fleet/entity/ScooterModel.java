@@ -57,6 +57,18 @@ public class ScooterModel {
         this.batteryCapacity = requirePositiveInt(batteryCapacity, "Емкость батареи");
     }
 
+    public void updatePrices(BigDecimal pricePerMinute,
+                             BigDecimal pricePerHour) {
+        this.pricePerMinute = requirePositiveMoney(
+                pricePerMinute,
+                "Цена за минуту"
+        );
+        this.pricePerHour = requirePositiveMoney(
+                pricePerHour,
+                "Цена за час"
+        );
+    }
+
     public Long getId() {
         return id;
     }

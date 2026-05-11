@@ -8,10 +8,10 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import ru.senla.scooterrental.discount.enums.DiscountType;
 import ru.senla.scooterrental.discount.enums.PromoCodeStatus;
 import ru.senla.scooterrental.discount.exceptions.DiscountValidationException;
 
+import java.math.BigDecimal;
 import java.util.Locale;
 
 @Entity
@@ -25,9 +25,8 @@ public class PromoCode {
     @Column(nullable = false, unique = true, length = 50)
     private String code;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "discount_type", nullable = false, length = 50)
-    private DiscountType discountType;
+    @Column(nullable = false, precision = 5, scale = 2)
+    private BigDecimal percent;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 50)
@@ -36,9 +35,9 @@ public class PromoCode {
     protected PromoCode() {
     }
 
-    public PromoCode(String code, DiscountType discountType) {
+    public PromoCode(String code, BigDecimal percent) {
         this.code = requireNotBlank(code, "Код промокода").toUpperCase(Locale.ROOT);
-        this.discountType = requireNonNull(discountType, "Тип скидки");
+        this.percent = requireValidPercent(percent);
         this.status = PromoCodeStatus.ACTIVE;
     }
 
@@ -62,8 +61,8 @@ public class PromoCode {
         return code;
     }
 
-    public DiscountType getDiscountType() {
-        return discountType;
+    public BigDecimal getPercent() {
+        return percent;
     }
 
     public PromoCodeStatus getStatus() {
@@ -78,6 +77,24 @@ public class PromoCode {
         }
 
         return value.trim();
+    }
+
+    private BigDecimal requireValidPercent(BigDecimal percent) {
+        requireNonNull(percent, "Процент скидки");
+
+        if (percent.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new DiscountValidationException(
+                    "Процент скидки должен быть положительным"
+            );
+        }
+
+        if (percent.compareTo(BigDecimal.valueOf(15)) > 0) {
+            throw new DiscountValidationException(
+                    "Процент скидки не может быть больше 15"
+            );
+        }
+
+        return percent;
     }
 
     private <T> T requireNonNull(T obj, String name) {

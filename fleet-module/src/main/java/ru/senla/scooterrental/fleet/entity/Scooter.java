@@ -95,17 +95,7 @@ public class Scooter {
     }
 
     public void returnToPoint(RentalPoint point) {
-        if (point == null) {
-            throw new FleetValidationException(
-                    "Точка проката не может быть пустой"
-            );
-        }
-
-        if (!point.canAcceptScooter()) {
-            throw new InvalidRentalPointStateException(
-                    "Точка проката не может принять самокат"
-            );
-        }
+        validateRentalPointCanAcceptScooter(point);
 
         if (status != ScooterStatus.RENTED
                 && status != ScooterStatus.RETURN_VERIFICATION_REQUIRED) {
@@ -119,6 +109,19 @@ public class Scooter {
         status = hasEnoughChargeForRental()
                 ? ScooterStatus.AVAILABLE
                 : ScooterStatus.SERVICE_REQUIRED;
+    }
+
+    public void moveToRentalPoint(RentalPoint point) {
+        validateRentalPointCanAcceptScooter(point);
+
+        if (status == ScooterStatus.RENTED
+                || status == ScooterStatus.RETURN_VERIFICATION_REQUIRED) {
+            throw new InvalidScooterStateException(
+                    "Нельзя перемещать самокат, участвующий в активной аренде или ожидающий проверки возврата"
+            );
+        }
+
+        currentRentalPoint = point;
     }
 
     public void requireReturnVerification() {
@@ -284,6 +287,20 @@ public class Scooter {
         }
 
         return currentRentalPoint;
+    }
+
+    private void validateRentalPointCanAcceptScooter(RentalPoint point) {
+        if (point == null) {
+            throw new FleetValidationException(
+                    "Точка проката не может быть пустой"
+            );
+        }
+
+        if (!point.canAcceptScooter()) {
+            throw new InvalidRentalPointStateException(
+                    "Точка проката не может принять самокат"
+            );
+        }
     }
 
     private void validateCurrentCharge(double currentCharge, ScooterModel model) {

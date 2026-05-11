@@ -144,6 +144,36 @@ public class JpaRentalRepository implements RentalRepository {
                 .findFirst();
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public boolean existsByUserIdAndPromoCodeCode(Long userId,
+                                                  String code) {
+
+        validateId(userId, "ID пользователя");
+
+        if (code == null || code.isBlank()) {
+            throw new RentalValidationException(
+                    "Код промокода не может быть пустым"
+            );
+        }
+
+        Long count = entityManager
+                .createQuery(
+                        """
+                        select count(rental)
+                        from Rental rental
+                        where rental.user.id = :userId
+                        and upper(rental.promoCode.code) = upper(:code)
+                        """,
+                        Long.class
+                )
+                .setParameter("userId", userId)
+                .setParameter("code", code.trim())
+                .getSingleResult();
+
+        return count > 0;
+    }
+
     private void validateRental(Rental rental) {
         if (rental == null) {
             throw new RentalValidationException(

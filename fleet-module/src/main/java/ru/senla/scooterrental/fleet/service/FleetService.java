@@ -6,6 +6,7 @@ import ru.senla.scooterrental.common.enums.ScooterClass;
 import ru.senla.scooterrental.fleet.entity.LocationNode;
 import ru.senla.scooterrental.fleet.entity.RentalPoint;
 import ru.senla.scooterrental.fleet.entity.Scooter;
+import ru.senla.scooterrental.fleet.entity.ScooterModel;
 import ru.senla.scooterrental.fleet.enums.LocationType;
 import ru.senla.scooterrental.fleet.enums.ScooterStatus;
 import ru.senla.scooterrental.fleet.exceptions.FleetEntityNotFoundException;
@@ -14,7 +15,6 @@ import ru.senla.scooterrental.fleet.repository.LocationNodeRepository;
 import ru.senla.scooterrental.fleet.repository.RentalPointRepository;
 import ru.senla.scooterrental.fleet.repository.ScooterModelRepository;
 import ru.senla.scooterrental.fleet.repository.ScooterRepository;
-import ru.senla.scooterrental.fleet.entity.ScooterModel;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -59,11 +59,112 @@ public class FleetService {
         return locationNodeRepository.save(locationNode);
     }
 
+    public LocationNode activateLocation(Long locationId) {
+        LocationNode locationNode = getLocationOrThrow(locationId);
+
+        locationNode.activate();
+
+        return locationNodeRepository.save(locationNode);
+    }
+
+    public LocationNode deactivateLocation(Long locationId) {
+        LocationNode locationNode = getLocationOrThrow(locationId);
+
+        locationNode.deactivate();
+
+        return locationNodeRepository.save(locationNode);
+    }
+
+    public LocationNode renameLocation(Long locationId, String name) {
+        LocationNode locationNode = getLocationOrThrow(locationId);
+
+        locationNode.rename(name);
+
+        return locationNodeRepository.save(locationNode);
+    }
+
+    public List<LocationNode> findAllLocations() {
+        return locationNodeRepository.findAll();
+    }
+
+    public List<LocationNode> findLocationsByType(LocationType type) {
+        return locationNodeRepository.findAllByType(type);
+    }
+
     public RentalPoint createRentalPoint(String name, Long locationNodeId) {
         LocationNode locationNode = getLocationOrThrow(locationNodeId);
 
         RentalPoint rentalPoint = new RentalPoint(name, locationNode);
         return rentalPointRepository.save(rentalPoint);
+    }
+
+    public RentalPoint activateRentalPoint(Long rentalPointId) {
+        RentalPoint rentalPoint = getRentalPointOrThrow(rentalPointId);
+
+        rentalPoint.activate();
+
+        return rentalPointRepository.save(rentalPoint);
+    }
+
+    public RentalPoint deactivateRentalPoint(Long rentalPointId) {
+        RentalPoint rentalPoint = getRentalPointOrThrow(rentalPointId);
+
+        rentalPoint.deactivate();
+
+        return rentalPointRepository.save(rentalPoint);
+    }
+
+    public RentalPoint renameRentalPoint(Long rentalPointId,
+                                         String name) {
+        RentalPoint rentalPoint = getRentalPointOrThrow(rentalPointId);
+
+        rentalPoint.rename(name);
+
+        return rentalPointRepository.save(rentalPoint);
+    }
+
+    public void deleteRentalPoint(Long rentalPointId) {
+        RentalPoint rentalPoint = getRentalPointOrThrow(rentalPointId);
+
+        List<Scooter> scooters = scooterRepository.findAllByRentalPointId(rentalPointId);
+
+        if (!scooters.isEmpty()) {
+            throw new FleetValidationException(
+                    "Нельзя удалить точку проката, пока в ней находятся самокаты"
+            );
+        }
+
+        rentalPointRepository.deleteById(rentalPoint.getId());
+    }
+
+    public List<RentalPoint> findAllRentalPoints() {
+        return rentalPointRepository.findAll();
+    }
+
+    public List<RentalPoint> findActiveRentalPoints() {
+        return rentalPointRepository.findAllActive();
+    }
+
+    public RentalPoint getRentalPointById(Long rentalPointId) {
+        return getRentalPointOrThrow(rentalPointId);
+    }
+
+    public List<Scooter> getRentalPointScooters(Long rentalPointId) {
+        getRentalPointOrThrow(rentalPointId);
+
+        return scooterRepository.findAllByRentalPointId(rentalPointId);
+    }
+
+    public RentalPoint getActiveRentalPointById(Long rentalPointId) {
+        RentalPoint rentalPoint = getRentalPointOrThrow(rentalPointId);
+
+        if (!rentalPoint.isActive()) {
+            throw new FleetValidationException(
+                    "Точка проката с ID " + rentalPointId + " недоступна"
+            );
+        }
+
+        return rentalPoint;
     }
 
     public ScooterModel createScooterModel(ScooterClass scooterClass,
@@ -82,6 +183,24 @@ public class FleetService {
         );
 
         return scooterModelRepository.save(model);
+    }
+
+    public ScooterModel getScooterModelById(Long modelId) {
+        return getScooterModelOrThrow(modelId);
+    }
+
+    public ScooterModel updateScooterModelPrices(Long modelId,
+                                                 BigDecimal pricePerMinute,
+                                                 BigDecimal pricePerHour) {
+        ScooterModel model = getScooterModelOrThrow(modelId);
+
+        model.updatePrices(pricePerMinute, pricePerHour);
+
+        return scooterModelRepository.save(model);
+    }
+
+    public List<ScooterModel> findAllScooterModels() {
+        return scooterModelRepository.findAll();
     }
 
     public Scooter createScooter(Long modelId,
@@ -103,11 +222,21 @@ public class FleetService {
     }
 
     public Scooter returnScooter(Long scooterId, Long rentalPointId) {
-
         Scooter scooter = getScooterOrThrow(scooterId);
         RentalPoint rentalPoint = getRentalPointOrThrow(rentalPointId);
 
         scooter.returnToPoint(rentalPoint);
+
+        return scooterRepository.save(scooter);
+    }
+
+    public Scooter moveScooterToRentalPoint(Long scooterId,
+                                            Long rentalPointId) {
+
+        Scooter scooter = getScooterOrThrow(scooterId);
+        RentalPoint rentalPoint = getRentalPointOrThrow(rentalPointId);
+
+        scooter.moveToRentalPoint(rentalPoint);
 
         return scooterRepository.save(scooter);
     }
@@ -168,44 +297,8 @@ public class FleetService {
         return scooterRepository.save(scooter);
     }
 
-    public LocationNode activateLocation(Long locationId) {
-        LocationNode locationNode = getLocationOrThrow(locationId);
-
-        locationNode.activate();
-
-        return locationNodeRepository.save(locationNode);
-    }
-
-    public LocationNode deactivateLocation(Long locationId) {
-        LocationNode locationNode = getLocationOrThrow(locationId);
-
-        locationNode.deactivate();
-
-        return locationNodeRepository.save(locationNode);
-    }
-
-    public RentalPoint activateRentalPoint(Long rentalPointId) {
-        RentalPoint rentalPoint = getRentalPointOrThrow(rentalPointId);
-
-        rentalPoint.activate();
-
-        return rentalPointRepository.save(rentalPoint);
-    }
-
-    public RentalPoint deactivateRentalPoint(Long rentalPointId) {
-        RentalPoint rentalPoint = getRentalPointOrThrow(rentalPointId);
-
-        rentalPoint.deactivate();
-
-        return rentalPointRepository.save(rentalPoint);
-    }
-
-    public ScooterModel getScooterModelById(Long modelId) {
-        return getScooterModelOrThrow(modelId);
-    }
-
-    public List<ScooterModel> findAllScooterModels() {
-        return scooterModelRepository.findAll();
+    public Scooter getScooterById(Long scooterId) {
+        return getScooterOrThrow(scooterId);
     }
 
     public List<Scooter> findAllScooters() {
@@ -224,24 +317,19 @@ public class FleetService {
         return scooterRepository.findAllByRentalPointId(rentalPointId);
     }
 
-    public List<RentalPoint> findAllRentalPoints() {
-        return rentalPointRepository.findAll();
-    }
+    public void deleteScooter(Long scooterId) {
 
-    public List<RentalPoint> findActiveRentalPoints() {
-        return rentalPointRepository.findAllActive();
-    }
+        Scooter scooter = getScooterOrThrow(scooterId);
 
-    public List<LocationNode> findAllLocations() {
-        return locationNodeRepository.findAll();
-    }
+        if (scooter.getStatus() == ScooterStatus.RENTED
+                || scooter.getStatus() == ScooterStatus.RETURN_VERIFICATION_REQUIRED) {
 
-    public List<LocationNode> findLocationsByType(LocationType type) {
-        return locationNodeRepository.findAllByType(type);
-    }
+            throw new FleetValidationException(
+                    "Нельзя удалить самокат, участвующий в активной аренде"
+            );
+        }
 
-    public Scooter getScooterById(Long scooterId) {
-        return getScooterOrThrow(scooterId);
+        scooterRepository.deleteById(scooterId);
     }
 
     private ScooterModel getScooterModelOrThrow(Long modelId) {
@@ -278,6 +366,7 @@ public class FleetService {
                     name + " не задан"
             );
         }
+
         return obj;
     }
 }

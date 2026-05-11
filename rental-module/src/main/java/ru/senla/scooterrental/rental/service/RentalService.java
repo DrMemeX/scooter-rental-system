@@ -188,6 +188,9 @@ public class RentalService {
         validateRideDistance(scooter, distanceKm, actualMinutes);
 
         BigDecimal totalCost = pricingService.calculate(rental, scooter);
+
+        validatePromoCodeNotUsedByUser(rental.getUserId(), promoCode);
+
         BigDecimal finalCost = discountService.applyDiscount(totalCost, promoCode);
 
         if (distanceKm > 0) {
@@ -231,6 +234,9 @@ public class RentalService {
         validateRideDistance(scooter, distanceKm, actualMinutes);
 
         BigDecimal totalCost = pricingService.calculate(rental, scooter);
+
+        validatePromoCodeNotUsedByUser(rental.getUserId(), promoCode);
+
         BigDecimal finalCost = discountService.applyDiscount(totalCost, promoCode);
 
         if (distanceKm > 0) {
@@ -337,6 +343,23 @@ public class RentalService {
             }
 
             return;
+        }
+    }
+
+    private void validatePromoCodeNotUsedByUser(Long userId, String promoCode) {
+        if (promoCode == null || promoCode.isBlank()) {
+            return;
+        }
+
+        boolean alreadyUsed = rentalRepository.existsByUserIdAndPromoCodeCode(
+                userId,
+                promoCode
+        );
+
+        if (alreadyUsed) {
+            throw new RentalValidationException(
+                    "Пользователь уже использовал данный промокод"
+            );
         }
     }
 

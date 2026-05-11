@@ -8,6 +8,7 @@ import ru.senla.scooterrental.discount.repository.PromoCodeRepository;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.List;
 import java.util.Locale;
 
 @Service
@@ -43,6 +44,25 @@ public class DiscountService {
     }
 
     @Transactional(readOnly = true)
+    public List<PromoCode> getAllPromoCodes() {
+        return promoCodeRepository.findAll();
+    }
+
+    @Transactional(readOnly = true)
+    public PromoCode getPromoCodeById(Long promoCodeId) {
+        if (promoCodeId == null || promoCodeId <= 0) {
+            throw new DiscountValidationException(
+                    "ID промокода должен быть положительным"
+            );
+        }
+
+        return promoCodeRepository.findById(promoCodeId)
+                .orElseThrow(() -> new DiscountValidationException(
+                        "Промокод с ID " + promoCodeId + " не найден"
+                ));
+    }
+
+    @Transactional(readOnly = true)
     public BigDecimal applyDiscount(BigDecimal price, String code) {
         BigDecimal validPrice = requireNonNegative(price, "Цена");
 
@@ -60,7 +80,7 @@ public class DiscountService {
         }
 
         BigDecimal percent = requireNonNegative(
-                promoCode.getDiscountType().getPercent(),
+                promoCode.getPercent(),
                 "Процент скидки"
         );
 

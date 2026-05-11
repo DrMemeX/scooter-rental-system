@@ -186,7 +186,7 @@ public class User {
     }
 
     public void assignManagerRole() {
-        assignRole(Role.MANAGER);
+        assignRole(Role.ADMIN);
     }
 
     public UserStatus getStatus() {
