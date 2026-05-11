@@ -35,7 +35,7 @@ public class UserService {
 
     public User registerManager(User user) {
         validateUserObject(user);
-        user.assignManagerRole();
+        user.assignAdminRole();
         return register(user);
     }
 

@@ -185,7 +185,7 @@ public class User {
         assignRole(Role.USER);
     }
 
-    public void assignManagerRole() {
+    public void assignAdminRole() {
         assignRole(Role.ADMIN);
     }
 
