@@ -35,7 +35,7 @@ public class AdminRentalController {
 
     @GetMapping("/{rentalId}")
     public RentalResponse getRentalById(
-            @PathVariable Long rentalId
+            @PathVariable("rentalId") Long rentalId
     ) {
         Rental rental = rentalService.getRentalOrThrow(rentalId);
 
@@ -44,7 +44,7 @@ public class AdminRentalController {
 
     @GetMapping("/users/{userId}")
     public List<RentalResponse> getRentalsByUserId(
-            @PathVariable Long userId
+            @PathVariable("userId") Long userId
     ) {
         return rentalService.getRentalsByUserId(userId)
                 .stream()
@@ -54,7 +54,7 @@ public class AdminRentalController {
 
     @GetMapping("/scooters/{scooterId}")
     public List<RentalResponse> getRentalsByScooterId(
-            @PathVariable Long scooterId
+            @PathVariable("scooterId") Long scooterId
     ) {
         return rentalService.getRentalsByScooterId(scooterId)
                 .stream()
@@ -64,7 +64,7 @@ public class AdminRentalController {
 
     @PostMapping("/{rentalId}/approve-manual-finish")
     public RentalResponse approveManualFinish(
-            @PathVariable Long rentalId,
+            @PathVariable("rentalId") Long rentalId,
             @Valid @RequestBody ApproveManualFinishRequest request
     ) {
         Rental rental = rentalService.approveManualFinish(

@@ -46,8 +46,8 @@ public class AdminUserController {
 
     @GetMapping
     public List<UserResponse> getUsers(
-            @RequestParam(required = false) Role role,
-            @RequestParam(required = false) UserStatus status
+            @RequestParam(value = "role", required = false) Role role,
+            @RequestParam(value = "status", required = false) UserStatus status
     ) {
         List<User> users;
 
@@ -66,7 +66,7 @@ public class AdminUserController {
 
     @GetMapping("/{userId}")
     public UserResponse getUserById(
-            @PathVariable Long userId
+            @PathVariable("userId") Long userId
     ) {
         return UserWebMapper.toResponse(
                 userService.getById(userId)
@@ -75,7 +75,7 @@ public class AdminUserController {
 
     @PatchMapping("/{userId}/verify")
     public UserResponse verifyUser(
-            @PathVariable Long userId
+            @PathVariable("userId") Long userId
     ) {
         return UserWebMapper.toResponse(
                 userService.verifyUser(userId)
@@ -84,7 +84,7 @@ public class AdminUserController {
 
     @PatchMapping("/{userId}/block")
     public UserResponse blockUser(
-            @PathVariable Long userId
+            @PathVariable("userId") Long userId
     ) {
         return UserWebMapper.toResponse(
                 userService.blockUser(userId)
@@ -93,7 +93,7 @@ public class AdminUserController {
 
     @PatchMapping("/{userId}/activate")
     public UserResponse activateUser(
-            @PathVariable Long userId
+            @PathVariable("userId") Long userId
     ) {
         return UserWebMapper.toResponse(
                 userService.activateUser(userId)
@@ -102,7 +102,7 @@ public class AdminUserController {
 
     @PostMapping("/{userId}/balance")
     public UserResponse addBalance(
-            @PathVariable Long userId,
+            @PathVariable("userId") Long userId,
             @Valid @RequestBody BalanceRequest request
     ) {
         return UserWebMapper.toResponse(
@@ -112,7 +112,7 @@ public class AdminUserController {
 
     @PostMapping("/{userId}/subscription/three-days")
     public UserResponse buyThreeDaySubscription(
-            @PathVariable Long userId
+            @PathVariable("userId") Long userId
     ) {
         return UserWebMapper.toResponse(
                 userService.buyThreeDaySubscription(userId)
@@ -122,7 +122,7 @@ public class AdminUserController {
     @DeleteMapping("/{userId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteUser(
-            @PathVariable Long userId
+            @PathVariable("userId") Long userId
     ) {
         userService.deleteUser(userId);
     }

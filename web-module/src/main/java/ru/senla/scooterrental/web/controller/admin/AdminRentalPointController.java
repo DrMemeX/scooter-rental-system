@@ -48,7 +48,7 @@ public class AdminRentalPointController {
 
     @GetMapping
     public List<RentalPointResponse> getRentalPoints(
-            @RequestParam(required = false, defaultValue = "false") boolean activeOnly
+            @RequestParam(value = "activeOnly", required = false, defaultValue = "false") boolean activeOnly
     ) {
         List<RentalPoint> rentalPoints = activeOnly
                 ? fleetService.findActiveRentalPoints()
@@ -61,7 +61,7 @@ public class AdminRentalPointController {
 
     @GetMapping("/{rentalPointId}")
     public RentalPointDetailsResponse getRentalPointDetails(
-            @PathVariable Long rentalPointId
+            @PathVariable("rentalPointId") Long rentalPointId
     ) {
         RentalPoint rentalPoint = fleetService.getRentalPointById(rentalPointId);
         List<Scooter> scooters = fleetService.getRentalPointScooters(rentalPointId);
@@ -71,7 +71,7 @@ public class AdminRentalPointController {
 
     @PatchMapping("/{rentalPointId}/rename")
     public RentalPointResponse renameRentalPoint(
-            @PathVariable Long rentalPointId,
+            @PathVariable("rentalPointId") Long rentalPointId,
             @Valid @RequestBody RenameRentalPointRequest request
     ) {
         RentalPoint rentalPoint = fleetService.renameRentalPoint(
@@ -84,7 +84,7 @@ public class AdminRentalPointController {
 
     @PatchMapping("/{rentalPointId}/activate")
     public RentalPointResponse activateRentalPoint(
-            @PathVariable Long rentalPointId
+            @PathVariable("rentalPointId") Long rentalPointId
     ) {
         RentalPoint rentalPoint = fleetService.activateRentalPoint(rentalPointId);
 
@@ -93,7 +93,7 @@ public class AdminRentalPointController {
 
     @PatchMapping("/{rentalPointId}/deactivate")
     public RentalPointResponse deactivateRentalPoint(
-            @PathVariable Long rentalPointId
+            @PathVariable("rentalPointId") Long rentalPointId
     ) {
         RentalPoint rentalPoint = fleetService.deactivateRentalPoint(rentalPointId);
 
@@ -103,7 +103,7 @@ public class AdminRentalPointController {
     @DeleteMapping("/{rentalPointId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteRentalPoint(
-            @PathVariable Long rentalPointId
+            @PathVariable("rentalPointId") Long rentalPointId
     ) {
         fleetService.deleteRentalPoint(rentalPointId);
     }

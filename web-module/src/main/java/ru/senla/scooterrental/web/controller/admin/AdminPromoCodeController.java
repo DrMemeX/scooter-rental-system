@@ -53,7 +53,7 @@ public class AdminPromoCodeController {
 
     @GetMapping("/{promoCodeId}")
     public PromoCodeResponse getPromoCodeById(
-            @PathVariable Long promoCodeId
+            @PathVariable("promoCodeId") Long promoCodeId
     ) {
         PromoCode promoCode = discountService.getPromoCodeById(promoCodeId);
 
@@ -62,14 +62,14 @@ public class AdminPromoCodeController {
 
     @PatchMapping("/{code}/activate")
     public void activatePromoCode(
-            @PathVariable String code
+            @PathVariable("code") String code
     ) {
         discountService.activate(code);
     }
 
     @PatchMapping("/{code}/deactivate")
     public void deactivatePromoCode(
-            @PathVariable String code
+            @PathVariable("code") String code
     ) {
         discountService.deactivate(code);
     }

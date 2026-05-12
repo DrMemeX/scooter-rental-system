@@ -33,7 +33,7 @@ public class UserRentalPointController {
 
     @GetMapping("/{rentalPointId}")
     public RentalPointDetailsResponse getRentalPointDetails(
-            @PathVariable Long rentalPointId
+            @PathVariable("rentalPointId") Long rentalPointId
     ) {
         RentalPoint rentalPoint = fleetService.getActiveRentalPointById(rentalPointId);
 

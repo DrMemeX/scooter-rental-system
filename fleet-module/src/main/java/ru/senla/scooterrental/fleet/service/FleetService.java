@@ -203,6 +203,23 @@ public class FleetService {
         return scooterModelRepository.findAll();
     }
 
+    public void deleteScooterModel(Long modelId) {
+        ScooterModel model = getScooterModelOrThrow(modelId);
+
+        List<Scooter> scooters = scooterRepository.findAll()
+                .stream()
+                .filter(scooter -> scooter.getModel().getId().equals(model.getId()))
+                .toList();
+
+        if (!scooters.isEmpty()) {
+            throw new FleetValidationException(
+                    "Нельзя удалить модель самоката, пока существуют самокаты этой модели"
+            );
+        }
+
+        scooterModelRepository.deleteById(modelId);
+    }
+
     public Scooter createScooter(Long modelId,
                                  Long rentalPointId,
                                  double initialCharge) {

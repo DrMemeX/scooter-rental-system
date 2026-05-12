@@ -130,6 +130,17 @@ public class JpaScooterRepository implements ScooterRepository {
                 .getResultList();
     }
 
+    @Override
+    public List<Scooter> findAllByModelId(Long modelId) {
+        return entityManager.createQuery("""
+            SELECT s
+            FROM Scooter s
+            WHERE s.model.id = :modelId
+            """, Scooter.class)
+                .setParameter("modelId", modelId)
+                .getResultList();
+    }
+
     private void validateScooter(Scooter scooter) {
         if (scooter == null) {
             throw new FleetValidationException(

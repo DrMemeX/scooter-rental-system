@@ -46,7 +46,7 @@ public class UserRentalController {
 
     @PostMapping("/{rentalId}/finish")
     public RentalResponse finishRental(
-            @PathVariable Long rentalId,
+            @PathVariable("rentalId") Long rentalId,
             @Valid @RequestBody FinishRentalRequest request
     ) {
         Rental rental = rentalService.finishRental(
@@ -61,7 +61,7 @@ public class UserRentalController {
 
     @PostMapping("/{rentalId}/manual-finish")
     public RentalResponse requestManualFinish(
-            @PathVariable Long rentalId
+            @PathVariable("rentalId") Long rentalId
     ) {
         Rental rental = rentalService.requestManualFinish(rentalId);
 
@@ -70,7 +70,7 @@ public class UserRentalController {
 
     @GetMapping("/my")
     public List<RentalResponse> getMyRentals(
-            @RequestParam Long userId
+            @RequestParam(value = "userId") Long userId
     ) {
         return rentalService.getRentalsByUserId(userId)
                 .stream()

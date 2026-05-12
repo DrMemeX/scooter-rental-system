@@ -48,9 +48,9 @@ public class AdminScooterController {
 
     @GetMapping
     public List<ScooterResponse> getScooters(
-            @RequestParam(required = false) ScooterStatus status,
-            @RequestParam(required = false) Long rentalPointId,
-            @RequestParam(required = false, defaultValue = "false") boolean availableOnly
+            @RequestParam(value = "status", required = false) ScooterStatus status,
+            @RequestParam(value = "rentalPointId", required = false) Long rentalPointId,
+            @RequestParam(value = "availableOnly", required = false, defaultValue = "false") boolean availableOnly
     ) {
         List<Scooter> scooters;
 
@@ -71,7 +71,7 @@ public class AdminScooterController {
 
     @GetMapping("/{scooterId}")
     public ScooterResponse getScooterById(
-            @PathVariable Long scooterId
+            @PathVariable("scooterId") Long scooterId
     ) {
         Scooter scooter = fleetService.getScooterById(scooterId);
 
@@ -80,7 +80,7 @@ public class AdminScooterController {
 
     @PatchMapping("/{scooterId}/move")
     public ScooterResponse moveScooter(
-            @PathVariable Long scooterId,
+            @PathVariable("scooterId") Long scooterId,
             @Valid @RequestBody MoveScooterRequest request
     ) {
         Scooter scooter = fleetService.moveScooterToRentalPoint(
@@ -94,7 +94,7 @@ public class AdminScooterController {
     @DeleteMapping("/{scooterId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteScooter(
-            @PathVariable Long scooterId
+            @PathVariable("scooterId") Long scooterId
     ) {
         fleetService.deleteScooter(scooterId);
     }

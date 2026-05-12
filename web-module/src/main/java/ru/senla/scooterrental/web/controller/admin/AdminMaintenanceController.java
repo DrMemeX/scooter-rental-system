@@ -30,7 +30,7 @@ public class AdminMaintenanceController {
 
     @PostMapping("/scooters/{scooterId}/technical-breakdown")
     public MaintenanceEventResponse reportTechnicalBreakdown(
-            @PathVariable Long scooterId,
+            @PathVariable("scooterId") Long scooterId,
             @Valid @RequestBody MaintenanceEventRequest request
     ) {
         ScooterServiceEvent event = maintenanceService.reportTechnicalBreakdown(
@@ -43,7 +43,7 @@ public class AdminMaintenanceController {
 
     @PostMapping("/scooters/{scooterId}/user-damage")
     public MaintenanceEventResponse reportUserDamage(
-            @PathVariable Long scooterId,
+            @PathVariable("scooterId") Long scooterId,
             @Valid @RequestBody MaintenanceEventRequest request
     ) {
         ScooterServiceEvent event = maintenanceService.reportUserDamage(
@@ -56,7 +56,7 @@ public class AdminMaintenanceController {
 
     @PostMapping("/scooters/{scooterId}/send")
     public MaintenanceEventResponse sendToMaintenance(
-            @PathVariable Long scooterId,
+            @PathVariable("scooterId") Long scooterId,
             @Valid @RequestBody MaintenanceEventRequest request
     ) {
         ScooterServiceEvent event = maintenanceService.sendToMaintenance(
@@ -69,7 +69,7 @@ public class AdminMaintenanceController {
 
     @PostMapping("/scooters/{scooterId}/complete")
     public MaintenanceEventResponse completeMaintenance(
-            @PathVariable Long scooterId,
+            @PathVariable("scooterId") Long scooterId,
             @Valid @RequestBody MaintenanceEventRequest request
     ) {
         ScooterServiceEvent event = maintenanceService.completeMaintenance(
@@ -82,7 +82,7 @@ public class AdminMaintenanceController {
 
     @PostMapping("/scooters/{scooterId}/charge")
     public MaintenanceEventResponse chargeScooter(
-            @PathVariable Long scooterId,
+            @PathVariable("scooterId") Long scooterId,
             @Valid @RequestBody ChargeScooterRequest request
     ) {
         ScooterServiceEvent event = maintenanceService.chargeScooter(
@@ -96,7 +96,7 @@ public class AdminMaintenanceController {
 
     @PostMapping("/scooters/{scooterId}/service-required")
     public MaintenanceEventResponse markServiceRequired(
-            @PathVariable Long scooterId,
+            @PathVariable("scooterId") Long scooterId,
             @Valid @RequestBody MaintenanceEventRequest request
     ) {
         ScooterServiceEvent event = maintenanceService.markServiceRequired(
@@ -109,7 +109,7 @@ public class AdminMaintenanceController {
 
     @GetMapping("/events")
     public List<MaintenanceEventResponse> getEvents(
-            @RequestParam(required = false) ServiceEventType type
+            @RequestParam(value = "type", required = false) ServiceEventType type
     ) {
         List<ScooterServiceEvent> events = type == null
                 ? maintenanceService.getAllEvents()

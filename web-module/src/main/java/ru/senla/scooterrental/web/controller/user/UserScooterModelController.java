@@ -31,7 +31,7 @@ public class UserScooterModelController {
 
     @GetMapping("/{modelId}")
     public ScooterModelResponse getScooterModelById(
-            @PathVariable Long modelId
+            @PathVariable("modelId") Long modelId
     ) {
         ScooterModel model = fleetService.getScooterModelById(modelId);
 

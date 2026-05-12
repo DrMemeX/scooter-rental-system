@@ -47,7 +47,7 @@ public class AdminLocationController {
 
     @GetMapping
     public List<LocationResponse> getLocations(
-            @RequestParam(required = false) LocationType type
+            @RequestParam(value = "type", required = false) LocationType type
     ) {
         List<LocationNode> locations = type == null
                 ? fleetService.findAllLocations()
@@ -60,7 +60,7 @@ public class AdminLocationController {
 
     @PatchMapping("/{locationId}/rename")
     public LocationResponse renameLocation(
-            @PathVariable Long locationId,
+            @PathVariable("locationId") Long locationId,
             @Valid @RequestBody RenameLocationRequest request
     ) {
         LocationNode location = fleetService.renameLocation(
@@ -73,7 +73,7 @@ public class AdminLocationController {
 
     @PatchMapping("/{locationId}/activate")
     public LocationResponse activateLocation(
-            @PathVariable Long locationId
+            @PathVariable("locationId") Long locationId
     ) {
         LocationNode location = fleetService.activateLocation(locationId);
 
@@ -82,7 +82,7 @@ public class AdminLocationController {
 
     @PatchMapping("/{locationId}/deactivate")
     public LocationResponse deactivateLocation(
-            @PathVariable Long locationId
+            @PathVariable("locationId") Long locationId
     ) {
         LocationNode location = fleetService.deactivateLocation(locationId);
 

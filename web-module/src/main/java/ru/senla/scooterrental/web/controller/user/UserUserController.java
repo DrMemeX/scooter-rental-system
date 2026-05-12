@@ -2,14 +2,7 @@ package ru.senla.scooterrental.web.controller.user;
 
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import ru.senla.scooterrental.user.entity.User;
 import ru.senla.scooterrental.user.service.UserService;
 import ru.senla.scooterrental.web.dto.request.user.BalanceRequest;
@@ -30,29 +23,25 @@ public class UserUserController {
         this.userService = userService;
     }
 
-    @PostMapping("/register")
+    @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public UserResponse registerUser(
             @Valid @RequestBody RegisterUserRequest request
     ) {
         User user = UserWebMapper.toEntity(request);
-        User savedUser = userService.registerUser(user);
-
-        return UserWebMapper.toResponse(savedUser);
+        return UserWebMapper.toResponse(userService.registerUser(user));
     }
 
     @GetMapping("/{userId}")
     public UserResponse getUserById(
-            @PathVariable Long userId
+            @PathVariable("userId") Long userId
     ) {
-        return UserWebMapper.toResponse(
-                userService.getById(userId)
-        );
+        return UserWebMapper.toResponse(userService.getById(userId));
     }
 
     @PatchMapping("/{userId}/profile")
     public UserResponse updateProfile(
-            @PathVariable Long userId,
+            @PathVariable("userId") Long userId,
             @RequestBody UpdateUserProfileRequest request
     ) {
         User user = userService.updateProfile(
@@ -67,49 +56,48 @@ public class UserUserController {
 
     @PatchMapping("/{userId}/email")
     public UserResponse changeEmail(
-            @PathVariable Long userId,
+            @PathVariable("userId") Long userId,
             @Valid @RequestBody ChangeEmailRequest request
     ) {
-        User user = userService.changeEmail(
-                userId,
-                request.newEmail()
+        return UserWebMapper.toResponse(
+                userService.changeEmail(userId, request.newEmail())
         );
-
-        return UserWebMapper.toResponse(user);
     }
 
     @PatchMapping("/{userId}/password")
     public UserResponse changePassword(
-            @PathVariable Long userId,
+            @PathVariable("userId") Long userId,
             @Valid @RequestBody ChangePasswordRequest request
     ) {
-        User user = userService.changePassword(
-                userId,
-                request.newPassword()
+        return UserWebMapper.toResponse(
+                userService.changePassword(userId, request.newPassword())
         );
-
-        return UserWebMapper.toResponse(user);
     }
 
     @PostMapping("/{userId}/balance")
     public UserResponse addBalance(
-            @PathVariable Long userId,
+            @PathVariable("userId") Long userId,
             @Valid @RequestBody BalanceRequest request
     ) {
-        User user = userService.addBalance(
-                userId,
-                request.amount()
+        return UserWebMapper.toResponse(
+                userService.addBalance(userId, request.amount())
         );
-
-        return UserWebMapper.toResponse(user);
     }
 
     @PostMapping("/{userId}/subscription/three-days")
     public UserResponse buyThreeDaySubscription(
-            @PathVariable Long userId
+            @PathVariable("userId") Long userId
     ) {
-        User user = userService.buyThreeDaySubscription(userId);
+        return UserWebMapper.toResponse(
+                userService.buyThreeDaySubscription(userId)
+        );
+    }
 
-        return UserWebMapper.toResponse(user);
+    @DeleteMapping("/{userId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteUser(
+            @PathVariable("userId") Long userId
+    ) {
+        userService.deleteUser(userId);
     }
 }
