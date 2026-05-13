@@ -14,15 +14,11 @@
 
     <modules>
         <module>common-module</module>
-        <module>security-module</module>
-        <module>auth-module</module>
         <module>user-module</module>
         <module>fleet-module</module>
         <module>rental-module</module>
         <module>discount-module</module>
         <module>maintenance-module</module>
-        <module>outbox-module</module>
-        <module>console-module</module>
         <module>web-module</module>
     </modules>
 
