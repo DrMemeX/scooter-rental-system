@@ -1,5 +1,7 @@
 package ru.senla.scooterrental.rental.service;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.senla.scooterrental.discount.service.DiscountService;
@@ -24,6 +26,9 @@ import java.util.List;
 @Transactional
 public class RentalService {
 
+    private static final Logger log =
+            LoggerFactory.getLogger(RentalService.class);
+
     private final RentalRepository rentalRepository;
     private final FleetService fleetService;
     private final PricingService pricingService;
@@ -47,6 +52,13 @@ public class RentalService {
                               Long scooterId,
                               TariffType tariffType,
                               Integer plannedHours) {
+
+        log.info(
+                "Starting rental: userId={}, scooterId={}, tariffType={}",
+                userId,
+                scooterId,
+                tariffType
+        );
 
         validatePositiveId(userId, "ID пользователя");
         validatePositiveId(scooterId, "ID самоката");
@@ -84,7 +96,16 @@ public class RentalService {
             rental.setMaxAllowedMinutes(maxAllowedMinutes);
         }
 
-        return rentalRepository.save(rental);
+        Rental savedRental = rentalRepository.save(rental);
+
+        log.info(
+                "Rental started successfully: rentalId={}, userId={}, scooterId={}",
+                savedRental.getId(),
+                userId,
+                scooterId
+        );
+
+        return savedRental;
     }
 
     public Rental startRental(Long userId,
@@ -179,6 +200,13 @@ public class RentalService {
                                         String promoCode,
                                         TerminationReason reason) {
 
+        log.info(
+                "Finishing rental: rentalId={}, rentalPointId={}, reason={}",
+                rentalId,
+                rentalPointId,
+                reason
+        );
+
         Rental rental = getRentalOrThrow(rentalId);
         Scooter scooter = fleetService.getScooterById(rental.getScooterId());
 
@@ -207,23 +235,47 @@ public class RentalService {
         rental.recordDistance(distanceKm);
         rental.finish(finalCost, reason);
 
-        return rentalRepository.save(rental);
+        Rental savedRental = rentalRepository.save(rental);
+
+        log.info(
+                "Rental finished successfully: rentalId={}, totalCost={}, reason={}",
+                savedRental.getId(),
+                finalCost,
+                reason
+        );
+
+        return savedRental;
     }
 
     public Rental requestManualFinish(Long rentalId) {
+        log.info("Requesting manual finish: rentalId={}", rentalId);
+
         Rental rental = getRentalOrThrow(rentalId);
 
         fleetService.requestReturnVerification(rental.getScooterId());
 
         rental.requestManualFinish();
 
-        return rentalRepository.save(rental);
+        Rental savedRental = rentalRepository.save(rental);
+
+        log.info(
+                "Manual finish requested successfully: rentalId={}",
+                savedRental.getId()
+        );
+
+        return savedRental;
     }
 
     public Rental approveManualFinish(Long rentalId,
                                       Long rentalPointId,
                                       double distanceKm,
                                       String promoCode) {
+
+        log.info(
+                "Approving manual finish: rentalId={}, rentalPointId={}",
+                rentalId,
+                rentalPointId
+        );
 
         Rental rental = getRentalOrThrow(rentalId);
         Scooter scooter = fleetService.getScooterById(rental.getScooterId());
@@ -256,7 +308,15 @@ public class RentalService {
                 TerminationReason.MANAGER_CONFIRMED_RETURN
         );
 
-        return rentalRepository.save(rental);
+        Rental savedRental = rentalRepository.save(rental);
+
+        log.info(
+                "Manual finish approved successfully: rentalId={}, totalCost={}",
+                savedRental.getId(),
+                finalCost
+        );
+
+        return savedRental;
     }
 
     public Rental approveManualFinish(Long rentalId,

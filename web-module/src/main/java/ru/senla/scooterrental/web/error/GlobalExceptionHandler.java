@@ -1,6 +1,8 @@
 package ru.senla.scooterrental.web.error;
 
 import jakarta.servlet.http.HttpServletRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -20,11 +22,22 @@ import ru.senla.scooterrental.common.exception.ValidationException;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    private static final Logger log =
+            LoggerFactory.getLogger(GlobalExceptionHandler.class);
+
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<ApiErrorResponse> handleAccessDenied(
             AccessDeniedException ex,
             HttpServletRequest request
     ) {
+
+        log.warn(
+                "Access denied: method={}, uri={}, message={}",
+                request.getMethod(),
+                request.getRequestURI(),
+                ex.getMessage()
+        );
+
         return build(
                 HttpStatus.FORBIDDEN,
                 ex.getMessage(),
@@ -37,6 +50,14 @@ public class GlobalExceptionHandler {
             ValidationException ex,
             HttpServletRequest req
     ) {
+
+        log.warn(
+                "Validation error: method={}, uri={}, message={}",
+                req.getMethod(),
+                req.getRequestURI(),
+                ex.getMessage()
+        );
+
         return build(HttpStatus.BAD_REQUEST, ex.getMessage(), req);
     }
 
@@ -45,6 +66,14 @@ public class GlobalExceptionHandler {
             NotFoundException ex,
             HttpServletRequest req
     ) {
+
+        log.warn(
+                "Resource not found: method={}, uri={}, message={}",
+                req.getMethod(),
+                req.getRequestURI(),
+                ex.getMessage()
+        );
+
         return build(HttpStatus.NOT_FOUND, ex.getMessage(), req);
     }
 
@@ -53,6 +82,14 @@ public class GlobalExceptionHandler {
             ConflictException ex,
             HttpServletRequest req
     ) {
+
+        log.warn(
+                "Conflict detected: method={}, uri={}, message={}",
+                req.getMethod(),
+                req.getRequestURI(),
+                ex.getMessage()
+        );
+
         return build(HttpStatus.CONFLICT, ex.getMessage(), req);
     }
 
@@ -61,6 +98,14 @@ public class GlobalExceptionHandler {
             ForbiddenException ex,
             HttpServletRequest req
     ) {
+
+        log.warn(
+                "Forbidden operation: method={}, uri={}, message={}",
+                req.getMethod(),
+                req.getRequestURI(),
+                ex.getMessage()
+        );
+
         return build(HttpStatus.FORBIDDEN, ex.getMessage(), req);
     }
 
@@ -69,6 +114,14 @@ public class GlobalExceptionHandler {
             PaymentRequiredException ex,
             HttpServletRequest req
     ) {
+
+        log.warn(
+                "Payment required: method={}, uri={}, message={}",
+                req.getMethod(),
+                req.getRequestURI(),
+                ex.getMessage()
+        );
+
         return build(HttpStatus.PAYMENT_REQUIRED, ex.getMessage(), req);
     }
 
@@ -84,6 +137,14 @@ public class GlobalExceptionHandler {
                 ? ex.getReason()
                 : ex.getMessage();
 
+        log.warn(
+                "Response status exception: method={}, uri={}, status={}, message={}",
+                req.getMethod(),
+                req.getRequestURI(),
+                status.value(),
+                message
+        );
+
         return build(status, message, req);
     }
 
@@ -92,6 +153,13 @@ public class GlobalExceptionHandler {
             HttpMessageNotReadableException ex,
             HttpServletRequest req
     ) {
+
+        log.warn(
+                "Invalid request body: method={}, uri={}",
+                req.getMethod(),
+                req.getRequestURI()
+        );
+
         return build(
                 HttpStatus.BAD_REQUEST,
                 "Некорректное тело запроса",
@@ -106,6 +174,13 @@ public class GlobalExceptionHandler {
     ) {
         String message = "Некорректный параметр '" + ex.getName()
                 + "': " + ex.getValue();
+
+        log.warn(
+                "Method argument type mismatch: method={}, uri={}, message={}",
+                req.getMethod(),
+                req.getRequestURI(),
+                message
+        );
 
         return build(HttpStatus.BAD_REQUEST, message, req);
     }
@@ -124,6 +199,13 @@ public class GlobalExceptionHandler {
                     .append("; ");
         }
 
+        log.warn(
+                "Method argument validation failed: method={}, uri={}, message={}",
+                req.getMethod(),
+                req.getRequestURI(),
+                message
+        );
+
         return build(HttpStatus.BAD_REQUEST, message.toString(), req);
     }
 
@@ -132,6 +214,14 @@ public class GlobalExceptionHandler {
             Exception ex,
             HttpServletRequest request
     ) {
+
+        log.error(
+                "Unhandled server error: method={}, uri={}",
+                request.getMethod(),
+                request.getRequestURI(),
+                ex
+        );
+
         return build(
                 HttpStatus.INTERNAL_SERVER_ERROR,
                 "Внутренняя ошибка сервера",

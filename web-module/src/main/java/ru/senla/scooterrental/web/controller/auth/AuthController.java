@@ -1,6 +1,8 @@
 package ru.senla.scooterrental.web.controller.auth;
 
 import jakarta.validation.Valid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -21,6 +23,9 @@ import ru.senla.scooterrental.web.security.JwtService;
 @RestController
 @RequestMapping("/api/v1/auth")
 public class AuthController {
+
+    private static final Logger log =
+            LoggerFactory.getLogger(AuthController.class);
 
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
@@ -46,6 +51,11 @@ public class AuthController {
             @Valid @RequestBody RegisterRequest request
     ) {
 
+        log.info(
+                "Registration request received: email={}",
+                request.email()
+        );
+
         User user = new User(
                 request.email(),
                 passwordEncoder.encode(request.password()),
@@ -61,6 +71,12 @@ public class AuthController {
                 savedUser.getRole().name()
         );
 
+        log.info(
+                "Registration completed successfully: userId={}, email={}",
+                savedUser.getId(),
+                savedUser.getEmail()
+        );
+
         return new AuthResponse(token);
     }
 
@@ -68,6 +84,12 @@ public class AuthController {
     public AuthResponse login(
             @Valid @RequestBody LoginRequest request
     ) {
+
+        log.info(
+                "Login request received: email={}",
+                request.email()
+        );
+
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         request.email(),
@@ -83,6 +105,12 @@ public class AuthController {
         String token = jwtService.generateToken(
                 user.getEmail(),
                 user.getRole().name()
+        );
+
+        log.info(
+                "Login completed successfully: userId={}, email={}",
+                user.getId(),
+                user.getEmail()
         );
 
         return new AuthResponse(token);

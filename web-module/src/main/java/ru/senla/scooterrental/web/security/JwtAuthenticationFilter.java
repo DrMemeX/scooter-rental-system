@@ -4,6 +4,8 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -15,6 +17,9 @@ import java.io.IOException;
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
+
+    private static final Logger log =
+            LoggerFactory.getLogger(JwtAuthenticationFilter.class);
 
     private final JwtService jwtService;
     private final CustomUserDetailsService userDetailsService;
@@ -34,6 +39,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String authHeader = request.getHeader("Authorization");
 
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+
+            log.warn(
+                    "Authorization header missing or invalid: method={}, uri={}",
+                    request.getMethod(),
+                    request.getRequestURI()
+            );
+
             filterChain.doFilter(request, response);
             return;
         }
@@ -41,6 +53,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String token = authHeader.substring(7);
 
         if (!jwtService.isTokenValid(token)) {
+
+            log.warn(
+                    "JWT authentication failed: method={}, uri={}",
+                    request.getMethod(),
+                    request.getRequestURI()
+            );
+
             filterChain.doFilter(request, response);
             return;
         }
@@ -64,6 +83,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         SecurityContextHolder.getContext()
                 .setAuthentication(authentication);
+
+        log.info(
+                "JWT authentication successful: email={}, method={}, uri={}",
+                email,
+                request.getMethod(),
+                request.getRequestURI()
+        );
 
         filterChain.doFilter(request, response);
     }

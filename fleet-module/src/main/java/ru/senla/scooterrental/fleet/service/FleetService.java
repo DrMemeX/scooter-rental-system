@@ -1,5 +1,7 @@
 package ru.senla.scooterrental.fleet.service;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.senla.scooterrental.common.enums.ScooterClass;
@@ -22,6 +24,9 @@ import java.util.List;
 @Service
 @Transactional
 public class FleetService {
+
+    private static final Logger log =
+            LoggerFactory.getLogger(FleetService.class);
 
     private final LocationNodeRepository locationNodeRepository;
     private final RentalPointRepository rentalPointRepository;
@@ -49,6 +54,13 @@ public class FleetService {
     public LocationNode createLocation(String name,
                                        LocationType type,
                                        Long parentId) {
+        log.info(
+                "Creating location: name={}, type={}, parentId={}",
+                name,
+                type,
+                parentId
+        );
+
         LocationNode parent = null;
 
         if (parentId != null) {
@@ -56,31 +68,62 @@ public class FleetService {
         }
 
         LocationNode locationNode = new LocationNode(name, type, parent);
-        return locationNodeRepository.save(locationNode);
+        LocationNode savedLocation = locationNodeRepository.save(locationNode);
+
+        log.info(
+                "Location created successfully: locationId={}, name={}, type={}",
+                savedLocation.getId(),
+                savedLocation.getName(),
+                savedLocation.getType()
+        );
+
+        return savedLocation;
     }
 
     public LocationNode activateLocation(Long locationId) {
+        log.info("Activating location: locationId={}", locationId);
+
         LocationNode locationNode = getLocationOrThrow(locationId);
 
         locationNode.activate();
 
-        return locationNodeRepository.save(locationNode);
+        LocationNode savedLocation = locationNodeRepository.save(locationNode);
+
+        log.info("Location activated successfully: locationId={}", savedLocation.getId());
+
+        return savedLocation;
     }
 
     public LocationNode deactivateLocation(Long locationId) {
+        log.info("Deactivating location: locationId={}", locationId);
+
         LocationNode locationNode = getLocationOrThrow(locationId);
 
         locationNode.deactivate();
 
-        return locationNodeRepository.save(locationNode);
+        LocationNode savedLocation = locationNodeRepository.save(locationNode);
+
+        log.info("Location deactivated successfully: locationId={}", savedLocation.getId());
+
+        return savedLocation;
     }
 
     public LocationNode renameLocation(Long locationId, String name) {
+        log.info("Renaming location: locationId={}, newName={}", locationId, name);
+
         LocationNode locationNode = getLocationOrThrow(locationId);
 
         locationNode.rename(name);
 
-        return locationNodeRepository.save(locationNode);
+        LocationNode savedLocation = locationNodeRepository.save(locationNode);
+
+        log.info(
+                "Location renamed successfully: locationId={}, newName={}",
+                savedLocation.getId(),
+                savedLocation.getName()
+        );
+
+        return savedLocation;
     }
 
     public List<LocationNode> findAllLocations() {
@@ -92,49 +135,106 @@ public class FleetService {
     }
 
     public RentalPoint createRentalPoint(String name, Long locationNodeId) {
+        log.info(
+                "Creating rental point: name={}, locationNodeId={}",
+                name,
+                locationNodeId
+        );
+
         LocationNode locationNode = getLocationOrThrow(locationNodeId);
 
         RentalPoint rentalPoint = new RentalPoint(name, locationNode);
-        return rentalPointRepository.save(rentalPoint);
+        RentalPoint savedRentalPoint = rentalPointRepository.save(rentalPoint);
+
+        log.info(
+                "Rental point created successfully: rentalPointId={}, name={}, locationNodeId={}",
+                savedRentalPoint.getId(),
+                savedRentalPoint.getName(),
+                locationNodeId
+        );
+
+        return savedRentalPoint;
     }
 
     public RentalPoint activateRentalPoint(Long rentalPointId) {
+        log.info("Activating rental point: rentalPointId={}", rentalPointId);
+
         RentalPoint rentalPoint = getRentalPointOrThrow(rentalPointId);
 
         rentalPoint.activate();
 
-        return rentalPointRepository.save(rentalPoint);
+        RentalPoint savedRentalPoint = rentalPointRepository.save(rentalPoint);
+
+        log.info(
+                "Rental point activated successfully: rentalPointId={}",
+                savedRentalPoint.getId()
+        );
+
+        return savedRentalPoint;
     }
 
     public RentalPoint deactivateRentalPoint(Long rentalPointId) {
+        log.info("Deactivating rental point: rentalPointId={}", rentalPointId);
+
         RentalPoint rentalPoint = getRentalPointOrThrow(rentalPointId);
 
         rentalPoint.deactivate();
 
-        return rentalPointRepository.save(rentalPoint);
+        RentalPoint savedRentalPoint = rentalPointRepository.save(rentalPoint);
+
+        log.info(
+                "Rental point deactivated successfully: rentalPointId={}",
+                savedRentalPoint.getId()
+        );
+
+        return savedRentalPoint;
     }
 
     public RentalPoint renameRentalPoint(Long rentalPointId,
                                          String name) {
+        log.info(
+                "Renaming rental point: rentalPointId={}, newName={}",
+                rentalPointId,
+                name
+        );
+
         RentalPoint rentalPoint = getRentalPointOrThrow(rentalPointId);
 
         rentalPoint.rename(name);
 
-        return rentalPointRepository.save(rentalPoint);
+        RentalPoint savedRentalPoint = rentalPointRepository.save(rentalPoint);
+
+        log.info(
+                "Rental point renamed successfully: rentalPointId={}, newName={}",
+                savedRentalPoint.getId(),
+                savedRentalPoint.getName()
+        );
+
+        return savedRentalPoint;
     }
 
     public void deleteRentalPoint(Long rentalPointId) {
+        log.info("Deleting rental point: rentalPointId={}", rentalPointId);
+
         RentalPoint rentalPoint = getRentalPointOrThrow(rentalPointId);
 
         List<Scooter> scooters = scooterRepository.findAllByRentalPointId(rentalPointId);
 
         if (!scooters.isEmpty()) {
+            log.warn(
+                    "Rental point delete rejected: rentalPointId={}, scootersCount={}",
+                    rentalPointId,
+                    scooters.size()
+            );
+
             throw new FleetValidationException(
                     "Нельзя удалить точку проката, пока в ней находятся самокаты"
             );
         }
 
         rentalPointRepository.deleteById(rentalPoint.getId());
+
+        log.info("Rental point deleted successfully: rentalPointId={}", rentalPointId);
     }
 
     public List<RentalPoint> findAllRentalPoints() {
@@ -159,6 +259,8 @@ public class FleetService {
         RentalPoint rentalPoint = getRentalPointOrThrow(rentalPointId);
 
         if (!rentalPoint.isActive()) {
+            log.warn("Inactive rental point requested: rentalPointId={}", rentalPointId);
+
             throw new FleetValidationException(
                     "Точка проката с ID " + rentalPointId + " недоступна"
             );
@@ -173,6 +275,16 @@ public class FleetService {
                                            BigDecimal pricePerMinute,
                                            BigDecimal pricePerHour,
                                            int batteryCapacity) {
+        log.info(
+                "Creating scooter model: scooterClass={}, maxSpeed={}, consumptionPerKm={}, pricePerMinute={}, pricePerHour={}, batteryCapacity={}",
+                scooterClass,
+                maxSpeedKmPerHour,
+                consumptionPerKm,
+                pricePerMinute,
+                pricePerHour,
+                batteryCapacity
+        );
+
         ScooterModel model = new ScooterModel(
                 scooterClass,
                 maxSpeedKmPerHour,
@@ -182,7 +294,15 @@ public class FleetService {
                 batteryCapacity
         );
 
-        return scooterModelRepository.save(model);
+        ScooterModel savedModel = scooterModelRepository.save(model);
+
+        log.info(
+                "Scooter model created successfully: modelId={}, scooterClass={}",
+                savedModel.getId(),
+                savedModel.getScooterClass()
+        );
+
+        return savedModel;
     }
 
     public ScooterModel getScooterModelById(Long modelId) {
@@ -192,11 +312,27 @@ public class FleetService {
     public ScooterModel updateScooterModelPrices(Long modelId,
                                                  BigDecimal pricePerMinute,
                                                  BigDecimal pricePerHour) {
+        log.info(
+                "Updating scooter model prices: modelId={}, pricePerMinute={}, pricePerHour={}",
+                modelId,
+                pricePerMinute,
+                pricePerHour
+        );
+
         ScooterModel model = getScooterModelOrThrow(modelId);
 
         model.updatePrices(pricePerMinute, pricePerHour);
 
-        return scooterModelRepository.save(model);
+        ScooterModel savedModel = scooterModelRepository.save(model);
+
+        log.info(
+                "Scooter model prices updated successfully: modelId={}, pricePerMinute={}, pricePerHour={}",
+                savedModel.getId(),
+                savedModel.getPricePerMinute(),
+                savedModel.getPricePerHour()
+        );
+
+        return savedModel;
     }
 
     public List<ScooterModel> findAllScooterModels() {
@@ -204,6 +340,8 @@ public class FleetService {
     }
 
     public void deleteScooterModel(Long modelId) {
+        log.info("Deleting scooter model: modelId={}", modelId);
+
         ScooterModel model = getScooterModelOrThrow(modelId);
 
         List<Scooter> scooters = scooterRepository.findAll()
@@ -212,106 +350,239 @@ public class FleetService {
                 .toList();
 
         if (!scooters.isEmpty()) {
+            log.warn(
+                    "Scooter model delete rejected: modelId={}, scootersCount={}",
+                    modelId,
+                    scooters.size()
+            );
+
             throw new FleetValidationException(
                     "Нельзя удалить модель самоката, пока существуют самокаты этой модели"
             );
         }
 
         scooterModelRepository.deleteById(modelId);
+
+        log.info("Scooter model deleted successfully: modelId={}", modelId);
     }
 
     public Scooter createScooter(Long modelId,
                                  Long rentalPointId,
                                  double initialCharge) {
+        log.info(
+                "Creating scooter: modelId={}, rentalPointId={}, initialCharge={}",
+                modelId,
+                rentalPointId,
+                initialCharge
+        );
+
         ScooterModel model = getScooterModelOrThrow(modelId);
         RentalPoint rentalPoint = getRentalPointOrThrow(rentalPointId);
 
         Scooter scooter = new Scooter(model, rentalPoint, initialCharge);
-        return scooterRepository.save(scooter);
+        Scooter savedScooter = scooterRepository.save(scooter);
+
+        log.info(
+                "Scooter created successfully: scooterId={}, modelId={}, rentalPointId={}",
+                savedScooter.getId(),
+                modelId,
+                rentalPointId
+        );
+
+        return savedScooter;
     }
 
     public Scooter rentScooter(Long scooterId) {
+        log.info("Renting scooter: scooterId={}", scooterId);
+
         Scooter scooter = getScooterOrThrow(scooterId);
 
         scooter.markAsRented();
 
-        return scooterRepository.save(scooter);
+        Scooter savedScooter = scooterRepository.save(scooter);
+
+        log.info("Scooter rented successfully: scooterId={}", savedScooter.getId());
+
+        return savedScooter;
     }
 
     public Scooter returnScooter(Long scooterId, Long rentalPointId) {
+        log.info(
+                "Returning scooter: scooterId={}, rentalPointId={}",
+                scooterId,
+                rentalPointId
+        );
+
         Scooter scooter = getScooterOrThrow(scooterId);
         RentalPoint rentalPoint = getRentalPointOrThrow(rentalPointId);
 
         scooter.returnToPoint(rentalPoint);
 
-        return scooterRepository.save(scooter);
+        Scooter savedScooter = scooterRepository.save(scooter);
+
+        log.info(
+                "Scooter returned successfully: scooterId={}, rentalPointId={}",
+                savedScooter.getId(),
+                rentalPointId
+        );
+
+        return savedScooter;
     }
 
     public Scooter moveScooterToRentalPoint(Long scooterId,
                                             Long rentalPointId) {
+
+        log.info(
+                "Moving scooter to rental point: scooterId={}, rentalPointId={}",
+                scooterId,
+                rentalPointId
+        );
 
         Scooter scooter = getScooterOrThrow(scooterId);
         RentalPoint rentalPoint = getRentalPointOrThrow(rentalPointId);
 
         scooter.moveToRentalPoint(rentalPoint);
 
-        return scooterRepository.save(scooter);
+        Scooter savedScooter = scooterRepository.save(scooter);
+
+        log.info(
+                "Scooter moved successfully: scooterId={}, rentalPointId={}",
+                savedScooter.getId(),
+                rentalPointId
+        );
+
+        return savedScooter;
     }
 
     public Scooter requestReturnVerification(Long scooterId) {
+        log.info("Requesting scooter return verification: scooterId={}", scooterId);
+
         Scooter scooter = getScooterOrThrow(scooterId);
 
         scooter.requireReturnVerification();
 
-        return scooterRepository.save(scooter);
+        Scooter savedScooter = scooterRepository.save(scooter);
+
+        log.info(
+                "Scooter return verification requested successfully: scooterId={}",
+                savedScooter.getId()
+        );
+
+        return savedScooter;
     }
 
     public Scooter sendToMaintenance(Long scooterId) {
+        log.info("Sending scooter to maintenance: scooterId={}", scooterId);
+
         Scooter scooter = getScooterOrThrow(scooterId);
 
         scooter.sendToMaintenance();
 
-        return scooterRepository.save(scooter);
+        Scooter savedScooter = scooterRepository.save(scooter);
+
+        log.info("Scooter sent to maintenance successfully: scooterId={}", savedScooter.getId());
+
+        return savedScooter;
     }
 
     public Scooter completeMaintenance(Long scooterId) {
+        log.info("Completing scooter maintenance: scooterId={}", scooterId);
+
         Scooter scooter = getScooterOrThrow(scooterId);
 
         scooter.completeMaintenance();
 
-        return scooterRepository.save(scooter);
+        Scooter savedScooter = scooterRepository.save(scooter);
+
+        log.info(
+                "Scooter maintenance completed successfully: scooterId={}",
+                savedScooter.getId()
+        );
+
+        return savedScooter;
     }
 
     public Scooter markServiceRequired(Long scooterId) {
+        log.info("Marking scooter service required: scooterId={}", scooterId);
+
         Scooter scooter = getScooterOrThrow(scooterId);
 
         scooter.markServiceRequired();
 
-        return scooterRepository.save(scooter);
+        Scooter savedScooter = scooterRepository.save(scooter);
+
+        log.info(
+                "Scooter marked service required successfully: scooterId={}",
+                savedScooter.getId()
+        );
+
+        return savedScooter;
     }
 
     public Scooter chargeScooter(Long scooterId, double amount) {
+        log.info(
+                "Charging scooter: scooterId={}, amount={}",
+                scooterId,
+                amount
+        );
+
         Scooter scooter = getScooterOrThrow(scooterId);
 
         scooter.charge(amount);
 
-        return scooterRepository.save(scooter);
+        Scooter savedScooter = scooterRepository.save(scooter);
+
+        log.info(
+                "Scooter charged successfully: scooterId={}, currentCharge={}",
+                savedScooter.getId(),
+                savedScooter.getCurrentCharge()
+        );
+
+        return savedScooter;
     }
 
     public Scooter addMileage(Long scooterId, double km) {
+        log.info(
+                "Adding scooter mileage: scooterId={}, km={}",
+                scooterId,
+                km
+        );
+
         Scooter scooter = getScooterOrThrow(scooterId);
 
         scooter.addMileage(km);
 
-        return scooterRepository.save(scooter);
+        Scooter savedScooter = scooterRepository.save(scooter);
+
+        log.info(
+                "Scooter mileage added successfully: scooterId={}, totalMileage={}",
+                savedScooter.getId(),
+                savedScooter.getTotalMileageKm()
+        );
+
+        return savedScooter;
     }
 
     public Scooter consumeCharge(Long scooterId, double amount) {
+        log.info(
+                "Consuming scooter charge: scooterId={}, amount={}",
+                scooterId,
+                amount
+        );
+
         Scooter scooter = getScooterOrThrow(scooterId);
 
         scooter.consumeCharge(amount);
 
-        return scooterRepository.save(scooter);
+        Scooter savedScooter = scooterRepository.save(scooter);
+
+        log.info(
+                "Scooter charge consumed successfully: scooterId={}, currentCharge={}",
+                savedScooter.getId(),
+                savedScooter.getCurrentCharge()
+        );
+
+        return savedScooter;
     }
 
     public Scooter getScooterById(Long scooterId) {
@@ -335,11 +606,18 @@ public class FleetService {
     }
 
     public void deleteScooter(Long scooterId) {
+        log.info("Deleting scooter: scooterId={}", scooterId);
 
         Scooter scooter = getScooterOrThrow(scooterId);
 
         if (scooter.getStatus() == ScooterStatus.RENTED
                 || scooter.getStatus() == ScooterStatus.RETURN_VERIFICATION_REQUIRED) {
+
+            log.warn(
+                    "Scooter delete rejected: scooterId={}, status={}",
+                    scooterId,
+                    scooter.getStatus()
+            );
 
             throw new FleetValidationException(
                     "Нельзя удалить самокат, участвующий в активной аренде"
@@ -347,6 +625,8 @@ public class FleetService {
         }
 
         scooterRepository.deleteById(scooterId);
+
+        log.info("Scooter deleted successfully: scooterId={}", scooterId);
     }
 
     private ScooterModel getScooterModelOrThrow(Long modelId) {
