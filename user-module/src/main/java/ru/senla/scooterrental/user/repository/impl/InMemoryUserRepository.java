@@ -143,4 +143,13 @@ public class InMemoryUserRepository implements UserRepository {
     private String normalizeEmail(String email) {
         return normalizeText(email, "Email").toLowerCase();
     }
+
+    private <T> T requireNonNull(T obj, String name) {
+        if (obj == null) {
+            throw new UserValidationException(
+                    name + " не задан."
+            );
+        }
+        return obj;
+    }
 }

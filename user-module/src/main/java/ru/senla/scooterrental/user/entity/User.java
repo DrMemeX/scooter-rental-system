@@ -75,7 +75,9 @@ public class User {
         String normalizedEmail = normalizeRequiredText(email, "Email");
 
         if (!EMAIL_PATTERN.matcher(normalizedEmail).matches()) {
-            throw new UserValidationException("Некорректный формат email.");
+            throw new UserValidationException(
+                    "Некорректный формат email."
+            );
         }
 
         this.email = normalizedEmail.toLowerCase();

@@ -2,7 +2,6 @@ package ru.senla.scooterrental.rental.service;
 
 import ru.senla.scooterrental.fleet.entity.Scooter;
 import ru.senla.scooterrental.rental.entity.Rental;
-import ru.senla.scooterrental.rental.enums.TariffType;
 import ru.senla.scooterrental.rental.exceptions.RentalValidationException;
 
 import java.math.BigDecimal;
@@ -12,48 +11,23 @@ import java.time.LocalDateTime;
 public class PricingService {
 
     public BigDecimal calculate(Rental rental, Scooter scooter) {
-        if (rental == null) {
-            throw new RentalValidationException(
-                    "Аренда не может быть пустой"
-            );
-        }
 
-        if (scooter == null) {
-            throw new RentalValidationException(
-                    "Самокат не может быть пустым"
-            );
-        }
-
-        if (scooter.getModel() == null) {
-            throw new RentalValidationException(
-                    "Модель самоката не может быть пустой"
-            );
-        }
+        requireNonNull(rental, "Аренда");
+        requireNonNull(scooter, "Самокат");
+        requireNonNull(scooter.getModel(), "Модель самоката");
+        requireNonNull(rental.getTariffType(), "Тип тарифа");
 
         long minutes = calculateRentalMinutes(rental.getStartTime());
 
-        if (rental.getTariffType() == null) {
-            throw new RentalValidationException(
-                    "Тип тарифа не может быть пустым"
-            );
-        }
-
         return switch (rental.getTariffType()) {
-            case MINUTE -> calculateMinutePrice(minutes, scooter);
-            case HOUR -> calculateHourPrice(minutes, scooter);
+            case MINUTE -> calculateMinutePrice(minutes, rental, scooter);
+            case HOUR -> calculateHourPrice(rental, scooter);
             case SUBSCRIPTION -> BigDecimal.ZERO;
-            default -> throw new RentalValidationException(
-                    "Неизвестный тип тарифа"
-            );
         };
     }
 
     private long calculateRentalMinutes(LocalDateTime startTime) {
-        if (startTime == null) {
-            throw new RentalValidationException(
-                    "Время начала аренды не может быть пустым"
-            );
-        }
+        requireNonNull(startTime, "Время начала аренды");
 
         LocalDateTime now = LocalDateTime.now();
 
@@ -68,17 +42,44 @@ public class PricingService {
         return Math.max(minutes, 1);
     }
 
-    private BigDecimal calculateMinutePrice(long minutes, Scooter scooter) {
+    private BigDecimal calculateMinutePrice(long actualMinutes,
+                                            Rental rental,
+                                            Scooter scooter) {
+        Integer maxAllowedMinutes = rental.getMaxAllowedMinutes();
+
+        if (maxAllowedMinutes == null || maxAllowedMinutes <= 0) {
+            throw new RentalValidationException(
+                    "Для поминутного тарифа не задан лимит оплаченного времени"
+            );
+        }
+
+        long billableMinutes = Math.min(actualMinutes, maxAllowedMinutes);
+
         return scooter.getModel()
                 .getPricePerMinute()
-                .multiply(BigDecimal.valueOf(minutes));
+                .multiply(BigDecimal.valueOf(billableMinutes));
     }
 
-    private BigDecimal calculateHourPrice(long minutes, Scooter scooter) {
-        long hours = (long) Math.ceil(minutes / 60.0);
+    private BigDecimal calculateHourPrice(Rental rental, Scooter scooter) {
+        Integer plannedHours = rental.getPlannedHours();
+
+        if (plannedHours == null || plannedHours <= 0) {
+            throw new RentalValidationException(
+                    "Для почасового тарифа должно быть указано количество часов"
+            );
+        }
 
         return scooter.getModel()
                 .getPricePerHour()
-                .multiply(BigDecimal.valueOf(hours));
+                .multiply(BigDecimal.valueOf(plannedHours));
+    }
+
+    private <T> T requireNonNull(T obj, String name) {
+        if (obj == null) {
+            throw new RentalValidationException(
+                    name + " не задан"
+            );
+        }
+        return obj;
     }
 }

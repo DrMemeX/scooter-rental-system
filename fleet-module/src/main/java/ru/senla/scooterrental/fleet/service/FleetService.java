@@ -25,25 +25,15 @@ public class FleetService {
     public FleetService(LocationNodeRepository locationNodeRepository,
                         RentalPointRepository rentalPointRepository,
                         ScooterRepository scooterRepository) {
-        if (locationNodeRepository == null) {
-            throw new FleetValidationException(
-                    "Репозиторий локаций не может быть пустым"
-            );
-        }
-        if (rentalPointRepository == null) {
-            throw new FleetValidationException(
-                    "Репозиторий точек проката не может быть пустым"
-            );
-        }
-        if (scooterRepository == null) {
-            throw new FleetValidationException(
-                    "Репозиторий самокатов не может быть пустым"
-            );
-        }
-
-        this.locationNodeRepository = locationNodeRepository;
-        this.rentalPointRepository = rentalPointRepository;
-        this.scooterRepository = scooterRepository;
+        this.locationNodeRepository = requireNonNull(
+                locationNodeRepository, "Репозиторий локаций"
+        );
+        this.rentalPointRepository = requireNonNull(
+                rentalPointRepository, "Репозиторий точек проката"
+        );
+        this.scooterRepository = requireNonNull(
+                scooterRepository, "Репозиторий самокатов"
+        );
     }
 
     public LocationNode createLocation(String name,
@@ -235,5 +225,14 @@ public class FleetService {
                 .orElseThrow(() -> new FleetEntityNotFoundException(
                         "Локация с ID " + locationId + " не найдена"
                 ));
+    }
+
+    private <T> T requireNonNull(T obj, String name) {
+        if (obj == null) {
+            throw new FleetValidationException(
+                    name + " не задан"
+            );
+        }
+        return obj;
     }
 }

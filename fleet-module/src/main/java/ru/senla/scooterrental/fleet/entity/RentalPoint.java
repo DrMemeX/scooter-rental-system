@@ -38,7 +38,7 @@ public class RentalPoint {
             );
         }
 
-        this.name = name;
+        this.name = name.trim();
         this.locationNode = locationNode;
         this.active = true;
     }
@@ -70,7 +70,7 @@ public class RentalPoint {
     public void activate() {
         if (!locationNode.isActive()) {
             throw new InvalidRentalPointStateException(
-                    "Нельзя активировать точку проката в неактивной локации"
+                    "Нельзя активировать точку проката внутри неактивной родительской локации"
             );
         }
 
