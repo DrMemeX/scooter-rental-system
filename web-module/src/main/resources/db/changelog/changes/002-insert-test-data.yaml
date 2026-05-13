@@ -43,16 +43,20 @@ databaseChangeLog:
               VALUES
                 (1, 'Orel', 'CITY', NULL, true),
                 (2, 'Central District', 'DISTRICT', 1, true),
-                (3, 'North District', 'DISTRICT', 1, true);
+                (3, 'North District', 'DISTRICT', 1, true),
+                (4, 'Central Point 1', 'RENTAL_POINT', 2, true),
+                (5, 'Central Point 2', 'RENTAL_POINT', 2, true),
+                (6, 'North Point 1', 'RENTAL_POINT', 3, true),
+                (7, 'North Point 2', 'RENTAL_POINT', 3, true);
 
         - sql:
             sql: |
               INSERT INTO rental_points (id, name, location_node_id, active)
               VALUES
-                (1, 'Central Point 1', 2, true),
-                (2, 'Central Point 2', 2, true),
-                (3, 'North Point 1', 3, true),
-                (4, 'North Point 2', 3, true);
+                (1, 'Central Point 1', 4, true),
+                (2, 'Central Point 2', 5, true),
+                (3, 'North Point 1', 6, true),
+                (4, 'North Point 2', 7, true);
 
         - sql:
             sql: |
