@@ -1,5 +1,8 @@
 package ru.senla.scooterrental.rental.service;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
 import ru.senla.scooterrental.fleet.entity.Scooter;
 import ru.senla.scooterrental.rental.entity.Rental;
 import ru.senla.scooterrental.rental.exceptions.RentalValidationException;
@@ -8,9 +11,14 @@ import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.LocalDateTime;
 
+@Service
 public class PricingService {
 
+    private static final Logger log =
+            LoggerFactory.getLogger(PricingService.class);
+
     public BigDecimal calculate(Rental rental, Scooter scooter) {
+        log.info("Starting rental price calculation");
 
         requireNonNull(rental, "Аренда");
         requireNonNull(scooter, "Самокат");
@@ -19,11 +27,21 @@ public class PricingService {
 
         long minutes = calculateRentalMinutes(rental.getStartTime());
 
-        return switch (rental.getTariffType()) {
+        BigDecimal price = switch (rental.getTariffType()) {
             case MINUTE -> calculateMinutePrice(minutes, rental, scooter);
             case HOUR -> calculateHourPrice(rental, scooter);
             case SUBSCRIPTION -> BigDecimal.ZERO;
         };
+
+        log.info(
+                "Rental price calculated successfully: rentalId={}, scooterId={}, tariffType={}, price={}",
+                rental.getId(),
+                scooter.getId(),
+                rental.getTariffType(),
+                price
+        );
+
+        return price;
     }
 
     private long calculateRentalMinutes(LocalDateTime startTime) {
@@ -80,6 +98,7 @@ public class PricingService {
                     name + " не задан"
             );
         }
+
         return obj;
     }
 }

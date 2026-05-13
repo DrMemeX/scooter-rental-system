@@ -1,5 +1,14 @@
 package ru.senla.scooterrental.user.entity;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.Table;
 import ru.senla.scooterrental.user.enums.Role;
 import ru.senla.scooterrental.user.enums.UserStatus;
 import ru.senla.scooterrental.user.exceptions.InsufficientBalanceException;
@@ -9,6 +18,8 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.regex.Pattern;
 
+@Entity
+@Table(name = "users")
 public class User {
 
     private static final Pattern EMAIL_PATTERN =
@@ -17,18 +28,49 @@ public class User {
     private static final Pattern PHONE_PATTERN =
             Pattern.compile("^\\+?[0-9]{10,15}$");
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column(nullable = false, unique = true, length = 255)
     private String email;
+
+    @Column(nullable = false, length = 255)
     private String password;
+
+    @Column(name = "first_name", nullable = false, length = 255)
     private String firstName;
+
+    @Column(name = "last_name", nullable = false, length = 255)
     private String lastName;
+
+    @Column(nullable = false, unique = true, length = 50)
     private String phone;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
     private Role role;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
     private UserStatus status;
+
+    @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal balance;
+
+    @Column(name = "subscription_purchased_at")
+    private LocalDateTime subscriptionPurchasedAt;
+
+    @Column(name = "subscription_expires_at")
+    private LocalDateTime subscriptionExpiresAt;
+
+    @Column(nullable = false)
     private boolean verified;
-    private final LocalDateTime createdAt;
+
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt;
+
+    protected User() { }
 
     public User(String email,
                 String password,
@@ -38,7 +80,6 @@ public class User {
         this.status = UserStatus.ACTIVE;
         this.balance = BigDecimal.ZERO;
         this.verified = false;
-        this.createdAt = LocalDateTime.now();
 
         setEmail(email);
         setInitialPassword(password);
@@ -47,24 +88,13 @@ public class User {
         setPhone(phone);
     }
 
-    public Long getId() {
-        return id;
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
     }
 
-    public void assignId(Long id) {
-        if (this.id != null) {
-            throw new UserValidationException(
-                    "ID пользователя уже назначен и не может быть изменён."
-            );
-        }
-
-        if (id == null || id <= 0) {
-            throw new UserValidationException(
-                    "ID пользователя должен быть положительным числом."
-            );
-        }
-
-        this.id = id;
+    public Long getId() {
+        return id;
     }
 
     public String getEmail() {
@@ -155,8 +185,8 @@ public class User {
         assignRole(Role.USER);
     }
 
-    public void assignManagerRole() {
-        assignRole(Role.MANAGER);
+    public void assignAdminRole() {
+        assignRole(Role.ADMIN);
     }
 
     public UserStatus getStatus() {
@@ -165,6 +195,14 @@ public class User {
 
     public BigDecimal getBalance() {
         return balance;
+    }
+
+    public LocalDateTime getSubscriptionPurchasedAt() {
+        return subscriptionPurchasedAt;
+    }
+
+    public LocalDateTime getSubscriptionExpiresAt() {
+        return subscriptionExpiresAt;
     }
 
     public boolean isVerified() {
@@ -195,6 +233,19 @@ public class User {
         validateMoneyAmount(amount, "Сумма пополнения");
         ensureBalanceInitialized();
         this.balance = this.balance.add(amount);
+    }
+
+    public boolean hasActiveSubscription() {
+        return subscriptionExpiresAt != null
+                && subscriptionExpiresAt.isAfter(LocalDateTime.now());
+    }
+
+    public void buyThreeDaySubscription(BigDecimal price) {
+        validateMoneyAmount(price, "Стоимость абонемента");
+        subtractBalance(price);
+
+        this.subscriptionPurchasedAt = LocalDateTime.now();
+        this.subscriptionExpiresAt = this.subscriptionPurchasedAt.plusDays(3);
     }
 
     public void subtractBalance(BigDecimal amount) {
