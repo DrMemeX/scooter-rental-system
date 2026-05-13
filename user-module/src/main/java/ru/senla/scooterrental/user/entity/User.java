@@ -27,6 +27,10 @@ public class User {
     private Role role;
     private UserStatus status;
     private BigDecimal balance;
+
+    private LocalDateTime subscriptionPurchasedAt;
+    private LocalDateTime subscriptionExpiresAt;
+
     private boolean verified;
     private final LocalDateTime createdAt;
 
@@ -37,6 +41,8 @@ public class User {
                 String phone) {
         this.status = UserStatus.ACTIVE;
         this.balance = BigDecimal.ZERO;
+        this.subscriptionPurchasedAt = null;
+        this.subscriptionExpiresAt = null;
         this.verified = false;
         this.createdAt = LocalDateTime.now();
 
@@ -167,6 +173,14 @@ public class User {
         return balance;
     }
 
+    public LocalDateTime getSubscriptionPurchasedAt() {
+        return subscriptionPurchasedAt;
+    }
+
+    public LocalDateTime getSubscriptionExpiresAt() {
+        return subscriptionExpiresAt;
+    }
+
     public boolean isVerified() {
         return verified;
     }
@@ -195,6 +209,19 @@ public class User {
         validateMoneyAmount(amount, "Сумма пополнения");
         ensureBalanceInitialized();
         this.balance = this.balance.add(amount);
+    }
+
+    public boolean hasActiveSubscription() {
+        return subscriptionExpiresAt != null
+                && subscriptionExpiresAt.isAfter(LocalDateTime.now());
+    }
+
+    public void buyThreeDaySubscription(BigDecimal price) {
+        validateMoneyAmount(price, "Стоимость абонемента");
+        subtractBalance(price);
+
+        this.subscriptionPurchasedAt = LocalDateTime.now();
+        this.subscriptionExpiresAt = this.subscriptionPurchasedAt.plusDays(3);
     }
 
     public void subtractBalance(BigDecimal amount) {

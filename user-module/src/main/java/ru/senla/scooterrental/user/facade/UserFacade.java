@@ -75,6 +75,12 @@ public class UserFacade {
     }
 
     public UserResponse updateProfile(Long id, UserUpdateRequest request) {
+        if (request == null) {
+            throw new UserValidationException(
+                    "Запрос на обновление профиля не может быть пустым."
+            );
+        }
+
         if (request.getFirstName() == null
             && request.getLastName() == null
             && request.getPhone() == null) {

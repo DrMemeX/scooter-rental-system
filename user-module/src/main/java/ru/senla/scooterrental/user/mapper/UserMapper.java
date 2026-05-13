@@ -42,6 +42,8 @@ public final class UserMapper {
                 user.getRole(),
                 user.getStatus(),
                 user.getBalance(),
+                user.getSubscriptionPurchasedAt(),
+                user.getSubscriptionExpiresAt(),
                 user.isVerified(),
                 user.getCreatedAt()
         );

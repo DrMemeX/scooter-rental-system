@@ -25,8 +25,11 @@ public class Rental {
     private Integer maxAllowedMinutes;
 
     private BigDecimal totalCost;
+    private Long promoCodeId;
+    private BigDecimal discountAmount;
 
     private TerminationReason terminationReason;
+    private double distanceKm;
 
     public Rental(Long userId,
                   Long scooterId,
@@ -47,7 +50,10 @@ public class Rental {
         this.startTime = LocalDateTime.now();
         this.endTime = null;
         this.totalCost = BigDecimal.ZERO;
+        this.promoCodeId = null;
+        this.discountAmount = BigDecimal.ZERO;
         this.terminationReason = null;
+        this.distanceKm = 0;
     }
 
     public void assignId(Long id) {
@@ -69,6 +75,30 @@ public class Rental {
                 maxAllowedMinutes,
                 "Максимальное количество минут поездки"
         );
+    }
+
+    public void recordDistance(double distanceKm) {
+        this.distanceKm = requireNonNegativeDistance(
+                distanceKm,
+                "Дистанция поездки"
+        );
+    }
+
+    public void applyPromoCode(Long promoCodeId, BigDecimal discountAmount) {
+        if (status != RentalStatus.ACTIVE) {
+            throw new InvalidRentalStateException(
+                    "Промокод можно применить только к активной аренде"
+            );
+        }
+
+        if (this.promoCodeId != null) {
+            throw new RentalValidationException(
+                    "Промокод уже применён к аренде"
+            );
+        }
+
+        this.promoCodeId = requirePositiveId(promoCodeId, "ID промокода");
+        this.discountAmount = requireNonNegative(discountAmount, "Размер скидки");
     }
 
     public void finish(BigDecimal totalCost, TerminationReason terminationReason) {
@@ -159,9 +189,22 @@ public class Rental {
         return totalCost;
     }
 
+    public Long getPromoCodeId() {
+        return promoCodeId;
+    }
+
+    public BigDecimal getDiscountAmount() {
+        return discountAmount;
+    }
+
     public TerminationReason getTerminationReason() {
         return terminationReason;
     }
+
+    public double getDistanceKm() {
+        return distanceKm;
+    }
+
     private Long requirePositiveId(Long id, String name) {
         if (id == null || id <= 0) {
             throw new RentalValidationException(
@@ -200,6 +243,16 @@ public class Rental {
         if (value == null || value <= 0) {
             throw new RentalValidationException(
                     name + " должно быть положительным"
+            );
+        }
+
+        return value;
+    }
+
+    private double requireNonNegativeDistance(double value, String name) {
+        if (value < 0) {
+            throw new RentalValidationException(
+                    name + " не может быть отрицательной"
             );
         }
 

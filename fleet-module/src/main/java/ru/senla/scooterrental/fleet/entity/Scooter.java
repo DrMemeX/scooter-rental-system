@@ -5,7 +5,6 @@ import ru.senla.scooterrental.fleet.exceptions.FleetValidationException;
 import ru.senla.scooterrental.fleet.exceptions.InvalidRentalPointStateException;
 import ru.senla.scooterrental.fleet.exceptions.InvalidScooterStateException;
 import ru.senla.scooterrental.fleet.exceptions.ScooterUnavailableException;
-import ru.senla.scooterrental.fleet.valueobject.ScooterModel;
 
 public class Scooter {
 
@@ -61,7 +60,12 @@ public class Scooter {
         this.currentRentalPoint = currentRentalPoint;
         this.currentCharge = currentCharge;
 
-        this.status = ScooterStatus.AVAILABLE;
+        if (hasEnoughChargeForRental()) {
+            this.status = ScooterStatus.AVAILABLE;
+        } else {
+            this.status = ScooterStatus.SERVICE_REQUIRED;
+        }
+
         this.totalMileageKm = 0;
     }
 
@@ -168,6 +172,21 @@ public class Scooter {
         status = ScooterStatus.MAINTENANCE;
     }
 
+    public void completeMaintenance() {
+
+        if (status != ScooterStatus.MAINTENANCE) {
+            throw new InvalidScooterStateException(
+                    "Завершить обслуживание можно только для самоката в ремонте"
+            );
+        }
+
+        if (!hasEnoughChargeForRental()) {
+            status = ScooterStatus.SERVICE_REQUIRED;
+        } else {
+            status = ScooterStatus.AVAILABLE;
+        }
+    }
+
     public void markServiceRequired() {
         if (status == ScooterStatus.RENTED) {
             throw new InvalidScooterStateException(
@@ -224,7 +243,7 @@ public class Scooter {
 
         currentCharge = Math.max(0, currentCharge - amount);
 
-        if (currentCharge == 0) {
+        if (currentCharge <= 0) {
             status = ScooterStatus.RETURN_VERIFICATION_REQUIRED;
         }
     }

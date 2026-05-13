@@ -117,6 +117,12 @@ public class LocationNode {
     }
 
     public void activate() {
+        if (parent != null && !parent.isActive()) {
+            throw new FleetValidationException(
+                    "Нельзя активировать локацию внутри неактивной родительской локации"
+            );
+        }
+
         this.active = true;
     }
 

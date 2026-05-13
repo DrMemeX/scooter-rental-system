@@ -18,6 +18,8 @@ public class UserResponse {
     private final UserStatus status;
 
     private final BigDecimal balance;
+    private final LocalDateTime subscriptionPurchasedAt;
+    private final LocalDateTime subscriptionExpiresAt;
     private final boolean verified;
 
     private final LocalDateTime createdAt;
@@ -30,6 +32,8 @@ public class UserResponse {
                         Role role,
                         UserStatus status,
                         BigDecimal balance,
+                        LocalDateTime subscriptionPurchasedAt,
+                        LocalDateTime subscriptionExpiresAt,
                         boolean verified,
                         LocalDateTime createdAt) {
         this.id = id;
@@ -40,6 +44,8 @@ public class UserResponse {
         this.role = role;
         this.status = status;
         this.balance = balance;
+        this.subscriptionPurchasedAt = subscriptionPurchasedAt;
+        this.subscriptionExpiresAt = subscriptionExpiresAt;
         this.verified = verified;
         this.createdAt = createdAt;
     }
@@ -74,6 +80,14 @@ public class UserResponse {
 
     public BigDecimal getBalance() {
         return balance;
+    }
+
+    public LocalDateTime getSubscriptionPurchasedAt() {
+        return subscriptionPurchasedAt;
+    }
+
+    public LocalDateTime getSubscriptionExpiresAt() {
+        return subscriptionExpiresAt;
     }
 
     public boolean isVerified() {
