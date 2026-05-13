@@ -23,7 +23,7 @@ public class RentalPoint {
     @Column(nullable = false, length = 255)
     private String name;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "location_node_id", nullable = false)
     private LocationNode locationNode;
 
