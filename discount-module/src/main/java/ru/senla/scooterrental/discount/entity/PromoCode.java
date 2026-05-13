@@ -1,34 +1,44 @@
 package ru.senla.scooterrental.discount.entity;
 
-import ru.senla.scooterrental.discount.enums.DiscountType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import ru.senla.scooterrental.discount.enums.PromoCodeStatus;
 import ru.senla.scooterrental.discount.exceptions.DiscountValidationException;
 
+import java.math.BigDecimal;
 import java.util.Locale;
 
+@Entity
+@Table(name = "promo_codes")
 public class PromoCode {
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private final String code;
-    private final DiscountType discountType;
+    @Column(nullable = false, unique = true, length = 50)
+    private String code;
 
+    @Column(nullable = false, precision = 5, scale = 2)
+    private BigDecimal percent;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 50)
     private PromoCodeStatus status;
 
-    public PromoCode(String code, DiscountType discountType) {
-        this.code = requireNotBlank(code, "Код промокода").toUpperCase(Locale.ROOT);
-        this.discountType = requireNonNull(discountType, "Тип скидки");
-        this.status = PromoCodeStatus.ACTIVE;
+    protected PromoCode() {
     }
 
-    public void assignId(Long id) {
-        if (this.id != null) {
-            throw new DiscountValidationException(
-                    "ID промокода уже назначен"
-            );
-        }
-
-        this.id = requirePositiveId(id, "ID промокода");
+    public PromoCode(String code, BigDecimal percent) {
+        this.code = requireNotBlank(code, "Код промокода").toUpperCase(Locale.ROOT);
+        this.percent = requireValidPercent(percent);
+        this.status = PromoCodeStatus.ACTIVE;
     }
 
     public void activate() {
@@ -51,8 +61,8 @@ public class PromoCode {
         return code;
     }
 
-    public DiscountType getDiscountType() {
-        return discountType;
+    public BigDecimal getPercent() {
+        return percent;
     }
 
     public PromoCodeStatus getStatus() {
@@ -69,6 +79,24 @@ public class PromoCode {
         return value.trim();
     }
 
+    private BigDecimal requireValidPercent(BigDecimal percent) {
+        requireNonNull(percent, "Процент скидки");
+
+        if (percent.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new DiscountValidationException(
+                    "Процент скидки должен быть положительным"
+            );
+        }
+
+        if (percent.compareTo(BigDecimal.valueOf(15)) > 0) {
+            throw new DiscountValidationException(
+                    "Процент скидки не может быть больше 15"
+            );
+        }
+
+        return percent;
+    }
+
     private <T> T requireNonNull(T obj, String name) {
         if (obj == null) {
             throw new DiscountValidationException(
@@ -77,15 +105,5 @@ public class PromoCode {
         }
 
         return obj;
-    }
-
-    private Long requirePositiveId(Long id, String name) {
-        if (id == null || id <= 0) {
-            throw new DiscountValidationException(
-                    name + " должен быть положительным"
-            );
-        }
-
-        return id;
     }
 }

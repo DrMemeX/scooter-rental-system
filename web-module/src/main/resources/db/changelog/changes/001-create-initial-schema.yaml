@@ -1,0 +1,569 @@
+databaseChangeLog:
+  - changeSet:
+      id: 001-create-initial-schema
+      author: DrMemeX
+
+      changes:
+        - createTable:
+            tableName: users
+            columns:
+
+              - column:
+                  name: id
+                  type: bigserial
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+
+              - column:
+                  name: email
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+                    unique: true
+
+              - column:
+                  name: password
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: first_name
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: last_name
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: phone
+                  type: varchar(50)
+                  constraints:
+                    nullable: false
+                    unique: true
+
+              - column:
+                  name: role
+                  type: varchar(20)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: status
+                  type: varchar(20)
+                  defaultValue: ACTIVE
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: balance
+                  type: numeric(10,2)
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: subscription_purchased_at
+                  type: timestamp
+
+              - column:
+                  name: subscription_expires_at
+                  type: timestamp
+
+              - column:
+                  name: verified
+                  type: boolean
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: created_at
+                  type: timestamp
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+
+        - sql:
+            sql: ALTER TABLE users ADD CONSTRAINT chk_users_role_allowed CHECK (role IN ('USER', 'ADMIN'));
+
+        - sql:
+            sql: ALTER TABLE users ADD CONSTRAINT chk_users_status_allowed CHECK (status IN ('ACTIVE', 'BLOCKED'));
+
+        - sql:
+            sql: ALTER TABLE users ADD CONSTRAINT chk_users_balance_non_negative CHECK (balance >= 0);
+
+        - createTable:
+            tableName: promo_codes
+            columns:
+
+              - column:
+                  name: id
+                  type: bigserial
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+
+              - column:
+                  name: code
+                  type: varchar(50)
+                  constraints:
+                    nullable: false
+                    unique: true
+
+              - column:
+                  name: percent
+                  type: numeric(5,2)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: status
+                  type: varchar(30)
+                  defaultValue: ACTIVE
+                  constraints:
+                    nullable: false
+
+        - sql:
+            sql: ALTER TABLE promo_codes ADD CONSTRAINT chk_promo_codes_percent_range CHECK (percent > 0 AND percent <= 15);
+
+        - sql:
+            sql: ALTER TABLE promo_codes ADD CONSTRAINT chk_promo_codes_status_allowed CHECK (status IN ('ACTIVE', 'INACTIVE'));
+
+        - createTable:
+            tableName: scooter_models
+            columns:
+
+              - column:
+                  name: id
+                  type: bigserial
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+
+              - column:
+                  name: scooter_class
+                  type: varchar(30)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: max_speed_km_per_hour
+                  type: numeric(5,2)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: consumption_per_km
+                  type: numeric(5,2)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: price_per_minute
+                  type: numeric(10,2)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: price_per_hour
+                  type: numeric(10,2)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: battery_capacity
+                  type: integer
+                  constraints:
+                    nullable: false
+
+        - sql:
+            sql: ALTER TABLE scooter_models ADD CONSTRAINT chk_scooter_models_max_speed_positive CHECK (max_speed_km_per_hour > 0);
+
+        - sql:
+            sql: ALTER TABLE scooter_models ADD CONSTRAINT chk_scooter_models_consumption_positive CHECK (consumption_per_km > 0);
+
+        - sql:
+            sql: ALTER TABLE scooter_models ADD CONSTRAINT chk_scooter_models_price_per_minute_non_negative CHECK (price_per_minute >= 0);
+
+        - sql:
+            sql: ALTER TABLE scooter_models ADD CONSTRAINT chk_scooter_models_price_per_hour_non_negative CHECK (price_per_hour >= 0);
+
+        - sql:
+            sql: ALTER TABLE scooter_models ADD CONSTRAINT chk_scooter_models_battery_capacity_positive CHECK (battery_capacity > 0);
+
+        - sql:
+            sql: ALTER TABLE scooter_models ADD CONSTRAINT chk_scooter_models_class_allowed CHECK (scooter_class IN ('SLOW', 'BASIC', 'SPEEDY'));
+
+        - createTable:
+            tableName: location_nodes
+            columns:
+
+              - column:
+                  name: id
+                  type: bigserial
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+
+              - column:
+                  name: name
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: type
+                  type: varchar(30)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: parent_id
+                  type: bigint
+
+              - column:
+                  name: active
+                  type: boolean
+                  defaultValueBoolean: true
+                  constraints:
+                    nullable: false
+
+        - sql:
+            sql: ALTER TABLE location_nodes ADD CONSTRAINT chk_location_nodes_type_allowed CHECK (type IN ('CITY', 'DISTRICT', 'RENTAL_POINT'));
+
+        - createTable:
+            tableName: rental_points
+            columns:
+
+              - column:
+                  name: id
+                  type: bigserial
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+
+              - column:
+                  name: name
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: location_node_id
+                  type: bigint
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: active
+                  type: boolean
+                  defaultValueBoolean: true
+                  constraints:
+                    nullable: false
+
+        - createTable:
+            tableName: scooters
+            columns:
+
+              - column:
+                  name: id
+                  type: bigserial
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+
+              - column:
+                  name: model_id
+                  type: bigint
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: rental_point_id
+                  type: bigint
+
+              - column:
+                  name: status
+                  type: varchar(40)
+                  defaultValue: AVAILABLE
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: current_charge
+                  type: numeric(10,2)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: total_mileage_km
+                  type: numeric(10,2)
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+
+        - sql:
+            sql: ALTER TABLE scooters ADD CONSTRAINT chk_scooters_current_charge_non_negative CHECK (current_charge >= 0);
+
+        - sql:
+            sql: ALTER TABLE scooters ADD CONSTRAINT chk_scooters_total_mileage_non_negative CHECK (total_mileage_km >= 0);
+
+        - sql:
+            sql: ALTER TABLE scooters ADD CONSTRAINT chk_scooters_status_allowed CHECK (status IN ('AVAILABLE', 'RENTED', 'SERVICE_REQUIRED', 'MAINTENANCE', 'RETURN_VERIFICATION_REQUIRED'));
+
+        - createTable:
+            tableName: rentals
+            columns:
+
+              - column:
+                  name: id
+                  type: bigserial
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+
+              - column:
+                  name: user_id
+                  type: bigint
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: scooter_id
+                  type: bigint
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: status
+                  type: varchar(40)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: start_time
+                  type: timestamp
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: end_time
+                  type: timestamp
+
+              - column:
+                  name: tariff_type
+                  type: varchar(20)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: planned_hours
+                  type: integer
+
+              - column:
+                  name: max_allowed_minutes
+                  type: integer
+
+              - column:
+                  name: total_cost
+                  type: numeric(10,2)
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: promo_code_id
+                  type: bigint
+
+              - column:
+                  name: discount_amount
+                  type: numeric(10,2)
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: termination_reason
+                  type: varchar(40)
+
+              - column:
+                  name: distance_km
+                  type: numeric(10,2)
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+
+        - sql:
+            sql: ALTER TABLE rentals ADD CONSTRAINT chk_rentals_planned_hours_positive CHECK (planned_hours IS NULL OR planned_hours > 0);
+
+        - sql:
+            sql: ALTER TABLE rentals ADD CONSTRAINT chk_rentals_max_allowed_minutes_positive CHECK (max_allowed_minutes IS NULL OR max_allowed_minutes > 0);
+
+        - sql:
+            sql: ALTER TABLE rentals ADD CONSTRAINT chk_rentals_total_cost_non_negative CHECK (total_cost >= 0);
+
+        - sql:
+            sql: ALTER TABLE rentals ADD CONSTRAINT chk_rentals_discount_amount_non_negative CHECK (discount_amount >= 0);
+
+        - sql:
+            sql: ALTER TABLE rentals ADD CONSTRAINT chk_rentals_distance_non_negative CHECK (distance_km >= 0);
+
+        - sql:
+            sql: ALTER TABLE rentals ADD CONSTRAINT chk_rentals_status_allowed CHECK (status IN ('ACTIVE', 'FINISHED', 'PENDING_MANAGER_CONFIRMATION'));
+
+        - sql:
+            sql: ALTER TABLE rentals ADD CONSTRAINT chk_rentals_tariff_type_allowed CHECK (tariff_type IN ('MINUTE', 'HOUR', 'SUBSCRIPTION'));
+
+        - sql:
+            sql: ALTER TABLE rentals ADD CONSTRAINT chk_rentals_termination_reason_allowed CHECK (termination_reason IS NULL OR termination_reason IN ('USER_FINISHED', 'BATTERY_DEPLETED', 'TECHNICAL_BREAKDOWN', 'USER_DAMAGE', 'MANAGER_CONFIRMED_RETURN'));
+
+        - createTable:
+            tableName: scooter_service_events
+            columns:
+
+              - column:
+                  name: id
+                  type: bigserial
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+
+              - column:
+                  name: scooter_id
+                  type: bigint
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: type
+                  type: varchar(40)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: description
+                  type: text
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: created_at
+                  type: timestamp
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+
+        - sql:
+            sql: ALTER TABLE scooter_service_events ADD CONSTRAINT chk_service_events_type_allowed CHECK (type IN ('TECHNICAL_BREAKDOWN', 'USER_DAMAGE', 'SENT_TO_MAINTENANCE', 'MAINTENANCE_COMPLETED', 'CHARGED', 'SERVICE_REQUIRED'));
+
+        - addForeignKeyConstraint:
+            constraintName: fk_location_nodes_parent
+            baseTableName: location_nodes
+            baseColumnNames: parent_id
+            referencedTableName: location_nodes
+            referencedColumnNames: id
+
+        - addForeignKeyConstraint:
+            constraintName: fk_rental_points_location_node
+            baseTableName: rental_points
+            baseColumnNames: location_node_id
+            referencedTableName: location_nodes
+            referencedColumnNames: id
+
+        - addForeignKeyConstraint:
+            constraintName: fk_scooters_model
+            baseTableName: scooters
+            baseColumnNames: model_id
+            referencedTableName: scooter_models
+            referencedColumnNames: id
+
+        - addForeignKeyConstraint:
+            constraintName: fk_scooters_rental_point
+            baseTableName: scooters
+            baseColumnNames: rental_point_id
+            referencedTableName: rental_points
+            referencedColumnNames: id
+
+        - addForeignKeyConstraint:
+            constraintName: fk_rentals_user
+            baseTableName: rentals
+            baseColumnNames: user_id
+            referencedTableName: users
+            referencedColumnNames: id
+
+        - addForeignKeyConstraint:
+            constraintName: fk_rentals_scooter
+            baseTableName: rentals
+            baseColumnNames: scooter_id
+            referencedTableName: scooters
+            referencedColumnNames: id
+
+        - addForeignKeyConstraint:
+            constraintName: fk_rentals_promo_code
+            baseTableName: rentals
+            baseColumnNames: promo_code_id
+            referencedTableName: promo_codes
+            referencedColumnNames: id
+
+        - addForeignKeyConstraint:
+            constraintName: fk_service_events_scooter
+            baseTableName: scooter_service_events
+            baseColumnNames: scooter_id
+            referencedTableName: scooters
+            referencedColumnNames: id
+
+        - createIndex:
+            tableName: rentals
+            indexName: idx_rentals_user_id
+            columns:
+              - column:
+                  name: user_id
+
+        - createIndex:
+            tableName: rentals
+            indexName: idx_rentals_scooter_id
+            columns:
+              - column:
+                  name: scooter_id
+
+        - createIndex:
+            tableName: rentals
+            indexName: idx_rentals_status
+            columns:
+              - column:
+                  name: status
+
+        - createIndex:
+            tableName: scooters
+            indexName: idx_scooters_rental_point_id
+            columns:
+              - column:
+                  name: rental_point_id
+
+        - createIndex:
+            tableName: scooters
+            indexName: idx_scooters_status
+            columns:
+              - column:
+                  name: status
+
+        - createIndex:
+            tableName: scooter_service_events
+            indexName: idx_service_events_scooter_id
+            columns:
+              - column:
+                  name: scooter_id
+
+        - createIndex:
+            tableName: promo_codes
+            indexName: idx_promo_codes_status
+            columns:
+              - column:
+                  name: status

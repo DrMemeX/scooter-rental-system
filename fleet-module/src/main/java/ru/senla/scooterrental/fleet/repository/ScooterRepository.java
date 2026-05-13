@@ -13,4 +13,6 @@ public interface ScooterRepository extends CrudRepository<Scooter, Long> {
     List<Scooter> findAllAvailable();
 
     List<Scooter> findAllByRentalPointId(Long rentalPointId);
+
+    List<Scooter> findAllByModelId(Long modelId);
 }

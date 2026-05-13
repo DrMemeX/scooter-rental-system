@@ -1,5 +1,9 @@
 package ru.senla.scooterrental.rental.service;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.senla.scooterrental.discount.service.DiscountService;
 import ru.senla.scooterrental.fleet.entity.Scooter;
 import ru.senla.scooterrental.fleet.service.FleetService;
@@ -18,7 +22,12 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 
+@Service
+@Transactional
 public class RentalService {
+
+    private static final Logger log =
+            LoggerFactory.getLogger(RentalService.class);
 
     private final RentalRepository rentalRepository;
     private final FleetService fleetService;
@@ -43,6 +52,13 @@ public class RentalService {
                               Long scooterId,
                               TariffType tariffType,
                               Integer plannedHours) {
+
+        log.info(
+                "Starting rental: userId={}, scooterId={}, tariffType={}",
+                userId,
+                scooterId,
+                tariffType
+        );
 
         validatePositiveId(userId, "ID пользователя");
         validatePositiveId(scooterId, "ID самоката");
@@ -74,13 +90,22 @@ public class RentalService {
 
         fleetService.rentScooter(scooterId);
 
-        Rental rental = new Rental(userId, scooterId, tariffType, plannedHours);
+        Rental rental = new Rental(user, scooter, tariffType, plannedHours);
 
         if (tariffType == TariffType.MINUTE) {
             rental.setMaxAllowedMinutes(maxAllowedMinutes);
         }
 
-        return rentalRepository.save(rental);
+        Rental savedRental = rentalRepository.save(rental);
+
+        log.info(
+                "Rental started successfully: rentalId={}, userId={}, scooterId={}",
+                savedRental.getId(),
+                userId,
+                scooterId
+        );
+
+        return savedRental;
     }
 
     public Rental startRental(Long userId,
@@ -175,6 +200,13 @@ public class RentalService {
                                         String promoCode,
                                         TerminationReason reason) {
 
+        log.info(
+                "Finishing rental: rentalId={}, rentalPointId={}, reason={}",
+                rentalId,
+                rentalPointId,
+                reason
+        );
+
         Rental rental = getRentalOrThrow(rentalId);
         Scooter scooter = fleetService.getScooterById(rental.getScooterId());
 
@@ -184,6 +216,9 @@ public class RentalService {
         validateRideDistance(scooter, distanceKm, actualMinutes);
 
         BigDecimal totalCost = pricingService.calculate(rental, scooter);
+
+        validatePromoCodeNotUsedByUser(rental.getUserId(), promoCode);
+
         BigDecimal finalCost = discountService.applyDiscount(totalCost, promoCode);
 
         if (distanceKm > 0) {
@@ -200,23 +235,47 @@ public class RentalService {
         rental.recordDistance(distanceKm);
         rental.finish(finalCost, reason);
 
-        return rentalRepository.save(rental);
+        Rental savedRental = rentalRepository.save(rental);
+
+        log.info(
+                "Rental finished successfully: rentalId={}, totalCost={}, reason={}",
+                savedRental.getId(),
+                finalCost,
+                reason
+        );
+
+        return savedRental;
     }
 
     public Rental requestManualFinish(Long rentalId) {
+        log.info("Requesting manual finish: rentalId={}", rentalId);
+
         Rental rental = getRentalOrThrow(rentalId);
 
         fleetService.requestReturnVerification(rental.getScooterId());
 
         rental.requestManualFinish();
 
-        return rentalRepository.save(rental);
+        Rental savedRental = rentalRepository.save(rental);
+
+        log.info(
+                "Manual finish requested successfully: rentalId={}",
+                savedRental.getId()
+        );
+
+        return savedRental;
     }
 
     public Rental approveManualFinish(Long rentalId,
                                       Long rentalPointId,
                                       double distanceKm,
                                       String promoCode) {
+
+        log.info(
+                "Approving manual finish: rentalId={}, rentalPointId={}",
+                rentalId,
+                rentalPointId
+        );
 
         Rental rental = getRentalOrThrow(rentalId);
         Scooter scooter = fleetService.getScooterById(rental.getScooterId());
@@ -227,6 +286,9 @@ public class RentalService {
         validateRideDistance(scooter, distanceKm, actualMinutes);
 
         BigDecimal totalCost = pricingService.calculate(rental, scooter);
+
+        validatePromoCodeNotUsedByUser(rental.getUserId(), promoCode);
+
         BigDecimal finalCost = discountService.applyDiscount(totalCost, promoCode);
 
         if (distanceKm > 0) {
@@ -246,7 +308,15 @@ public class RentalService {
                 TerminationReason.MANAGER_CONFIRMED_RETURN
         );
 
-        return rentalRepository.save(rental);
+        Rental savedRental = rentalRepository.save(rental);
+
+        log.info(
+                "Manual finish approved successfully: rentalId={}, totalCost={}",
+                savedRental.getId(),
+                finalCost
+        );
+
+        return savedRental;
     }
 
     public Rental approveManualFinish(Long rentalId,
@@ -259,6 +329,7 @@ public class RentalService {
         return approveManualFinish(rentalId, rentalPointId, 0, null);
     }
 
+    @Transactional(readOnly = true)
     public Rental getRentalOrThrow(Long rentalId) {
         validatePositiveId(rentalId, "ID аренды");
 
@@ -268,14 +339,17 @@ public class RentalService {
                 ));
     }
 
+    @Transactional(readOnly = true)
     public List<Rental> getAllRentals() {
         return rentalRepository.findAll();
     }
 
+    @Transactional(readOnly = true)
     public List<Rental> getRentalsByUserId(Long userId) {
         return rentalRepository.findByUserId(userId);
     }
 
+    @Transactional(readOnly = true)
     public List<Rental> getRentalsByScooterId(Long scooterId) {
         return rentalRepository.findByScooterId(scooterId);
     }
@@ -329,6 +403,23 @@ public class RentalService {
             }
 
             return;
+        }
+    }
+
+    private void validatePromoCodeNotUsedByUser(Long userId, String promoCode) {
+        if (promoCode == null || promoCode.isBlank()) {
+            return;
+        }
+
+        boolean alreadyUsed = rentalRepository.existsByUserIdAndPromoCodeCode(
+                userId,
+                promoCode
+        );
+
+        if (alreadyUsed) {
+            throw new RentalValidationException(
+                    "Пользователь уже использовал данный промокод"
+            );
         }
     }
 

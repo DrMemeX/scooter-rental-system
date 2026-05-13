@@ -1,6 +1,8 @@
 package ru.senla.scooterrental.rental.exceptions;
 
-public class RentalNotFoundException extends RuntimeException {
+import ru.senla.scooterrental.common.exception.NotFoundException;
+
+public class RentalNotFoundException extends NotFoundException {
 
     public RentalNotFoundException(String message) {
         super(message);

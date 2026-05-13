@@ -1,47 +1,97 @@
 package ru.senla.scooterrental.rental.entity;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import ru.senla.scooterrental.discount.entity.PromoCode;
+import ru.senla.scooterrental.fleet.entity.Scooter;
 import ru.senla.scooterrental.rental.enums.RentalStatus;
 import ru.senla.scooterrental.rental.enums.TariffType;
 import ru.senla.scooterrental.rental.enums.TerminationReason;
 import ru.senla.scooterrental.rental.exceptions.InvalidRentalStateException;
 import ru.senla.scooterrental.rental.exceptions.RentalValidationException;
+import ru.senla.scooterrental.user.entity.User;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+@Entity
+@Table(name = "rentals")
 public class Rental {
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private final Long userId;
-    private final Long scooterId;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "scooter_id", nullable = false)
+    private Scooter scooter;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 50)
     private RentalStatus status;
 
-    private final LocalDateTime startTime;
+    @Column(name = "start_time", nullable = false, updatable = false)
+    private LocalDateTime startTime;
+
+    @Column(name = "end_time")
     private LocalDateTime endTime;
 
-    private final TariffType tariffType;
-    private final Integer plannedHours;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "tariff_type", nullable = false, length = 50)
+    private TariffType tariffType;
+
+    @Column(name = "planned_hours")
+    private Integer plannedHours;
+
+    @Column(name = "max_allowed_minutes")
     private Integer maxAllowedMinutes;
 
+    @Column(name = "total_cost", nullable = false, precision = 10, scale = 2)
     private BigDecimal totalCost;
-    private Long promoCodeId;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "promo_code_id")
+    private PromoCode promoCode;
+
+    @Column(name = "discount_amount", nullable = false, precision = 10, scale = 2)
     private BigDecimal discountAmount;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "termination_reason", length = 50)
     private TerminationReason terminationReason;
+
+    @Column(name = "distance_km", nullable = false)
     private double distanceKm;
 
-    public Rental(Long userId,
-                  Long scooterId,
+    protected Rental() { }
+
+    public Rental(User user,
+                  Scooter scooter,
                   TariffType tariffType,
                   Integer plannedHours) {
 
-        this.userId = requirePositiveId(userId, "ID пользователя");
-        this.scooterId = requirePositiveId(scooterId, "ID самоката");
+        this.user = requireNonNull(user, "Пользователь");
+        this.scooter = requireNonNull(scooter, "Самокат");
         this.tariffType = requireNonNull(tariffType, "Тип тарифа");
 
         if (tariffType == TariffType.HOUR) {
-            this.plannedHours = requirePositiveInteger(plannedHours, "Количество часов");
+            this.plannedHours = requirePositiveInteger(
+                    plannedHours,
+                    "Количество часов"
+            );
         } else {
             this.plannedHours = null;
         }
@@ -49,19 +99,12 @@ public class Rental {
         this.status = RentalStatus.ACTIVE;
         this.startTime = LocalDateTime.now();
         this.endTime = null;
+        this.maxAllowedMinutes = null;
         this.totalCost = BigDecimal.ZERO;
-        this.promoCodeId = null;
+        this.promoCode = null;
         this.discountAmount = BigDecimal.ZERO;
         this.terminationReason = null;
         this.distanceKm = 0;
-    }
-
-    public void assignId(Long id) {
-        if (this.id != null) {
-            throw new RentalValidationException("ID аренды уже назначен");
-        }
-
-        this.id = requirePositiveId(id, "ID аренды");
     }
 
     public void setMaxAllowedMinutes(Integer maxAllowedMinutes) {
@@ -84,20 +127,20 @@ public class Rental {
         );
     }
 
-    public void applyPromoCode(Long promoCodeId, BigDecimal discountAmount) {
+    public void applyPromoCode(PromoCode promoCode, BigDecimal discountAmount) {
         if (status != RentalStatus.ACTIVE) {
             throw new InvalidRentalStateException(
                     "Промокод можно применить только к активной аренде"
             );
         }
 
-        if (this.promoCodeId != null) {
+        if (this.promoCode != null) {
             throw new RentalValidationException(
                     "Промокод уже применён к аренде"
             );
         }
 
-        this.promoCodeId = requirePositiveId(promoCodeId, "ID промокода");
+        this.promoCode = requireNonNull(promoCode, "Промокод");
         this.discountAmount = requireNonNegative(discountAmount, "Размер скидки");
     }
 
@@ -109,7 +152,10 @@ public class Rental {
         }
 
         this.totalCost = requireNonNegative(totalCost, "Итоговая стоимость аренды");
-        this.terminationReason = requireNonNull(terminationReason, "Причина завершения аренды");
+        this.terminationReason = requireNonNull(
+                terminationReason,
+                "Причина завершения аренды"
+        );
         this.status = RentalStatus.FINISHED;
         this.endTime = LocalDateTime.now();
     }
@@ -124,7 +170,8 @@ public class Rental {
         this.status = RentalStatus.PENDING_MANAGER_CONFIRMATION;
     }
 
-    public void approveManualFinish(BigDecimal totalCost, TerminationReason terminationReason) {
+    public void approveManualFinish(BigDecimal totalCost,
+                                    TerminationReason terminationReason) {
         if (status != RentalStatus.PENDING_MANAGER_CONFIRMATION) {
             throw new InvalidRentalStateException(
                     "Подтвердить ручное завершение можно только для аренды, ожидающей проверки менеджера"
@@ -132,7 +179,10 @@ public class Rental {
         }
 
         this.totalCost = requireNonNegative(totalCost, "Итоговая стоимость аренды");
-        this.terminationReason = requireNonNull(terminationReason, "Причина завершения аренды");
+        this.terminationReason = requireNonNull(
+                terminationReason,
+                "Причина завершения аренды"
+        );
         this.status = RentalStatus.FINISHED;
         this.endTime = LocalDateTime.now();
     }
@@ -153,12 +203,20 @@ public class Rental {
         return id;
     }
 
+    public User getUser() {
+        return user;
+    }
+
     public Long getUserId() {
-        return userId;
+        return user.getId();
+    }
+
+    public Scooter getScooter() {
+        return scooter;
     }
 
     public Long getScooterId() {
-        return scooterId;
+        return scooter.getId();
     }
 
     public RentalStatus getStatus() {
@@ -189,8 +247,16 @@ public class Rental {
         return totalCost;
     }
 
+    public PromoCode getPromoCode() {
+        return promoCode;
+    }
+
     public Long getPromoCodeId() {
-        return promoCodeId;
+        if (promoCode == null) {
+            return null;
+        }
+
+        return promoCode.getId();
     }
 
     public BigDecimal getDiscountAmount() {
@@ -205,21 +271,13 @@ public class Rental {
         return distanceKm;
     }
 
-    private Long requirePositiveId(Long id, String name) {
-        if (id == null || id <= 0) {
-            throw new RentalValidationException(
-                    name + " должен быть положительным"
-            );
-        }
-        return id;
-    }
-
     private <T> T requireNonNull(T obj, String name) {
         if (obj == null) {
             throw new RentalValidationException(
                     name + " не задан"
             );
         }
+
         return obj;
     }
 
