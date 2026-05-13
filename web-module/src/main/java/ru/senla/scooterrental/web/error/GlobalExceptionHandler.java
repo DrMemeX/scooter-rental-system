@@ -132,7 +132,6 @@ public class GlobalExceptionHandler {
             Exception ex,
             HttpServletRequest request
     ) {
-        
         return build(
                 HttpStatus.INTERNAL_SERVER_ERROR,
                 "Внутренняя ошибка сервера",
