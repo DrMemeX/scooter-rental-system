@@ -6,12 +6,12 @@
 
 ## Table of Contents
 
+* [Technologies](#technologies)
 * [1. Overview](#1-overview)
 * [2. Roles](#2-roles)
 * [3. Domain Model](#3-domain-model)
 * [4. Scooter Classes](#4-scooter-classes)
 * [5. Business Rules](#5-business-rules)
-
     * [5.1 Distance Validation](#51-distance-validation)
     * [5.2 Battery](#52-battery)
     * [5.3 Pricing](#53-pricing)
@@ -30,8 +30,23 @@
 * [12. State Transitions](#12-state-transitions)
 * [13. Configuration Rules](#13-configuration-rules)
 * [14. Out of Scope](#14-out-of-scope)
+* [15. Run Application](#15-run-application)
 
 ---
+
+## Technologies
+
+* Java 17
+* Spring Boot
+* Spring Security
+* PostgreSQL
+* Liquibase
+* Docker
+* Maven
+* JUnit 5
+* Mockito
+* MockMvc
+* SLF4J + Logback
 
 ## 1. Overview
 
@@ -56,7 +71,7 @@
 * указывает точку возврата при штатном завершении аренды
 * инициирует ручное завершение аренды (если не может завершить её штатно в допустимой точке возврата)
 
-### 🛠 MANAGER
+### 🛠 ADMIN
 
 * создаёт, редактирует и деактивирует точки проката
 * просматривает состав самокатов по точкам
@@ -74,11 +89,12 @@
 
 * `User`
 * `ScooterModel`
-* `RentalPoint`
 * `Scooter`
-* `PromoCode`
+* `RentalPoint`
 * `Rental`
+* `PromoCode`
 * `ScooterServiceEvent`
+* `LocationNode`
 
 ---
 
@@ -150,7 +166,7 @@ total = plannedHours × pricePerHour
 #### Скидка
 
 Скидка по почасовому тарифу применяется через уникальный promo code.
-Доступны скидки: 5%, 10%, 15%.
+Доступны скидки от 1% до 15%.
 Код проверяется при старте аренды и фиксируется в истории аренды.
 
 ### 5.4 Battery Depletion (Hourly)
@@ -289,7 +305,7 @@ if currentCharge < 20 → rental forbidden
 ### Шаг 1 — USER
 
 ```text
-POST /rentals/{id}/request-manual-finish
+POST /{rentalId}/manual-finish
 ```
 
 Система:
@@ -309,10 +325,10 @@ Scooter → RETURN_VERIFICATION_REQUIRED
 
 ---
 
-### Шаг 2 — MANAGER (approve / reject)
+### Шаг 2 — ADMIN (approve / reject)
 
 ```text
-POST /manager/rentals/{id}/confirm-manual-finish
+POST /{rentalId}/approve-manual-finish
 ```
 
 Менеджер может:
@@ -418,16 +434,12 @@ status → MAINTENANCE
 Основное приложение реализуется как модульный монолит:
 
 * `common-module`
-* `security-module`
-* `auth-module`
-* `user-module`
-* `fleet-module`
-* `rental-module`
 * `discount-module`
+* `fleet-module`
 * `maintenance-module`
-* `outbox-module`
-
-Дополнительно используется `notification-service` как внешний микросервис для демонстрации распределённого взаимодействия.
+* `rental-module`
+* `user-module`
+* `web-module`
 
 ---
 
@@ -476,7 +488,36 @@ status → MAINTENANCE
 
 * построение реальных карт и геозон
 * автоматическое определение координат самоката
-* автоматическая зарядка без участия менеджера
+* автоматическая зарядка без участия админа
 * динамическое ценообразование
 ---
 
+## 15. Run Application
+
+Для запуска проекта можно использовать готовые скрипты:
+
+```bash
+run.bat
+run.sh
+```
+
+Скрипты выполняют следующие шаги:
+
+1. запускает PostgreSQL через Docker Compose;
+2. ждёт инициализации базы данных;
+3. собирает проект через Maven;
+4. запускает Spring Boot application из web-module.
+
+---
+
+Альтернативный ручной запуск:
+
+docker compose up -d
+mvn clean install -DskipTests
+mvn spring-boot:run -pl web-module
+---
+
+После запуска приложение доступно по адресу:
+
+http://localhost:8080
+http://127.0.0.1:8080
