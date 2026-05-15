@@ -25,10 +25,7 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -207,6 +204,51 @@ class FleetServiceTest {
                 "Точка проката с ID 1 недоступна",
                 exception.getMessage()
         );
+    }
+
+    @Test
+    void activateRentalPoint_shouldActivateRentalPointSuccessfully() {
+        rentalPoint.deactivate();
+
+        when(rentalPointRepository.findById(1L))
+                .thenReturn(Optional.of(rentalPoint));
+
+        when(rentalPointRepository.save(rentalPoint))
+                .thenReturn(rentalPoint);
+
+        RentalPoint result = fleetService.activateRentalPoint(1L);
+
+        assertTrue(result.isActive());
+
+        verify(rentalPointRepository).save(rentalPoint);
+    }
+
+    @Test
+    void deactivateRentalPoint_shouldDeactivateRentalPointSuccessfully() {
+        when(rentalPointRepository.findById(1L))
+                .thenReturn(Optional.of(rentalPoint));
+
+        when(rentalPointRepository.save(rentalPoint))
+                .thenReturn(rentalPoint);
+
+        RentalPoint result = fleetService.deactivateRentalPoint(1L);
+
+        assertFalse(result.isActive());
+
+        verify(rentalPointRepository).save(rentalPoint);
+    }
+
+    @Test
+    void deleteRentalPoint_shouldDeleteSuccessfully_whenNoScootersExist() {
+        when(rentalPointRepository.findById(1L))
+                .thenReturn(Optional.of(rentalPoint));
+
+        when(scooterRepository.findAllByRentalPointId(1L))
+                .thenReturn(List.of());
+
+        fleetService.deleteRentalPoint(1L);
+
+        verify(rentalPointRepository).deleteById(1L);
     }
 
     @Test
@@ -419,6 +461,40 @@ class FleetServiceTest {
     }
 
     @Test
+    void consumeCharge_shouldDecreaseChargeSuccessfully() {
+        scooter.markAsRented();
+
+        when(scooterRepository.findById(1L))
+                .thenReturn(Optional.of(scooter));
+
+        when(scooterRepository.save(scooter))
+                .thenReturn(scooter);
+
+        Scooter result = fleetService.consumeCharge(1L, 20);
+
+        assertEquals(80.0, result.getCurrentCharge());
+
+        verify(scooterRepository).save(scooter);
+    }
+
+    @Test
+    void addMileage_shouldIncreaseMileageSuccessfully() {
+        scooter.markAsRented();
+
+        when(scooterRepository.findById(1L))
+                .thenReturn(Optional.of(scooter));
+
+        when(scooterRepository.save(scooter))
+                .thenReturn(scooter);
+
+        Scooter result = fleetService.addMileage(1L, 15);
+
+        assertEquals(15.0, result.getTotalMileageKm());
+
+        verify(scooterRepository).save(scooter);
+    }
+
+    @Test
     void chargeScooter_shouldThrowException_whenAmountIsNegative() {
         when(scooterRepository.findById(1L))
                 .thenReturn(Optional.of(scooter));
@@ -454,26 +530,6 @@ class FleetServiceTest {
         );
 
         verify(scooterRepository).save(scooter);
-    }
-
-    @Test
-    void deleteScooter_shouldThrowException_whenScooterIsRented() {
-        scooter.markAsRented();
-
-        when(scooterRepository.findById(1L))
-                .thenReturn(Optional.of(scooter));
-
-        FleetValidationException exception = assertThrows(
-                FleetValidationException.class,
-                () -> fleetService.deleteScooter(1L)
-        );
-
-        assertEquals(
-                "Нельзя удалить самокат, участвующий в активной аренде",
-                exception.getMessage()
-        );
-
-        verify(scooterRepository, never()).deleteById(1L);
     }
 
     @Test
@@ -513,6 +569,53 @@ class FleetServiceTest {
                 "Самокат с ID 99 не найден",
                 exception.getMessage()
         );
+    }
+
+    @Test
+    void deleteScooter_shouldDeleteSuccessfully() {
+        when(scooterRepository.findById(1L))
+                .thenReturn(Optional.of(scooter));
+
+        fleetService.deleteScooter(1L);
+
+        verify(scooterRepository).deleteById(1L);
+    }
+
+    @Test
+    void deleteScooter_shouldThrowException_whenScooterIsRented() {
+        scooter.markAsRented();
+
+        when(scooterRepository.findById(1L))
+                .thenReturn(Optional.of(scooter));
+
+        FleetValidationException exception = assertThrows(
+                FleetValidationException.class,
+                () -> fleetService.deleteScooter(1L)
+        );
+
+        assertEquals(
+                "Нельзя удалить самокат, участвующий в активной аренде",
+                exception.getMessage()
+        );
+
+        verify(scooterRepository, never()).deleteById(1L);
+    }
+
+    @Test
+    void activateLocation_shouldActivateLocationSuccessfully() {
+        city.deactivate();
+
+        when(locationNodeRepository.findById(1L))
+                .thenReturn(Optional.of(city));
+
+        when(locationNodeRepository.save(city))
+                .thenReturn(city);
+
+        LocationNode result = fleetService.activateLocation(1L);
+
+        assertTrue(result.isActive());
+
+        verify(locationNodeRepository).save(city);
     }
 
     @Test

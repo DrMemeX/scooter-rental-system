@@ -7,6 +7,7 @@ import ru.senla.scooterrental.fleet.entity.Scooter;
 import ru.senla.scooterrental.fleet.entity.ScooterModel;
 import ru.senla.scooterrental.rental.entity.Rental;
 import ru.senla.scooterrental.rental.enums.TariffType;
+import ru.senla.scooterrental.rental.enums.TerminationReason;
 import ru.senla.scooterrental.rental.exceptions.RentalValidationException;
 import ru.senla.scooterrental.user.entity.User;
 
@@ -146,5 +147,69 @@ class PricingServiceTest {
                 RentalValidationException.class,
                 () -> pricingService.calculate(rental, scooter)
         );
+    }
+
+    @Test
+    void calculate_shouldCalculateBatteryDepletedHourPrice() {
+        Rental rental = new Rental(user, scooter, TariffType.HOUR, 3);
+
+        ReflectionTestUtils.setField(
+                rental,
+                "startTime",
+                LocalDateTime.now().minusMinutes(80)
+        );
+
+        when(scooterModel.getPricePerHour()).thenReturn(BigDecimal.valueOf(600));
+
+        BigDecimal result = pricingService.calculate(
+                rental,
+                scooter,
+                TerminationReason.BATTERY_DEPLETED
+        );
+
+        assertEquals(BigDecimal.valueOf(800.00).setScale(2), result);
+    }
+
+    @Test
+    void calculate_shouldApplyOvertime_whenBatteryDepletedAfterPlannedHours() {
+        Rental rental = new Rental(user, scooter, TariffType.HOUR, 2);
+
+        ReflectionTestUtils.setField(
+                rental,
+                "startTime",
+                LocalDateTime.now().minusMinutes(210)
+        );
+
+        when(scooterModel.getPricePerHour()).thenReturn(BigDecimal.valueOf(600));
+        when(scooterModel.getPricePerMinute()).thenReturn(BigDecimal.valueOf(12));
+
+        BigDecimal result = pricingService.calculate(
+                rental,
+                scooter,
+                TerminationReason.BATTERY_DEPLETED
+        );
+
+        assertEquals(BigDecimal.valueOf(2280), result);
+    }
+
+    @Test
+    void calculate_shouldUseFullPackagePrice_whenHourRentalFinishedByUserInsidePlannedHours() {
+        Rental rental = new Rental(user, scooter, TariffType.HOUR, 2);
+
+        ReflectionTestUtils.setField(
+                rental,
+                "startTime",
+                LocalDateTime.now().minusMinutes(80)
+        );
+
+        when(scooterModel.getPricePerHour()).thenReturn(BigDecimal.valueOf(600));
+
+        BigDecimal result = pricingService.calculate(
+                rental,
+                scooter,
+                TerminationReason.USER_FINISHED
+        );
+
+        assertEquals(BigDecimal.valueOf(1200), result);
     }
 }

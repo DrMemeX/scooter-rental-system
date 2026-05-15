@@ -215,7 +215,7 @@ public class RentalService {
         validateMinuteRentalTimeLimit(rental, actualMinutes);
         validateRideDistance(scooter, distanceKm, actualMinutes);
 
-        BigDecimal totalCost = pricingService.calculate(rental, scooter);
+        BigDecimal totalCost = pricingService.calculate(rental, scooter, reason);
 
         validatePromoCodeNotUsedByUser(rental.getUserId(), promoCode);
 
