@@ -210,4 +210,72 @@ class DiscountServiceTest {
 
         verify(promoCodeRepository).save(promoCode);
     }
+
+    @Test
+    void applyDiscount_shouldThrowException_whenPriceIsNegative() {
+        DiscountValidationException exception =
+                assertThrows(
+                        DiscountValidationException.class,
+                        () -> discountService.applyDiscount(
+                                BigDecimal.valueOf(-100),
+                                "SALE10"
+                        )
+                );
+
+        assertEquals(
+                "Цена не может быть отрицательным",
+                exception.getMessage()
+        );
+    }
+
+    @Test
+    void applyDiscount_shouldThrowException_whenPromoCodeIsBlank() {
+        DiscountValidationException exception =
+                assertThrows(
+                        DiscountValidationException.class,
+                        () -> discountService.applyDiscount(
+                                BigDecimal.valueOf(100),
+                                "   "
+                        )
+                );
+
+        assertEquals(
+                "Код промокода не может быть пустым",
+                exception.getMessage()
+        );
+    }
+
+    @Test
+    void getPromoCodeById_shouldThrowException_whenPromoNotFound() {
+        when(promoCodeRepository.findById(999L))
+                .thenReturn(Optional.empty());
+
+        DiscountValidationException exception =
+                assertThrows(
+                        DiscountValidationException.class,
+                        () -> discountService.getPromoCodeById(999L)
+                );
+
+        assertEquals(
+                "Промокод с ID 999 не найден",
+                exception.getMessage()
+        );
+    }
+
+    @Test
+    void createPromoCode_shouldThrowException_whenPercentGreaterThan15() {
+        DiscountValidationException exception =
+                assertThrows(
+                        DiscountValidationException.class,
+                        () -> new PromoCode(
+                                "SUPER30",
+                                BigDecimal.valueOf(30)
+                        )
+                );
+
+        assertEquals(
+                "Процент скидки не может быть больше 15",
+                exception.getMessage()
+        );
+    }
 }

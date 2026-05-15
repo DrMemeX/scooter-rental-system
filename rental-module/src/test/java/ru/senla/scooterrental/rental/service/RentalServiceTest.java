@@ -262,7 +262,11 @@ class RentalServiceTest {
 
         when(rentalRepository.findById(100L)).thenReturn(Optional.of(rental));
         when(fleetService.getScooterById(10L)).thenReturn(scooter);
-        when(pricingService.calculate(rental, scooter)).thenReturn(BigDecimal.valueOf(200));
+        when(pricingService.calculate(
+                eq(rental),
+                eq(scooter),
+                any(TerminationReason.class)
+        )).thenReturn(BigDecimal.valueOf(200));
         when(discountService.applyDiscount(BigDecimal.valueOf(200), null))
                 .thenReturn(BigDecimal.valueOf(200));
         when(rentalRepository.save(any(Rental.class))).thenAnswer(invocation -> invocation.getArgument(0));
@@ -286,7 +290,11 @@ class RentalServiceTest {
 
         when(rentalRepository.findById(100L)).thenReturn(Optional.of(rental));
         when(fleetService.getScooterById(10L)).thenReturn(scooter);
-        when(pricingService.calculate(rental, scooter)).thenReturn(BigDecimal.valueOf(200));
+        when(pricingService.calculate(
+                eq(rental),
+                eq(scooter),
+                any(TerminationReason.class)
+        )).thenReturn(BigDecimal.valueOf(200));
         when(rentalRepository.existsByUserIdAndPromoCodeCode(1L, "SALE10")).thenReturn(false);
         when(discountService.applyDiscount(BigDecimal.valueOf(200), "SALE10"))
                 .thenReturn(BigDecimal.valueOf(180));
@@ -346,7 +354,11 @@ class RentalServiceTest {
 
         when(rentalRepository.findById(100L)).thenReturn(Optional.of(rental));
         when(fleetService.getScooterById(10L)).thenReturn(scooter);
-        when(pricingService.calculate(rental, scooter)).thenReturn(BigDecimal.valueOf(200));
+        when(pricingService.calculate(
+                eq(rental),
+                eq(scooter),
+                any(TerminationReason.class)
+        )).thenReturn(BigDecimal.valueOf(200));
         when(rentalRepository.existsByUserIdAndPromoCodeCode(1L, "SALE10")).thenReturn(true);
 
         assertThrows(
@@ -368,7 +380,11 @@ class RentalServiceTest {
 
         when(rentalRepository.findById(100L)).thenReturn(Optional.of(rental));
         when(fleetService.getScooterById(10L)).thenReturn(scooter);
-        when(pricingService.calculate(rental, scooter)).thenReturn(BigDecimal.valueOf(200));
+        when(pricingService.calculate(
+                eq(rental),
+                eq(scooter),
+                any(TerminationReason.class)
+        )).thenReturn(BigDecimal.valueOf(200));
         when(discountService.applyDiscount(BigDecimal.valueOf(200), null))
                 .thenReturn(BigDecimal.valueOf(200));
         when(rentalRepository.save(any(Rental.class))).thenAnswer(invocation -> invocation.getArgument(0));
@@ -387,7 +403,11 @@ class RentalServiceTest {
 
         when(rentalRepository.findById(100L)).thenReturn(Optional.of(rental));
         when(fleetService.getScooterById(10L)).thenReturn(scooter);
-        when(pricingService.calculate(rental, scooter)).thenReturn(BigDecimal.valueOf(200));
+        when(pricingService.calculate(
+                eq(rental),
+                eq(scooter),
+                any(TerminationReason.class)
+        )).thenReturn(BigDecimal.valueOf(200));
         when(discountService.applyDiscount(BigDecimal.valueOf(200), null))
                 .thenReturn(BigDecimal.valueOf(200));
         when(rentalRepository.save(any(Rental.class))).thenAnswer(invocation -> invocation.getArgument(0));
@@ -406,7 +426,11 @@ class RentalServiceTest {
 
         when(rentalRepository.findById(100L)).thenReturn(Optional.of(rental));
         when(fleetService.getScooterById(10L)).thenReturn(scooter);
-        when(pricingService.calculate(rental, scooter)).thenReturn(BigDecimal.valueOf(200));
+        when(pricingService.calculate(
+                eq(rental),
+                eq(scooter),
+                any(TerminationReason.class)
+        )).thenReturn(BigDecimal.valueOf(200));
         when(discountService.applyDiscount(BigDecimal.valueOf(200), null))
                 .thenReturn(BigDecimal.valueOf(200));
         when(rentalRepository.save(any(Rental.class))).thenAnswer(invocation -> invocation.getArgument(0));
