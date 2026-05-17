@@ -206,6 +206,7 @@ public class RentalService {
                 rentalPointId,
                 reason
         );
+        validatePositiveId(rentalPointId, "ID точки проката");
 
         Rental rental = getRentalOrThrow(rentalId);
         Scooter scooter = fleetService.getScooterById(rental.getScooterId());
@@ -276,6 +277,7 @@ public class RentalService {
                 rentalId,
                 rentalPointId
         );
+        validatePositiveId(rentalPointId, "ID точки проката");
 
         Rental rental = getRentalOrThrow(rentalId);
         Scooter scooter = fleetService.getScooterById(rental.getScooterId());
@@ -346,11 +348,15 @@ public class RentalService {
 
     @Transactional(readOnly = true)
     public List<Rental> getRentalsByUserId(Long userId) {
+        validatePositiveId(userId, "ID пользователя");
+
         return rentalRepository.findByUserId(userId);
     }
 
     @Transactional(readOnly = true)
     public List<Rental> getRentalsByScooterId(Long scooterId) {
+        validatePositiveId(scooterId, "ID самоката");
+
         return rentalRepository.findByScooterId(scooterId);
     }
 

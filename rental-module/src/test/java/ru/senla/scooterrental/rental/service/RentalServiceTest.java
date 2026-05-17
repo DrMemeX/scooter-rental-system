@@ -5,6 +5,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 import ru.senla.scooterrental.discount.service.DiscountService;
 import ru.senla.scooterrental.fleet.entity.Scooter;
 import ru.senla.scooterrental.fleet.entity.ScooterModel;
@@ -21,6 +22,7 @@ import ru.senla.scooterrental.user.entity.User;
 import ru.senla.scooterrental.user.service.UserService;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -57,7 +59,8 @@ class RentalServiceTest {
         when(userService.getById(1L)).thenReturn(user);
         when(fleetService.getScooterById(10L)).thenReturn(scooter);
         when(rentalRepository.findUnfinishedByUserId(1L)).thenReturn(Optional.empty());
-        when(rentalRepository.save(any(Rental.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(rentalRepository.save(any(Rental.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
 
         Rental result = rentalService.startRental(1L, 10L, TariffType.MINUTE);
 
@@ -78,7 +81,8 @@ class RentalServiceTest {
         when(userService.getById(1L)).thenReturn(user);
         when(fleetService.getScooterById(10L)).thenReturn(scooter);
         when(rentalRepository.findUnfinishedByUserId(1L)).thenReturn(Optional.empty());
-        when(rentalRepository.save(any(Rental.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(rentalRepository.save(any(Rental.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
 
         Rental result = rentalService.startRental(1L, 10L, TariffType.HOUR, 2);
 
@@ -100,7 +104,8 @@ class RentalServiceTest {
         when(userService.getById(1L)).thenReturn(user);
         when(fleetService.getScooterById(10L)).thenReturn(scooter);
         when(rentalRepository.findUnfinishedByUserId(1L)).thenReturn(Optional.empty());
-        when(rentalRepository.save(any(Rental.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(rentalRepository.save(any(Rental.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
 
         Rental result = rentalService.startRental(1L, 10L, TariffType.SUBSCRIPTION);
 
@@ -113,10 +118,30 @@ class RentalServiceTest {
     }
 
     @Test
+    void startRental_shouldThrowException_whenUserIdIsNull() {
+        assertThrows(
+                RentalValidationException.class,
+                () -> rentalService.startRental(null, 10L, TariffType.MINUTE)
+        );
+
+        verifyNoInteractions(userService, fleetService, rentalRepository);
+    }
+
+    @Test
     void startRental_shouldThrowException_whenUserIdIsInvalid() {
         assertThrows(
                 RentalValidationException.class,
                 () -> rentalService.startRental(0L, 10L, TariffType.MINUTE)
+        );
+
+        verifyNoInteractions(userService, fleetService, rentalRepository);
+    }
+
+    @Test
+    void startRental_shouldThrowException_whenScooterIdIsNull() {
+        assertThrows(
+                RentalValidationException.class,
+                () -> rentalService.startRental(1L, null, TariffType.MINUTE)
         );
 
         verifyNoInteractions(userService, fleetService, rentalRepository);
@@ -168,7 +193,8 @@ class RentalServiceTest {
 
         when(userService.getById(1L)).thenReturn(user);
         when(fleetService.getScooterById(10L)).thenReturn(scooter);
-        when(rentalRepository.findUnfinishedByUserId(1L)).thenReturn(Optional.of(existingRental));
+        when(rentalRepository.findUnfinishedByUserId(1L))
+                .thenReturn(Optional.of(existingRental));
 
         assertThrows(
                 ActiveRentalAlreadyExistsException.class,
@@ -185,6 +211,46 @@ class RentalServiceTest {
         Scooter scooter = defaultScooter();
 
         when(user.getBalance()).thenReturn(BigDecimal.valueOf(5));
+        when(userService.getById(1L)).thenReturn(user);
+        when(fleetService.getScooterById(10L)).thenReturn(scooter);
+        when(rentalRepository.findUnfinishedByUserId(1L)).thenReturn(Optional.empty());
+
+        assertThrows(
+                RentalValidationException.class,
+                () -> rentalService.startRental(1L, 10L, TariffType.MINUTE)
+        );
+
+        verify(fleetService, never()).rentScooter(anyLong());
+        verify(rentalRepository, never()).save(any());
+    }
+
+    @Test
+    void startRental_shouldThrowException_whenMinutePriceIsZero() {
+        User user = defaultUser();
+        Scooter scooter = defaultScooter();
+        ScooterModel scooterModel = scooter.getModel();
+
+        when(scooterModel.getPricePerMinute()).thenReturn(BigDecimal.ZERO);
+        when(userService.getById(1L)).thenReturn(user);
+        when(fleetService.getScooterById(10L)).thenReturn(scooter);
+        when(rentalRepository.findUnfinishedByUserId(1L)).thenReturn(Optional.empty());
+
+        assertThrows(
+                RentalValidationException.class,
+                () -> rentalService.startRental(1L, 10L, TariffType.MINUTE)
+        );
+
+        verify(fleetService, never()).rentScooter(anyLong());
+        verify(rentalRepository, never()).save(any());
+    }
+
+    @Test
+    void startRental_shouldThrowException_whenMinutePriceIsNegative() {
+        User user = defaultUser();
+        Scooter scooter = defaultScooter();
+        ScooterModel scooterModel = scooter.getModel();
+
+        when(scooterModel.getPricePerMinute()).thenReturn(BigDecimal.valueOf(-10));
         when(userService.getById(1L)).thenReturn(user);
         when(fleetService.getScooterById(10L)).thenReturn(scooter);
         when(rentalRepository.findUnfinishedByUserId(1L)).thenReturn(Optional.empty());
@@ -253,7 +319,6 @@ class RentalServiceTest {
         verify(fleetService, never()).rentScooter(anyLong());
         verify(rentalRepository, never()).save(any());
     }
-
     @Test
     void finishRental_shouldFinishRentalSuccessfully() {
         User user = defaultUser();
@@ -269,7 +334,8 @@ class RentalServiceTest {
         )).thenReturn(BigDecimal.valueOf(200));
         when(discountService.applyDiscount(BigDecimal.valueOf(200), null))
                 .thenReturn(BigDecimal.valueOf(200));
-        when(rentalRepository.save(any(Rental.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(rentalRepository.save(any(Rental.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
 
         Rental result = rentalService.finishRental(100L, 5L);
 
@@ -295,10 +361,12 @@ class RentalServiceTest {
                 eq(scooter),
                 any(TerminationReason.class)
         )).thenReturn(BigDecimal.valueOf(200));
-        when(rentalRepository.existsByUserIdAndPromoCodeCode(1L, "SALE10")).thenReturn(false);
+        when(rentalRepository.existsByUserIdAndPromoCodeCode(1L, "SALE10"))
+                .thenReturn(false);
         when(discountService.applyDiscount(BigDecimal.valueOf(200), "SALE10"))
                 .thenReturn(BigDecimal.valueOf(180));
-        when(rentalRepository.save(any(Rental.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(rentalRepository.save(any(Rental.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
 
         Rental result = rentalService.finishRental(100L, 5L, 0.2, "SALE10");
 
@@ -328,6 +396,50 @@ class RentalServiceTest {
     }
 
     @Test
+    void finishRental_shouldThrowException_whenRentalIdIsNull() {
+        assertThrows(
+                RentalValidationException.class,
+                () -> rentalService.finishRental(null, 5L)
+        );
+
+        verifyNoInteractions(fleetService, pricingService, discountService, userService);
+        verify(rentalRepository, never()).save(any());
+    }
+
+    @Test
+    void finishRental_shouldThrowException_whenRentalIdIsInvalid() {
+        assertThrows(
+                RentalValidationException.class,
+                () -> rentalService.finishRental(0L, 5L)
+        );
+
+        verifyNoInteractions(fleetService, pricingService, discountService, userService);
+        verify(rentalRepository, never()).save(any());
+    }
+
+    @Test
+    void finishRental_shouldThrowException_whenRentalPointIdIsNull() {
+        assertThrows(
+                RentalValidationException.class,
+                () -> rentalService.finishRental(100L, null)
+        );
+
+        verifyNoInteractions(fleetService, pricingService, discountService, userService);
+        verify(rentalRepository, never()).save(any());
+    }
+
+    @Test
+    void finishRental_shouldThrowException_whenRentalPointIdIsInvalid() {
+        assertThrows(
+                RentalValidationException.class,
+                () -> rentalService.finishRental(100L, 0L)
+        );
+
+        verifyNoInteractions(fleetService, pricingService, discountService, userService);
+        verify(rentalRepository, never()).save(any());
+    }
+
+    @Test
     void finishRental_shouldThrowException_whenDistanceIsNegative() {
         User user = defaultUser();
         Scooter scooter = defaultScooter();
@@ -347,6 +459,77 @@ class RentalServiceTest {
     }
 
     @Test
+    void finishRental_shouldThrowException_whenRideDistanceIsImpossible() {
+        User user = defaultUser();
+        Scooter scooter = defaultScooter();
+        Rental rental = new Rental(user, scooter, TariffType.HOUR, 2);
+
+        ReflectionTestUtils.setField(
+                rental,
+                "startTime",
+                LocalDateTime.now().minusMinutes(10)
+        );
+
+        when(scooter.getCurrentCharge()).thenReturn(1.0);
+        when(rentalRepository.findById(100L)).thenReturn(Optional.of(rental));
+        when(fleetService.getScooterById(10L)).thenReturn(scooter);
+
+        assertThrows(
+                RentalValidationException.class,
+                () -> rentalService.finishRental(100L, 5L, 100.0, null)
+        );
+
+        verify(fleetService, never()).returnScooter(anyLong(), anyLong());
+        verify(userService, never()).subtractBalance(anyLong(), any());
+        verify(rentalRepository, never()).save(any());
+    }
+
+    @Test
+    void finishRental_shouldThrowException_whenMinuteRentalTimeLimitExceeded() {
+        User user = defaultUser();
+        Scooter scooter = defaultScooter();
+        Rental rental = new Rental(user, scooter, TariffType.MINUTE, null);
+        rental.setMaxAllowedMinutes(1);
+
+        ReflectionTestUtils.setField(
+                rental,
+                "startTime",
+                LocalDateTime.now().minusMinutes(10)
+        );
+
+        when(rentalRepository.findById(100L)).thenReturn(Optional.of(rental));
+        when(fleetService.getScooterById(10L)).thenReturn(scooter);
+
+        assertThrows(
+                RentalValidationException.class,
+                () -> rentalService.finishRental(100L, 5L)
+        );
+
+        verify(pricingService, never()).calculate(any(), any(), any());
+        verify(fleetService, never()).returnScooter(anyLong(), anyLong());
+        verify(rentalRepository, never()).save(any());
+    }
+
+    @Test
+    void finishRental_shouldThrowException_whenMinuteRentalHasNoMaxAllowedMinutes() {
+        User user = defaultUser();
+        Scooter scooter = defaultScooter();
+        Rental rental = new Rental(user, scooter, TariffType.MINUTE, null);
+
+        when(rentalRepository.findById(100L)).thenReturn(Optional.of(rental));
+        when(fleetService.getScooterById(10L)).thenReturn(scooter);
+
+        assertThrows(
+                RentalValidationException.class,
+                () -> rentalService.finishRental(100L, 5L)
+        );
+
+        verify(pricingService, never()).calculate(any(), any(), any());
+        verify(fleetService, never()).returnScooter(anyLong(), anyLong());
+        verify(rentalRepository, never()).save(any());
+    }
+
+    @Test
     void finishRental_shouldThrowException_whenPromoCodeWasAlreadyUsed() {
         User user = defaultUser();
         Scooter scooter = defaultScooter();
@@ -359,7 +542,8 @@ class RentalServiceTest {
                 eq(scooter),
                 any(TerminationReason.class)
         )).thenReturn(BigDecimal.valueOf(200));
-        when(rentalRepository.existsByUserIdAndPromoCodeCode(1L, "SALE10")).thenReturn(true);
+        when(rentalRepository.existsByUserIdAndPromoCodeCode(1L, "SALE10"))
+                .thenReturn(true);
 
         assertThrows(
                 RentalValidationException.class,
@@ -387,7 +571,8 @@ class RentalServiceTest {
         )).thenReturn(BigDecimal.valueOf(200));
         when(discountService.applyDiscount(BigDecimal.valueOf(200), null))
                 .thenReturn(BigDecimal.valueOf(200));
-        when(rentalRepository.save(any(Rental.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(rentalRepository.save(any(Rental.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
 
         Rental result = rentalService.finishDueToBatteryDepleted(100L, 5L, null);
 
@@ -410,7 +595,8 @@ class RentalServiceTest {
         )).thenReturn(BigDecimal.valueOf(200));
         when(discountService.applyDiscount(BigDecimal.valueOf(200), null))
                 .thenReturn(BigDecimal.valueOf(200));
-        when(rentalRepository.save(any(Rental.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(rentalRepository.save(any(Rental.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
 
         Rental result = rentalService.finishDueToTechnicalBreakdown(100L, 5L, null);
 
@@ -433,7 +619,8 @@ class RentalServiceTest {
         )).thenReturn(BigDecimal.valueOf(200));
         when(discountService.applyDiscount(BigDecimal.valueOf(200), null))
                 .thenReturn(BigDecimal.valueOf(200));
-        when(rentalRepository.save(any(Rental.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(rentalRepository.save(any(Rental.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
 
         Rental result = rentalService.finishDueToUserDamage(100L, 5L, null);
 
@@ -448,7 +635,8 @@ class RentalServiceTest {
         Rental rental = new Rental(user, scooter, TariffType.HOUR, 2);
 
         when(rentalRepository.findById(100L)).thenReturn(Optional.of(rental));
-        when(rentalRepository.save(any(Rental.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(rentalRepository.save(any(Rental.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
 
         Rental result = rentalService.requestManualFinish(100L);
 
@@ -483,7 +671,8 @@ class RentalServiceTest {
         when(pricingService.calculate(rental, scooter)).thenReturn(BigDecimal.valueOf(200));
         when(discountService.applyDiscount(BigDecimal.valueOf(200), null))
                 .thenReturn(BigDecimal.valueOf(200));
-        when(rentalRepository.save(any(Rental.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(rentalRepository.save(any(Rental.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
 
         Rental result = rentalService.approveManualFinish(100L, 5L);
 
@@ -494,6 +683,149 @@ class RentalServiceTest {
         verify(fleetService).returnScooter(10L, 5L);
         verify(userService).subtractBalance(1L, BigDecimal.valueOf(200));
         verify(rentalRepository).save(rental);
+    }
+
+    @Test
+    void approveManualFinish_shouldFinishWithPromoAndDistance() {
+        User user = defaultUser();
+        Scooter scooter = defaultScooter();
+        Rental rental = new Rental(user, scooter, TariffType.HOUR, 2);
+        rental.requestManualFinish();
+
+        when(rentalRepository.findById(100L)).thenReturn(Optional.of(rental));
+        when(fleetService.getScooterById(10L)).thenReturn(scooter);
+        when(pricingService.calculate(rental, scooter)).thenReturn(BigDecimal.valueOf(200));
+        when(rentalRepository.existsByUserIdAndPromoCodeCode(1L, "SALE10"))
+                .thenReturn(false);
+        when(discountService.applyDiscount(BigDecimal.valueOf(200), "SALE10"))
+                .thenReturn(BigDecimal.valueOf(180));
+        when(rentalRepository.save(any(Rental.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        Rental result = rentalService.approveManualFinish(
+                100L,
+                5L,
+                0.2,
+                "SALE10"
+        );
+
+        assertEquals(RentalStatus.FINISHED, result.getStatus());
+        assertEquals(TerminationReason.MANAGER_CONFIRMED_RETURN, result.getTerminationReason());
+        assertEquals(BigDecimal.valueOf(180), result.getTotalCost());
+        assertEquals(0.2, result.getDistanceKm());
+
+        verify(fleetService).addMileage(10L, 0.2);
+        verify(fleetService).consumeCharge(10L, 1.0);
+        verify(fleetService).returnScooter(10L, 5L);
+        verify(userService).subtractBalance(1L, BigDecimal.valueOf(180));
+        verify(rentalRepository).save(rental);
+    }
+
+    @Test
+    void approveManualFinish_shouldThrowException_whenRentalNotFound() {
+        when(rentalRepository.findById(100L)).thenReturn(Optional.empty());
+
+        assertThrows(
+                RentalNotFoundException.class,
+                () -> rentalService.approveManualFinish(100L, 5L)
+        );
+
+        verify(fleetService, never()).returnScooter(anyLong(), anyLong());
+        verify(userService, never()).subtractBalance(anyLong(), any());
+        verify(rentalRepository, never()).save(any());
+    }
+
+    @Test
+    void approveManualFinish_shouldThrowException_whenRentalPointIdIsNull() {
+        assertThrows(
+                RentalValidationException.class,
+                () -> rentalService.approveManualFinish(100L, null)
+        );
+
+        verifyNoInteractions(fleetService, pricingService, discountService, userService);
+        verify(rentalRepository, never()).save(any());
+    }
+
+    @Test
+    void approveManualFinish_shouldThrowException_whenRentalPointIdIsInvalid() {
+        assertThrows(
+                RentalValidationException.class,
+                () -> rentalService.approveManualFinish(100L, 0L)
+        );
+
+        verifyNoInteractions(fleetService, pricingService, discountService, userService);
+        verify(rentalRepository, never()).save(any());
+    }
+
+    @Test
+    void approveManualFinish_shouldThrowException_whenDistanceIsNegative() {
+        User user = defaultUser();
+        Scooter scooter = defaultScooter();
+        Rental rental = new Rental(user, scooter, TariffType.HOUR, 2);
+        rental.requestManualFinish();
+
+        when(rentalRepository.findById(100L)).thenReturn(Optional.of(rental));
+        when(fleetService.getScooterById(10L)).thenReturn(scooter);
+
+        assertThrows(
+                RentalValidationException.class,
+                () -> rentalService.approveManualFinish(100L, 5L, -1.0, null)
+        );
+
+        verify(fleetService, never()).returnScooter(anyLong(), anyLong());
+        verify(userService, never()).subtractBalance(anyLong(), any());
+        verify(rentalRepository, never()).save(any());
+    }
+
+    @Test
+    void approveManualFinish_shouldThrowException_whenRideDistanceIsImpossible() {
+        User user = defaultUser();
+        Scooter scooter = defaultScooter();
+        Rental rental = new Rental(user, scooter, TariffType.HOUR, 2);
+        rental.requestManualFinish();
+
+        ReflectionTestUtils.setField(
+                rental,
+                "startTime",
+                LocalDateTime.now().minusMinutes(10)
+        );
+
+        when(scooter.getCurrentCharge()).thenReturn(1.0);
+        when(rentalRepository.findById(100L)).thenReturn(Optional.of(rental));
+        when(fleetService.getScooterById(10L)).thenReturn(scooter);
+
+        assertThrows(
+                RentalValidationException.class,
+                () -> rentalService.approveManualFinish(100L, 5L, 100.0, null)
+        );
+
+        verify(fleetService, never()).returnScooter(anyLong(), anyLong());
+        verify(userService, never()).subtractBalance(anyLong(), any());
+        verify(rentalRepository, never()).save(any());
+    }
+
+    @Test
+    void approveManualFinish_shouldThrowException_whenPromoCodeWasAlreadyUsed() {
+        User user = defaultUser();
+        Scooter scooter = defaultScooter();
+        Rental rental = new Rental(user, scooter, TariffType.HOUR, 2);
+        rental.requestManualFinish();
+
+        when(rentalRepository.findById(100L)).thenReturn(Optional.of(rental));
+        when(fleetService.getScooterById(10L)).thenReturn(scooter);
+        when(pricingService.calculate(rental, scooter)).thenReturn(BigDecimal.valueOf(200));
+        when(rentalRepository.existsByUserIdAndPromoCodeCode(1L, "SALE10"))
+                .thenReturn(true);
+
+        assertThrows(
+                RentalValidationException.class,
+                () -> rentalService.approveManualFinish(100L, 5L, 0, "SALE10")
+        );
+
+        verify(discountService, never()).applyDiscount(any(), anyString());
+        verify(fleetService, never()).returnScooter(anyLong(), anyLong());
+        verify(userService, never()).subtractBalance(anyLong(), any());
+        verify(rentalRepository, never()).save(any());
     }
 
     @Test
@@ -520,6 +852,16 @@ class RentalServiceTest {
         );
 
         verify(rentalRepository).findById(100L);
+    }
+
+    @Test
+    void getRentalOrThrow_shouldThrowException_whenIdIsNull() {
+        assertThrows(
+                RentalValidationException.class,
+                () -> rentalService.getRentalOrThrow(null)
+        );
+
+        verifyNoInteractions(rentalRepository);
     }
 
     @Test
@@ -563,6 +905,26 @@ class RentalServiceTest {
     }
 
     @Test
+    void getRentalsByUserId_shouldThrowException_whenUserIdIsNull() {
+        assertThrows(
+                RentalValidationException.class,
+                () -> rentalService.getRentalsByUserId(null)
+        );
+
+        verifyNoInteractions(rentalRepository);
+    }
+
+    @Test
+    void getRentalsByUserId_shouldThrowException_whenUserIdIsInvalid() {
+        assertThrows(
+                RentalValidationException.class,
+                () -> rentalService.getRentalsByUserId(0L)
+        );
+
+        verifyNoInteractions(rentalRepository);
+    }
+
+    @Test
     void getRentalsByScooterId_shouldReturnScooterRentals() {
         User user = defaultUser();
         Scooter scooter = defaultScooter();
@@ -574,6 +936,26 @@ class RentalServiceTest {
 
         assertEquals(1, result.size());
         verify(rentalRepository).findByScooterId(10L);
+    }
+
+    @Test
+    void getRentalsByScooterId_shouldThrowException_whenScooterIdIsNull() {
+        assertThrows(
+                RentalValidationException.class,
+                () -> rentalService.getRentalsByScooterId(null)
+        );
+
+        verifyNoInteractions(rentalRepository);
+    }
+
+    @Test
+    void getRentalsByScooterId_shouldThrowException_whenScooterIdIsInvalid() {
+        assertThrows(
+                RentalValidationException.class,
+                () -> rentalService.getRentalsByScooterId(0L)
+        );
+
+        verifyNoInteractions(rentalRepository);
     }
 
     private User defaultUser() {

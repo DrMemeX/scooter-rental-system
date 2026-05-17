@@ -53,6 +53,22 @@ class DiscountServiceTest {
     }
 
     @Test
+    void createPromoCode_shouldThrowException_whenPromoCodeIsNull() {
+        DiscountValidationException exception =
+                assertThrows(
+                        DiscountValidationException.class,
+                        () -> discountService.createPromoCode(null)
+                );
+
+        assertEquals(
+                "Промокод не задан",
+                exception.getMessage()
+        );
+
+        verify(promoCodeRepository, never()).save(any());
+    }
+
+    @Test
     void createPromoCode_shouldThrowException_whenCodeAlreadyExists() {
         when(promoCodeRepository.existsByCode("SALE10"))
                 .thenReturn(true);
@@ -83,6 +99,34 @@ class DiscountServiceTest {
     }
 
     @Test
+    void getByCodeOrThrow_shouldThrowException_whenCodeIsNull() {
+        DiscountValidationException exception =
+                assertThrows(
+                        DiscountValidationException.class,
+                        () -> discountService.getByCodeOrThrow(null)
+                );
+
+        assertEquals(
+                "Код промокода не задан",
+                exception.getMessage()
+        );
+    }
+
+    @Test
+    void getByCodeOrThrow_shouldThrowException_whenCodeIsBlank() {
+        DiscountValidationException exception =
+                assertThrows(
+                        DiscountValidationException.class,
+                        () -> discountService.getByCodeOrThrow("   ")
+                );
+
+        assertEquals(
+                "Код промокода не может быть пустым",
+                exception.getMessage()
+        );
+    }
+
+    @Test
     void getByCodeOrThrow_shouldThrowException_whenPromoNotFound() {
         when(promoCodeRepository.findByCode("INVALID"))
                 .thenReturn(Optional.empty());
@@ -107,6 +151,7 @@ class DiscountServiceTest {
         List<PromoCode> result = discountService.getAllPromoCodes();
 
         assertEquals(1, result.size());
+        assertEquals("SALE10", result.get(0).getCode());
     }
 
     @Test
@@ -121,6 +166,20 @@ class DiscountServiceTest {
     }
 
     @Test
+    void getPromoCodeById_shouldThrowException_whenIdIsNull() {
+        DiscountValidationException exception =
+                assertThrows(
+                        DiscountValidationException.class,
+                        () -> discountService.getPromoCodeById(null)
+                );
+
+        assertEquals(
+                "ID промокода должен быть положительным",
+                exception.getMessage()
+        );
+    }
+
+    @Test
     void getPromoCodeById_shouldThrowException_whenIdInvalid() {
         DiscountValidationException exception =
                 assertThrows(
@@ -130,6 +189,23 @@ class DiscountServiceTest {
 
         assertEquals(
                 "ID промокода должен быть положительным",
+                exception.getMessage()
+        );
+    }
+
+    @Test
+    void getPromoCodeById_shouldThrowException_whenPromoNotFound() {
+        when(promoCodeRepository.findById(999L))
+                .thenReturn(Optional.empty());
+
+        DiscountValidationException exception =
+                assertThrows(
+                        DiscountValidationException.class,
+                        () -> discountService.getPromoCodeById(999L)
+                );
+
+        assertEquals(
+                "Промокод с ID 999 не найден",
                 exception.getMessage()
         );
     }
@@ -160,6 +236,59 @@ class DiscountServiceTest {
         assertEquals(
                 BigDecimal.valueOf(100),
                 result
+        );
+
+        verify(promoCodeRepository, never()).findByCode(any());
+    }
+
+    @Test
+    void applyDiscount_shouldThrowException_whenPriceIsNull() {
+        DiscountValidationException exception =
+                assertThrows(
+                        DiscountValidationException.class,
+                        () -> discountService.applyDiscount(
+                                null,
+                                "SALE10"
+                        )
+                );
+
+        assertEquals(
+                "Цена не задан",
+                exception.getMessage()
+        );
+    }
+
+    @Test
+    void applyDiscount_shouldThrowException_whenPriceIsNegative() {
+        DiscountValidationException exception =
+                assertThrows(
+                        DiscountValidationException.class,
+                        () -> discountService.applyDiscount(
+                                BigDecimal.valueOf(-100),
+                                "SALE10"
+                        )
+                );
+
+        assertEquals(
+                "Цена не может быть отрицательным",
+                exception.getMessage()
+        );
+    }
+
+    @Test
+    void applyDiscount_shouldThrowException_whenPromoCodeIsBlank() {
+        DiscountValidationException exception =
+                assertThrows(
+                        DiscountValidationException.class,
+                        () -> discountService.applyDiscount(
+                                BigDecimal.valueOf(100),
+                                "   "
+                        )
+                );
+
+        assertEquals(
+                "Код промокода не может быть пустым",
+                exception.getMessage()
         );
     }
 
@@ -198,6 +327,25 @@ class DiscountServiceTest {
     }
 
     @Test
+    void deactivate_shouldThrowException_whenPromoNotFound() {
+        when(promoCodeRepository.findByCode("UNKNOWN"))
+                .thenReturn(Optional.empty());
+
+        DiscountValidationException exception =
+                assertThrows(
+                        DiscountValidationException.class,
+                        () -> discountService.deactivate("UNKNOWN")
+                );
+
+        assertEquals(
+                "Промокод не найден",
+                exception.getMessage()
+        );
+
+        verify(promoCodeRepository, never()).save(any());
+    }
+
+    @Test
     void activate_shouldActivatePromoCode() {
         promoCode.deactivate();
 
@@ -212,30 +360,42 @@ class DiscountServiceTest {
     }
 
     @Test
-    void applyDiscount_shouldThrowException_whenPriceIsNegative() {
+    void activate_shouldThrowException_whenPromoNotFound() {
+        when(promoCodeRepository.findByCode("UNKNOWN"))
+                .thenReturn(Optional.empty());
+
         DiscountValidationException exception =
                 assertThrows(
                         DiscountValidationException.class,
-                        () -> discountService.applyDiscount(
-                                BigDecimal.valueOf(-100),
-                                "SALE10"
-                        )
+                        () -> discountService.activate("UNKNOWN")
                 );
 
         assertEquals(
-                "Цена не может быть отрицательным",
+                "Промокод не найден",
                 exception.getMessage()
         );
+
+        verify(promoCodeRepository, never()).save(any());
     }
 
     @Test
-    void applyDiscount_shouldThrowException_whenPromoCodeIsBlank() {
+    void promoCodeConstructor_shouldNormalizeCodeToUpperCase() {
+        PromoCode result = new PromoCode(
+                " sale10 ",
+                BigDecimal.TEN
+        );
+
+        assertEquals("SALE10", result.getCode());
+    }
+
+    @Test
+    void promoCodeConstructor_shouldThrowException_whenCodeIsNull() {
         DiscountValidationException exception =
                 assertThrows(
                         DiscountValidationException.class,
-                        () -> discountService.applyDiscount(
-                                BigDecimal.valueOf(100),
-                                "   "
+                        () -> new PromoCode(
+                                null,
+                                BigDecimal.TEN
                         )
                 );
 
@@ -246,24 +406,75 @@ class DiscountServiceTest {
     }
 
     @Test
-    void getPromoCodeById_shouldThrowException_whenPromoNotFound() {
-        when(promoCodeRepository.findById(999L))
-                .thenReturn(Optional.empty());
-
+    void promoCodeConstructor_shouldThrowException_whenCodeIsBlank() {
         DiscountValidationException exception =
                 assertThrows(
                         DiscountValidationException.class,
-                        () -> discountService.getPromoCodeById(999L)
+                        () -> new PromoCode(
+                                "   ",
+                                BigDecimal.TEN
+                        )
                 );
 
         assertEquals(
-                "Промокод с ID 999 не найден",
+                "Код промокода не может быть пустым",
                 exception.getMessage()
         );
     }
 
     @Test
-    void createPromoCode_shouldThrowException_whenPercentGreaterThan15() {
+    void promoCodeConstructor_shouldThrowException_whenPercentIsNull() {
+        DiscountValidationException exception =
+                assertThrows(
+                        DiscountValidationException.class,
+                        () -> new PromoCode(
+                                "SALE10",
+                                null
+                        )
+                );
+
+        assertEquals(
+                "Процент скидки не задан",
+                exception.getMessage()
+        );
+    }
+
+    @Test
+    void promoCodeConstructor_shouldThrowException_whenPercentIsZero() {
+        DiscountValidationException exception =
+                assertThrows(
+                        DiscountValidationException.class,
+                        () -> new PromoCode(
+                                "SALE10",
+                                BigDecimal.ZERO
+                        )
+                );
+
+        assertEquals(
+                "Процент скидки должен быть положительным",
+                exception.getMessage()
+        );
+    }
+
+    @Test
+    void promoCodeConstructor_shouldThrowException_whenPercentIsNegative() {
+        DiscountValidationException exception =
+                assertThrows(
+                        DiscountValidationException.class,
+                        () -> new PromoCode(
+                                "SALE10",
+                                BigDecimal.valueOf(-5)
+                        )
+                );
+
+        assertEquals(
+                "Процент скидки должен быть положительным",
+                exception.getMessage()
+        );
+    }
+
+    @Test
+    void promoCodeConstructor_shouldThrowException_whenPercentGreaterThan15() {
         DiscountValidationException exception =
                 assertThrows(
                         DiscountValidationException.class,
