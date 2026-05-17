@@ -50,22 +50,6 @@ class UserServiceTest {
     }
 
     @Test
-    void registerManager_shouldRegisterManagerSuccessfully() {
-        User user = defaultUser();
-
-        when(userRepository.existsByEmail(user.getEmail())).thenReturn(false);
-        when(userRepository.existsByPhone(user.getPhone())).thenReturn(false);
-        when(userRepository.save(user)).thenReturn(user);
-
-        User result = userService.registerManager(user);
-
-        assertSame(user, result);
-        assertEquals(Role.ADMIN, result.getRole());
-
-        verify(userRepository).save(user);
-    }
-
-    @Test
     void registerUser_shouldThrowException_whenUserIsNull() {
         assertThrows(
                 UserValidationException.class,
@@ -105,6 +89,63 @@ class UserServiceTest {
     }
 
     @Test
+    void registerManager_shouldRegisterManagerSuccessfully() {
+        User user = defaultUser();
+
+        when(userRepository.existsByEmail(user.getEmail())).thenReturn(false);
+        when(userRepository.existsByPhone(user.getPhone())).thenReturn(false);
+        when(userRepository.save(user)).thenReturn(user);
+
+        User result = userService.registerManager(user);
+
+        assertSame(user, result);
+        assertEquals(Role.ADMIN, result.getRole());
+
+        verify(userRepository).existsByEmail(user.getEmail());
+        verify(userRepository).existsByPhone(user.getPhone());
+        verify(userRepository).save(user);
+    }
+
+    @Test
+    void registerManager_shouldThrowException_whenUserIsNull() {
+        assertThrows(
+                UserValidationException.class,
+                () -> userService.registerManager(null)
+        );
+
+        verifyNoInteractions(userRepository);
+    }
+
+    @Test
+    void registerManager_shouldThrowException_whenEmailAlreadyExists() {
+        User user = defaultUser();
+
+        when(userRepository.existsByEmail(user.getEmail())).thenReturn(true);
+
+        assertThrows(
+                UserAlreadyExistsException.class,
+                () -> userService.registerManager(user)
+        );
+
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    void registerManager_shouldThrowException_whenPhoneAlreadyExists() {
+        User user = defaultUser();
+
+        when(userRepository.existsByEmail(user.getEmail())).thenReturn(false);
+        when(userRepository.existsByPhone(user.getPhone())).thenReturn(true);
+
+        assertThrows(
+                UserAlreadyExistsException.class,
+                () -> userService.registerManager(user)
+        );
+
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
     void getById_shouldReturnUser_whenUserExists() {
         User user = defaultUser();
 
@@ -124,6 +165,16 @@ class UserServiceTest {
                 UserNotFoundException.class,
                 () -> userService.getById(1L)
         );
+    }
+
+    @Test
+    void getById_shouldThrowException_whenIdIsNull() {
+        assertThrows(
+                UserValidationException.class,
+                () -> userService.getById(null)
+        );
+
+        verifyNoInteractions(userRepository);
     }
 
     @Test
@@ -149,6 +200,29 @@ class UserServiceTest {
     }
 
     @Test
+    void getByEmail_shouldThrowException_whenEmailNotFound() {
+        when(userRepository.findByEmail("unknown@example.com"))
+                .thenReturn(Optional.empty());
+
+        assertThrows(
+                UserNotFoundException.class,
+                () -> userService.getByEmail("unknown@example.com")
+        );
+
+        verify(userRepository).findByEmail("unknown@example.com");
+    }
+
+    @Test
+    void getByEmail_shouldThrowException_whenEmailIsNull() {
+        assertThrows(
+                UserValidationException.class,
+                () -> userService.getByEmail(null)
+        );
+
+        verifyNoInteractions(userRepository);
+    }
+
+    @Test
     void getByEmail_shouldThrowException_whenEmailIsBlank() {
         assertThrows(
                 UserValidationException.class,
@@ -168,6 +242,39 @@ class UserServiceTest {
 
         assertSame(user, result);
         verify(userRepository).findByPhone("+79991234567");
+    }
+
+    @Test
+    void getByPhone_shouldThrowException_whenPhoneNotFound() {
+        when(userRepository.findByPhone("+79990000000"))
+                .thenReturn(Optional.empty());
+
+        assertThrows(
+                UserNotFoundException.class,
+                () -> userService.getByPhone("+79990000000")
+        );
+
+        verify(userRepository).findByPhone("+79990000000");
+    }
+
+    @Test
+    void getByPhone_shouldThrowException_whenPhoneIsNull() {
+        assertThrows(
+                UserValidationException.class,
+                () -> userService.getByPhone(null)
+        );
+
+        verifyNoInteractions(userRepository);
+    }
+
+    @Test
+    void getByPhone_shouldThrowException_whenPhoneIsBlank() {
+        assertThrows(
+                UserValidationException.class,
+                () -> userService.getByPhone(" ")
+        );
+
+        verifyNoInteractions(userRepository);
     }
 
     @Test
@@ -224,6 +331,16 @@ class UserServiceTest {
     }
 
     @Test
+    void getUsersByStatus_shouldThrowException_whenStatusIsNull() {
+        assertThrows(
+                UserValidationException.class,
+                () -> userService.getUsersByStatus(null)
+        );
+
+        verifyNoInteractions(userRepository);
+    }
+
+    @Test
     void updateProfile_shouldUpdateProfileSuccessfully() {
         User user = defaultUser();
 
@@ -243,6 +360,80 @@ class UserServiceTest {
         assertEquals("+79990000000", result.getPhone());
 
         verify(userRepository).save(user);
+    }
+
+    @Test
+    void updateProfile_shouldUpdateOnlyFirstNameSuccessfully() {
+        User user = defaultUser();
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(userRepository.save(user)).thenReturn(user);
+
+        User result = userService.updateProfile(
+                1L,
+                "Alex",
+                null,
+                null
+        );
+
+        assertEquals("Alex", result.getFirstName());
+        assertEquals("Ivanov", result.getLastName());
+        assertEquals("+79991234567", result.getPhone());
+
+        verify(userRepository).save(user);
+    }
+
+    @Test
+    void updateProfile_shouldUpdateOnlyLastNameSuccessfully() {
+        User user = defaultUser();
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(userRepository.save(user)).thenReturn(user);
+
+        User result = userService.updateProfile(
+                1L,
+                null,
+                "Sidorov",
+                null
+        );
+
+        assertEquals("Ivan", result.getFirstName());
+        assertEquals("Sidorov", result.getLastName());
+        assertEquals("+79991234567", result.getPhone());
+
+        verify(userRepository).save(user);
+    }
+
+    @Test
+    void updateProfile_shouldUpdateOnlyPhoneSuccessfully() {
+        User user = defaultUser();
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(userRepository.existsByPhone("+79990000000")).thenReturn(false);
+        when(userRepository.save(user)).thenReturn(user);
+
+        User result = userService.updateProfile(
+                1L,
+                null,
+                null,
+                "+7 (999) 000-00-00"
+        );
+
+        assertEquals("Ivan", result.getFirstName());
+        assertEquals("Ivanov", result.getLastName());
+        assertEquals("+79990000000", result.getPhone());
+
+        verify(userRepository).save(user);
+    }
+
+    @Test
+    void updateProfile_shouldThrowException_whenIdIsNull() {
+        assertThrows(
+                UserValidationException.class,
+                () -> userService.updateProfile(null, "Alex", null, null)
+        );
+
+        verifyNoInteractions(userRepository);
     }
 
     @Test
@@ -269,6 +460,26 @@ class UserServiceTest {
         assertThrows(
                 UserBlockedException.class,
                 () -> userService.updateProfile(1L, "Alex", null, null)
+        );
+
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    void updateProfile_shouldThrowException_whenPhoneAlreadyExists() {
+        User user = defaultUser();
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(userRepository.existsByPhone("+79990000000")).thenReturn(true);
+
+        assertThrows(
+                UserAlreadyExistsException.class,
+                () -> userService.updateProfile(
+                        1L,
+                        null,
+                        null,
+                        "+7 (999) 000-00-00"
+                )
         );
 
         verify(userRepository, never()).save(any());
@@ -304,6 +515,35 @@ class UserServiceTest {
     }
 
     @Test
+    void changeEmail_shouldThrowException_whenEmailIsBlank() {
+        User user = defaultUser();
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+
+        assertThrows(
+                UserValidationException.class,
+                () -> userService.changeEmail(1L, " ")
+        );
+
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    void changeEmail_shouldThrowException_whenUserIsBlocked() {
+        User user = defaultUser();
+        user.block();
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+
+        assertThrows(
+                UserBlockedException.class,
+                () -> userService.changeEmail(1L, "new@example.com")
+        );
+
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
     void changePassword_shouldChangePasswordSuccessfully() {
         User user = defaultUser();
 
@@ -314,6 +554,35 @@ class UserServiceTest {
 
         assertEquals("NewPassword123", result.getPassword());
         verify(userRepository).save(user);
+    }
+
+    @Test
+    void changePassword_shouldThrowException_whenPasswordIsBlank() {
+        User user = defaultUser();
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+
+        assertThrows(
+                UserValidationException.class,
+                () -> userService.changePassword(1L, " ")
+        );
+
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    void changePassword_shouldThrowException_whenUserIsBlocked() {
+        User user = defaultUser();
+        user.block();
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+
+        assertThrows(
+                UserBlockedException.class,
+                () -> userService.changePassword(1L, "NewPassword123")
+        );
+
+        verify(userRepository, never()).save(any());
     }
 
     @Test
@@ -401,6 +670,21 @@ class UserServiceTest {
     }
 
     @Test
+    void verifyUser_shouldThrowException_whenUserIsBlocked() {
+        User user = defaultUser();
+        user.block();
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+
+        assertThrows(
+                UserBlockedException.class,
+                () -> userService.verifyUser(1L)
+        );
+
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
     void addBalance_shouldAddBalanceSuccessfully() {
         User user = defaultUser();
 
@@ -411,6 +695,21 @@ class UserServiceTest {
 
         assertEquals(BigDecimal.valueOf(500), result.getBalance());
         verify(userRepository).save(user);
+    }
+
+    @Test
+    void addBalance_shouldThrowException_whenUserIsBlocked() {
+        User user = defaultUser();
+        user.block();
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+
+        assertThrows(
+                UserBlockedException.class,
+                () -> userService.addBalance(1L, BigDecimal.valueOf(500))
+        );
+
+        verify(userRepository, never()).save(any());
     }
 
     @Test
@@ -435,6 +734,21 @@ class UserServiceTest {
 
         assertThrows(
                 InsufficientBalanceException.class,
+                () -> userService.subtractBalance(1L, BigDecimal.valueOf(200))
+        );
+
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    void subtractBalance_shouldThrowException_whenUserIsBlocked() {
+        User user = defaultUser();
+        user.block();
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+
+        assertThrows(
+                UserBlockedException.class,
                 () -> userService.subtractBalance(1L, BigDecimal.valueOf(200))
         );
 
@@ -474,6 +788,21 @@ class UserServiceTest {
     }
 
     @Test
+    void buyThreeDaySubscription_shouldThrowException_whenUserIsBlocked() {
+        User user = defaultUser();
+        user.block();
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+
+        assertThrows(
+                UserBlockedException.class,
+                () -> userService.buyThreeDaySubscription(1L)
+        );
+
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
     void deleteUser_shouldDeleteUserSuccessfully() {
         when(userRepository.existsById(1L)).thenReturn(true);
 
@@ -496,6 +825,26 @@ class UserServiceTest {
     }
 
     @Test
+    void deleteUser_shouldThrowException_whenIdIsNull() {
+        assertThrows(
+                UserValidationException.class,
+                () -> userService.deleteUser(null)
+        );
+
+        verifyNoInteractions(userRepository);
+    }
+
+    @Test
+    void deleteUser_shouldThrowException_whenIdIsInvalid() {
+        assertThrows(
+                UserValidationException.class,
+                () -> userService.deleteUser(0L)
+        );
+
+        verifyNoInteractions(userRepository);
+    }
+
+    @Test
     void existsByEmail_shouldReturnTrue_whenEmailExists() {
         when(userRepository.existsByEmail("ivan@example.com")).thenReturn(true);
 
@@ -506,6 +855,16 @@ class UserServiceTest {
     }
 
     @Test
+    void existsByEmail_shouldThrowException_whenEmailIsBlank() {
+        assertThrows(
+                UserValidationException.class,
+                () -> userService.existsByEmail(" ")
+        );
+
+        verifyNoInteractions(userRepository);
+    }
+
+    @Test
     void existsByPhone_shouldReturnTrue_whenPhoneExists() {
         when(userRepository.existsByPhone("+79991234567")).thenReturn(true);
 
@@ -513,6 +872,16 @@ class UserServiceTest {
 
         assertTrue(result);
         verify(userRepository).existsByPhone("+79991234567");
+    }
+
+    @Test
+    void existsByPhone_shouldThrowException_whenPhoneIsBlank() {
+        assertThrows(
+                UserValidationException.class,
+                () -> userService.existsByPhone(" ")
+        );
+
+        verifyNoInteractions(userRepository);
     }
 
     private User defaultUser() {
