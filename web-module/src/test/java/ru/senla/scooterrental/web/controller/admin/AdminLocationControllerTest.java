@@ -8,6 +8,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import ru.senla.scooterrental.fleet.entity.LocationNode;
 import ru.senla.scooterrental.fleet.enums.LocationType;
+import ru.senla.scooterrental.fleet.exceptions.FleetEntityNotFoundException;
+import ru.senla.scooterrental.fleet.exceptions.FleetValidationException;
 import ru.senla.scooterrental.fleet.service.FleetService;
 import ru.senla.scooterrental.web.dto.request.fleet.location.CreateLocationRequest;
 import ru.senla.scooterrental.web.dto.request.fleet.location.RenameLocationRequest;
@@ -17,10 +19,13 @@ import java.util.List;
 
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 class AdminLocationControllerTest {
@@ -62,7 +67,114 @@ class AdminLocationControllerTest {
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(request))
                 )
-                .andExpect(status().isCreated());
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id").value(1L))
+                .andExpect(jsonPath("$.name").value("Center"))
+                .andExpect(jsonPath("$.type").value("RENTAL_POINT"))
+                .andExpect(jsonPath("$.active").value(true));
+
+        verify(fleetService).createLocation(
+                "Center",
+                LocationType.RENTAL_POINT,
+                null
+        );
+    }
+
+    @Test
+    void createLocation_shouldReturnBadRequest_whenRequestIsInvalid()
+            throws Exception {
+
+        CreateLocationRequest request = new CreateLocationRequest(
+                "",
+                null,
+                null
+        );
+
+        mockMvc.perform(
+                        post("/api/v1/admin/locations")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(request))
+                )
+                .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(fleetService);
+    }
+
+    @Test
+    void createLocation_shouldReturnBadRequest_whenBodyIsMissing()
+            throws Exception {
+
+        mockMvc.perform(
+                        post("/api/v1/admin/locations")
+                                .contentType(MediaType.APPLICATION_JSON)
+                )
+                .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(fleetService);
+    }
+
+    @Test
+    void createLocation_shouldReturnBadRequest_whenServiceThrowsValidation()
+            throws Exception {
+
+        CreateLocationRequest request = new CreateLocationRequest(
+                "District",
+                LocationType.RENTAL_POINT,
+                1L
+        );
+
+        when(fleetService.createLocation(
+                "District",
+                LocationType.RENTAL_POINT,
+                1L
+        )).thenThrow(new FleetValidationException(
+                "Некорректная иерархия локаций"
+        ));
+
+        mockMvc.perform(
+                        post("/api/v1/admin/locations")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(request))
+                )
+                .andExpect(status().isBadRequest());
+
+        verify(fleetService).createLocation(
+                "District",
+                LocationType.RENTAL_POINT,
+                1L
+        );
+    }
+
+    @Test
+    void createLocation_shouldReturnNotFound_whenParentLocationNotFound()
+            throws Exception {
+
+        CreateLocationRequest request = new CreateLocationRequest(
+                "District",
+                LocationType.DISTRICT,
+                99L
+        );
+
+        when(fleetService.createLocation(
+                "District",
+                LocationType.DISTRICT,
+                99L
+        )).thenThrow(new FleetEntityNotFoundException(
+                "Локация с ID 99 не найдена"
+        ));
+
+        mockMvc.perform(
+                        post("/api/v1/admin/locations")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(request))
+                )
+                .andExpect(status().isNotFound());
+
+        verify(fleetService).createLocation(
+                "District",
+                LocationType.DISTRICT,
+                99L
+        );
     }
 
     @Test
@@ -73,7 +185,43 @@ class AdminLocationControllerTest {
                 .thenReturn(List.of(location));
 
         mockMvc.perform(get("/api/v1/admin/locations"))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(1L))
+                .andExpect(jsonPath("$[0].name").value("Center"))
+                .andExpect(jsonPath("$[0].type").value("RENTAL_POINT"))
+                .andExpect(jsonPath("$[0].active").value(true));
+
+        verify(fleetService).findAllLocations();
+    }
+
+    @Test
+    void getLocations_shouldReturnOk_whenTypeProvided() throws Exception {
+        LocationNode location = location();
+
+        when(fleetService.findLocationsByType(LocationType.RENTAL_POINT))
+                .thenReturn(List.of(location));
+
+        mockMvc.perform(
+                        get("/api/v1/admin/locations")
+                                .param("type", "RENTAL_POINT")
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].type").value("RENTAL_POINT"));
+
+        verify(fleetService).findLocationsByType(LocationType.RENTAL_POINT);
+    }
+
+    @Test
+    void getLocations_shouldReturnBadRequest_whenTypeIsInvalid()
+            throws Exception {
+
+        mockMvc.perform(
+                        get("/api/v1/admin/locations")
+                                .param("type", "WRONG_TYPE")
+                )
+                .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(fleetService);
     }
 
     @Test
@@ -81,9 +229,9 @@ class AdminLocationControllerTest {
         LocationNode location = location();
 
         RenameLocationRequest request =
-                new RenameLocationRequest("New name");
+                new RenameLocationRequest("Новое название");
 
-        when(fleetService.renameLocation(1L, "New name"))
+        when(fleetService.renameLocation(1L, "Новое название"))
                 .thenReturn(location);
 
         mockMvc.perform(
@@ -91,7 +239,50 @@ class AdminLocationControllerTest {
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(request))
                 )
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1L))
+                .andExpect(jsonPath("$.name").value("Center"));
+
+        verify(fleetService).renameLocation(1L, "Новое название");
+    }
+
+    @Test
+    void renameLocation_shouldReturnBadRequest_whenRequestIsInvalid()
+            throws Exception {
+
+        RenameLocationRequest request =
+                new RenameLocationRequest("");
+
+        mockMvc.perform(
+                        patch("/api/v1/admin/locations/1/rename")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(request))
+                )
+                .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(fleetService);
+    }
+
+    @Test
+    void renameLocation_shouldReturnNotFound_whenLocationNotFound()
+            throws Exception {
+
+        RenameLocationRequest request =
+                new RenameLocationRequest("Новое название");
+
+        when(fleetService.renameLocation(99L, "Новое название"))
+                .thenThrow(new FleetEntityNotFoundException(
+                        "Локация с ID 99 не найдена"
+                ));
+
+        mockMvc.perform(
+                        patch("/api/v1/admin/locations/99/rename")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(request))
+                )
+                .andExpect(status().isNotFound());
+
+        verify(fleetService).renameLocation(99L, "Новое название");
     }
 
     @Test
@@ -102,7 +293,26 @@ class AdminLocationControllerTest {
                 .thenReturn(location);
 
         mockMvc.perform(patch("/api/v1/admin/locations/1/activate"))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1L))
+                .andExpect(jsonPath("$.active").value(true));
+
+        verify(fleetService).activateLocation(1L);
+    }
+
+    @Test
+    void activateLocation_shouldReturnNotFound_whenLocationNotFound()
+            throws Exception {
+
+        when(fleetService.activateLocation(99L))
+                .thenThrow(new FleetEntityNotFoundException(
+                        "Локация с ID 99 не найдена"
+                ));
+
+        mockMvc.perform(patch("/api/v1/admin/locations/99/activate"))
+                .andExpect(status().isNotFound());
+
+        verify(fleetService).activateLocation(99L);
     }
 
     @Test
@@ -113,7 +323,25 @@ class AdminLocationControllerTest {
                 .thenReturn(location);
 
         mockMvc.perform(patch("/api/v1/admin/locations/1/deactivate"))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1L));
+
+        verify(fleetService).deactivateLocation(1L);
+    }
+
+    @Test
+    void deactivateLocation_shouldReturnNotFound_whenLocationNotFound()
+            throws Exception {
+
+        when(fleetService.deactivateLocation(99L))
+                .thenThrow(new FleetEntityNotFoundException(
+                        "Локация с ID 99 не найдена"
+                ));
+
+        mockMvc.perform(patch("/api/v1/admin/locations/99/deactivate"))
+                .andExpect(status().isNotFound());
+
+        verify(fleetService).deactivateLocation(99L);
     }
 
     private LocationNode location() {
