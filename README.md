@@ -515,6 +515,7 @@ run.sh
 docker compose up -d
 mvn clean install -DskipTests
 mvn spring-boot:run -pl web-module
+
 ---
 
 После запуска приложение доступно по адресу:
