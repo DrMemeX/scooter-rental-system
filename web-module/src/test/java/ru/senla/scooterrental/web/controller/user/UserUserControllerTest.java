@@ -20,9 +20,7 @@ import ru.senla.scooterrental.web.error.GlobalExceptionHandler;
 import java.math.BigDecimal;
 import java.util.List;
 
-import static org.mockito.Mockito.lenient;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
@@ -73,6 +71,79 @@ class UserUserControllerTest {
                                 .principal(authentication)
                 )
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    void getUserById_shouldReturnForbidden_whenUserRequestsAnotherUser()
+            throws Exception {
+
+        User currentUser = user();
+
+        when(authentication.getName())
+                .thenReturn("ivan@example.com");
+
+        doReturn(List.of(
+                new SimpleGrantedAuthority("ROLE_USER")
+        ))
+                .when(authentication)
+                .getAuthorities();
+
+        when(userService.getByEmail("ivan@example.com"))
+                .thenReturn(currentUser);
+
+        mockMvc.perform(
+                        get("/api/v1/users/999")
+                                .principal(authentication)
+                )
+                .andExpect(status().isForbidden());
+
+        verify(userService, never())
+                .getById(999L);
+    }
+
+    @Test
+    void getUserById_shouldAllowAdminToAccessAnotherUser()
+            throws Exception {
+
+        User currentUser = user();
+        User targetUser = user();
+
+        when(authentication.getName())
+                .thenReturn("admin@example.com");
+
+        doReturn(List.of(
+                new SimpleGrantedAuthority("ROLE_ADMIN")
+        ))
+                .when(authentication)
+                .getAuthorities();
+
+        when(userService.getByEmail("admin@example.com"))
+                .thenReturn(currentUser);
+
+        when(userService.getById(999L))
+                .thenReturn(targetUser);
+
+        mockMvc.perform(
+                        get("/api/v1/users/999")
+                                .principal(authentication)
+                )
+                .andExpect(status().isOk());
+
+        verify(userService)
+                .getById(999L);
+    }
+
+    @Test
+    void getUserById_shouldReturnBadRequest_whenIdInvalid()
+            throws Exception {
+
+        mockMvc.perform(
+                        get("/api/v1/users/abc")
+                                .principal(authentication)
+                )
+                .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(userService);
     }
 
     @Test
@@ -142,6 +213,28 @@ class UserUserControllerTest {
     }
 
     @Test
+    void changeEmail_shouldReturnBadRequest_whenEmailInvalid()
+            throws Exception {
+
+        ChangeEmailRequest request =
+                new ChangeEmailRequest("wrongEmail");
+
+        mockMvc.perform(
+                        patch("/api/v1/users/1/email")
+                                .principal(authentication)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(
+                                        objectMapper.writeValueAsString(
+                                                request
+                                        )
+                                )
+                )
+                .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(userService);
+    }
+
+    @Test
     void changePassword_shouldChangePasswordSuccessfully()
             throws Exception {
 
@@ -170,6 +263,28 @@ class UserUserControllerTest {
                                 .content(objectMapper.writeValueAsString(request))
                 )
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    void changePassword_shouldReturnBadRequest_whenPasswordInvalid()
+            throws Exception {
+
+        ChangePasswordRequest request =
+                new ChangePasswordRequest("1");
+
+        mockMvc.perform(
+                        patch("/api/v1/users/1/password")
+                                .principal(authentication)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(
+                                        objectMapper.writeValueAsString(
+                                                request
+                                        )
+                                )
+                )
+                .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(userService);
     }
 
     @Test
@@ -202,6 +317,31 @@ class UserUserControllerTest {
                 )
                 .andExpect(status().isOk());
     }
+
+    @Test
+    void addBalance_shouldReturnBadRequest_whenAmountNegative()
+            throws Exception {
+
+        BalanceRequest request =
+                new BalanceRequest(
+                        BigDecimal.valueOf(-500)
+                );
+
+        mockMvc.perform(
+                        post("/api/v1/users/1/balance")
+                                .principal(authentication)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(
+                                        objectMapper.writeValueAsString(
+                                                request
+                                        )
+                                )
+                )
+                .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(userService);
+    }
+
 
     @Test
     void buyThreeDaySubscription_shouldBuySuccessfully()
@@ -248,6 +388,34 @@ class UserUserControllerTest {
                                 .principal(authentication)
                 )
                 .andExpect(status().isNoContent());
+    }
+
+    @Test
+    void deleteUser_shouldReturnForbidden_whenUserDeletesAnotherUser()
+            throws Exception {
+
+        User currentUser = user();
+
+        when(authentication.getName())
+                .thenReturn("ivan@example.com");
+
+        doReturn(List.of(
+                new SimpleGrantedAuthority("ROLE_USER")
+        ))
+                .when(authentication)
+                .getAuthorities();
+
+        when(userService.getByEmail("ivan@example.com"))
+                .thenReturn(currentUser);
+
+        mockMvc.perform(
+                        delete("/api/v1/users/999")
+                                .principal(authentication)
+                )
+                .andExpect(status().isForbidden());
+
+        verify(userService, never())
+                .deleteUser(999L);
     }
 
     private User user() {

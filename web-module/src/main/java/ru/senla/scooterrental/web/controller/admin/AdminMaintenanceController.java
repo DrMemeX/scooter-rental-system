@@ -122,7 +122,7 @@ public class AdminMaintenanceController {
 
     @GetMapping("/scooters/{scooterId}/events")
     public List<MaintenanceEventResponse> getEventsByScooterId(
-            @PathVariable Long scooterId
+            @PathVariable("scooterId") Long scooterId
     ) {
         return maintenanceService.getEventsByScooterId(scooterId)
                 .stream()
