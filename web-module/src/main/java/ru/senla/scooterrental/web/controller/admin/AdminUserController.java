@@ -39,7 +39,7 @@ public class AdminUserController {
             @Valid @RequestBody RegisterUserRequest request
     ) {
         User user = UserWebMapper.toEntity(request);
-        User savedUser = userService.registerManager(user);
+        User savedUser = userService.registerAdmin(user);
 
         return UserWebMapper.toResponse(savedUser);
     }

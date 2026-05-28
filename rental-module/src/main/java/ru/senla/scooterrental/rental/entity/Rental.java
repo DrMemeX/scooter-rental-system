@@ -108,9 +108,9 @@ public class Rental {
     }
 
     public void setMaxAllowedMinutes(Integer maxAllowedMinutes) {
-        if (tariffType != TariffType.MINUTE) {
+        if (tariffType != TariffType.MINUTE && tariffType != TariffType.HOUR) {
             throw new RentalValidationException(
-                    "Максимальное время поездки задаётся только для поминутного тарифа"
+                    "Максимальное время поездки может быть задано только для тарифов с оплатой по времени"
             );
         }
 

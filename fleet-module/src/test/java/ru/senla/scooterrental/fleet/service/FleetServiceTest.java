@@ -19,6 +19,7 @@ import ru.senla.scooterrental.fleet.repository.LocationNodeRepository;
 import ru.senla.scooterrental.fleet.repository.RentalPointRepository;
 import ru.senla.scooterrental.fleet.repository.ScooterModelRepository;
 import ru.senla.scooterrental.fleet.repository.ScooterRepository;
+import ru.senla.scooterrental.fleet.service.impl.FleetServiceImpl;
 
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
@@ -47,7 +48,7 @@ class FleetServiceTest {
     private ScooterModelRepository scooterModelRepository;
 
     @InjectMocks
-    private FleetService fleetService;
+    private FleetServiceImpl fleetService;
 
     private LocationNode city;
     private LocationNode district;
@@ -91,6 +92,8 @@ class FleetServiceTest {
         scooter = new Scooter(scooterModel, rentalPoint, 100.0);
         setId(scooter, 1L);
     }
+
+    // Location tests
 
     @Test
     void createLocation_shouldCreateLocationWithoutParentSuccessfully() {
@@ -226,6 +229,8 @@ class FleetServiceTest {
         assertEquals(LocationType.CITY, result.get(0).getType());
     }
 
+    // Rental point tests
+
     @Test
     void createRentalPoint_shouldCreateRentalPointSuccessfully() {
         when(locationNodeRepository.findById(3L))
@@ -324,6 +329,22 @@ class FleetServiceTest {
         RentalPoint result = fleetService.getRentalPointById(1L);
 
         assertEquals(rentalPoint, result);
+    }
+
+    @Test
+    void getRentalPointById_shouldThrowException_whenPointNotFound() {
+        when(rentalPointRepository.findById(99L))
+                .thenReturn(Optional.empty());
+
+        FleetEntityNotFoundException exception = assertThrows(
+                FleetEntityNotFoundException.class,
+                () -> fleetService.getRentalPointById(99L)
+        );
+
+        assertEquals(
+                "Точка проката с ID 99 не найдена",
+                exception.getMessage()
+        );
     }
 
     @Test
@@ -426,6 +447,8 @@ class FleetServiceTest {
         verify(rentalPointRepository, never()).deleteById(1L);
     }
 
+    // Scooter model tests
+
     @Test
     void createScooterModel_shouldCreateModelSuccessfully() {
         when(scooterModelRepository.save(any(ScooterModel.class)))
@@ -454,6 +477,22 @@ class FleetServiceTest {
         ScooterModel result = fleetService.getScooterModelById(1L);
 
         assertEquals(scooterModel, result);
+    }
+
+    @Test
+    void getScooterModelById_shouldThrowException_whenModelNotFound() {
+        when(scooterModelRepository.findById(99L))
+                .thenReturn(Optional.empty());
+
+        FleetEntityNotFoundException exception = assertThrows(
+                FleetEntityNotFoundException.class,
+                () -> fleetService.getScooterModelById(99L)
+        );
+
+        assertEquals(
+                "Модель самоката с ID 99 не найдена",
+                exception.getMessage()
+        );
     }
 
     @Test
@@ -521,6 +560,8 @@ class FleetServiceTest {
         verify(scooterModelRepository, never()).deleteById(1L);
     }
 
+    // Scooter creation tests
+
     @Test
     void createScooter_shouldCreateScooterSuccessfully() {
         when(scooterModelRepository.findById(1L))
@@ -571,6 +612,68 @@ class FleetServiceTest {
     }
 
     @Test
+    void createScooter_shouldThrowException_whenModelNotFound() {
+        when(scooterModelRepository.findById(99L))
+                .thenReturn(Optional.empty());
+
+        FleetEntityNotFoundException exception = assertThrows(
+                FleetEntityNotFoundException.class,
+                () -> fleetService.createScooter(99L, 1L, 100.0)
+        );
+
+        assertEquals(
+                "Модель самоката с ID 99 не найдена",
+                exception.getMessage()
+        );
+
+        verify(scooterRepository, never()).save(any(Scooter.class));
+    }
+
+    @Test
+    void createScooter_shouldThrowException_whenRentalPointNotFound() {
+        when(scooterModelRepository.findById(1L))
+                .thenReturn(Optional.of(scooterModel));
+
+        when(rentalPointRepository.findById(99L))
+                .thenReturn(Optional.empty());
+
+        FleetEntityNotFoundException exception = assertThrows(
+                FleetEntityNotFoundException.class,
+                () -> fleetService.createScooter(1L, 99L, 100.0)
+        );
+
+        assertEquals(
+                "Точка проката с ID 99 не найдена",
+                exception.getMessage()
+        );
+
+        verify(scooterRepository, never()).save(any(Scooter.class));
+    }
+
+    @Test
+    void createScooter_shouldThrowException_whenChargeExceedsBatteryCapacity() {
+        when(scooterModelRepository.findById(1L))
+                .thenReturn(Optional.of(scooterModel));
+
+        when(rentalPointRepository.findById(1L))
+                .thenReturn(Optional.of(rentalPoint));
+
+        FleetValidationException exception = assertThrows(
+                FleetValidationException.class,
+                () -> fleetService.createScooter(1L, 1L, 2000.0)
+        );
+
+        assertEquals(
+                "Заряд не может превышать емкость батареи",
+                exception.getMessage()
+        );
+
+        verify(scooterRepository, never()).save(any(Scooter.class));
+    }
+
+    // Scooter lifecycle tests
+
+    @Test
     void rentScooter_shouldMarkScooterAsRentedSuccessfully() {
         when(scooterRepository.findById(1L))
                 .thenReturn(Optional.of(scooter));
@@ -584,6 +687,42 @@ class FleetServiceTest {
         assertNull(result.getCurrentRentalPoint());
 
         verify(scooterRepository).save(scooter);
+    }
+
+    @Test
+    void rentScooter_shouldThrowException_whenScooterNotFound() {
+        when(scooterRepository.findById(99L))
+                .thenReturn(Optional.empty());
+
+        FleetEntityNotFoundException exception = assertThrows(
+                FleetEntityNotFoundException.class,
+                () -> fleetService.rentScooter(99L)
+        );
+
+        assertEquals(
+                "Самокат с ID 99 не найден",
+                exception.getMessage()
+        );
+    }
+
+    @Test
+    void rentScooter_shouldThrowException_whenScooterIsNotAvailable() {
+        scooter.sendToMaintenance();
+
+        when(scooterRepository.findById(1L))
+                .thenReturn(Optional.of(scooter));
+
+        FleetValidationException exception = assertThrows(
+                FleetValidationException.class,
+                () -> fleetService.rentScooter(1L)
+        );
+
+        assertEquals(
+                "Самокат с ID 1 недоступен для аренды",
+                exception.getMessage()
+        );
+
+        verify(scooterRepository, never()).save(any(Scooter.class));
     }
 
     @Test
@@ -608,6 +747,27 @@ class FleetServiceTest {
     }
 
     @Test
+    void returnScooter_shouldThrowException_whenScooterIsNotRented() {
+        when(scooterRepository.findById(1L))
+                .thenReturn(Optional.of(scooter));
+
+        when(rentalPointRepository.findById(1L))
+                .thenReturn(Optional.of(rentalPoint));
+
+        FleetValidationException exception = assertThrows(
+                FleetValidationException.class,
+                () -> fleetService.returnScooter(1L, 1L)
+        );
+
+        assertEquals(
+                "Вернуть можно только арендованный самокат",
+                exception.getMessage()
+        );
+
+        verify(scooterRepository, never()).save(any(Scooter.class));
+    }
+
+    @Test
     void moveScooterToRentalPoint_shouldMoveScooterSuccessfully() {
         when(scooterRepository.findById(1L))
                 .thenReturn(Optional.of(scooter));
@@ -623,6 +783,53 @@ class FleetServiceTest {
         assertEquals(secondRentalPoint, result.getCurrentRentalPoint());
 
         verify(scooterRepository).save(scooter);
+    }
+
+    @Test
+    void moveScooterToRentalPoint_shouldThrowException_whenScooterIsRented() {
+        scooter.markAsRented();
+
+        when(scooterRepository.findById(1L))
+                .thenReturn(Optional.of(scooter));
+
+        when(rentalPointRepository.findById(2L))
+                .thenReturn(Optional.of(secondRentalPoint));
+
+        FleetValidationException exception = assertThrows(
+                FleetValidationException.class,
+                () -> fleetService.moveScooterToRentalPoint(1L, 2L)
+        );
+
+        assertEquals(
+                "Нельзя перемещать самокат с активной арендой",
+                exception.getMessage()
+        );
+
+        verify(scooterRepository, never()).save(any(Scooter.class));
+    }
+
+    @Test
+    void moveScooterToRentalPoint_shouldThrowException_whenScooterRequiresReturnVerification() {
+        scooter.markAsRented();
+        scooter.requireReturnVerification();
+
+        when(scooterRepository.findById(1L))
+                .thenReturn(Optional.of(scooter));
+
+        when(rentalPointRepository.findById(2L))
+                .thenReturn(Optional.of(secondRentalPoint));
+
+        FleetValidationException exception = assertThrows(
+                FleetValidationException.class,
+                () -> fleetService.moveScooterToRentalPoint(1L, 2L)
+        );
+
+        assertEquals(
+                "Нельзя перемещать самокат с активной арендой",
+                exception.getMessage()
+        );
+
+        verify(scooterRepository, never()).save(any(Scooter.class));
     }
 
     @Test
@@ -646,6 +853,24 @@ class FleetServiceTest {
     }
 
     @Test
+    void requestReturnVerification_shouldThrowException_whenScooterIsNotRented() {
+        when(scooterRepository.findById(1L))
+                .thenReturn(Optional.of(scooter));
+
+        FleetValidationException exception = assertThrows(
+                FleetValidationException.class,
+                () -> fleetService.requestReturnVerification(1L)
+        );
+
+        assertEquals(
+                "Запросить ручное завершение можно только для арендованного самоката",
+                exception.getMessage()
+        );
+
+        verify(scooterRepository, never()).save(any(Scooter.class));
+    }
+
+    @Test
     void sendToMaintenance_shouldChangeStatusSuccessfully() {
         when(scooterRepository.findById(1L))
                 .thenReturn(Optional.of(scooter));
@@ -658,6 +883,21 @@ class FleetServiceTest {
         assertEquals(ScooterStatus.MAINTENANCE, result.getStatus());
 
         verify(scooterRepository).save(scooter);
+    }
+
+    @Test
+    void sendToMaintenance_shouldThrowException_whenScooterIsRented() {
+        scooter.markAsRented();
+
+        when(scooterRepository.findById(1L))
+                .thenReturn(Optional.of(scooter));
+
+        assertThrows(
+                RuntimeException.class,
+                () -> fleetService.sendToMaintenance(1L)
+        );
+
+        verify(scooterRepository, never()).save(any(Scooter.class));
     }
 
     @Test
@@ -678,6 +918,19 @@ class FleetServiceTest {
     }
 
     @Test
+    void completeMaintenance_shouldThrowException_whenScooterIsNotInMaintenance() {
+        when(scooterRepository.findById(1L))
+                .thenReturn(Optional.of(scooter));
+
+        assertThrows(
+                RuntimeException.class,
+                () -> fleetService.completeMaintenance(1L)
+        );
+
+        verify(scooterRepository, never()).save(any(Scooter.class));
+    }
+
+    @Test
     void markServiceRequired_shouldChangeStatusSuccessfully() {
         when(scooterRepository.findById(1L))
                 .thenReturn(Optional.of(scooter));
@@ -690,6 +943,21 @@ class FleetServiceTest {
         assertEquals(ScooterStatus.SERVICE_REQUIRED, result.getStatus());
 
         verify(scooterRepository).save(scooter);
+    }
+
+    @Test
+    void markServiceRequired_shouldThrowException_whenScooterIsRented() {
+        scooter.markAsRented();
+
+        when(scooterRepository.findById(1L))
+                .thenReturn(Optional.of(scooter));
+
+        assertThrows(
+                RuntimeException.class,
+                () -> fleetService.markServiceRequired(1L)
+        );
+
+        verify(scooterRepository, never()).save(any(Scooter.class));
     }
 
     @Test
@@ -726,6 +994,21 @@ class FleetServiceTest {
     }
 
     @Test
+    void chargeScooter_shouldThrowException_whenScooterIsRented() {
+        scooter.markAsRented();
+
+        when(scooterRepository.findById(1L))
+                .thenReturn(Optional.of(scooter));
+
+        assertThrows(
+                RuntimeException.class,
+                () -> fleetService.chargeScooter(1L, 50.0)
+        );
+
+        verify(scooterRepository, never()).save(any(Scooter.class));
+    }
+
+    @Test
     void consumeCharge_shouldDecreaseChargeSuccessfully() {
         scooter.markAsRented();
 
@@ -740,6 +1023,19 @@ class FleetServiceTest {
         assertEquals(80.0, result.getCurrentCharge());
 
         verify(scooterRepository).save(scooter);
+    }
+
+    @Test
+    void consumeCharge_shouldThrowException_whenScooterIsNotRented() {
+        when(scooterRepository.findById(1L))
+                .thenReturn(Optional.of(scooter));
+
+        assertThrows(
+                RuntimeException.class,
+                () -> fleetService.consumeCharge(1L, 20.0)
+        );
+
+        verify(scooterRepository, never()).save(any(Scooter.class));
     }
 
     @Test
@@ -758,6 +1054,21 @@ class FleetServiceTest {
 
         verify(scooterRepository).save(scooter);
     }
+
+    @Test
+    void addMileage_shouldThrowException_whenScooterIsNotRented() {
+        when(scooterRepository.findById(1L))
+                .thenReturn(Optional.of(scooter));
+
+        assertThrows(
+                RuntimeException.class,
+                () -> fleetService.addMileage(1L, 10.0)
+        );
+
+        verify(scooterRepository, never()).save(any(Scooter.class));
+    }
+
+    // Scooter query tests
 
     @Test
     void getScooterById_shouldReturnScooter_whenScooterExists() {
@@ -830,6 +1141,8 @@ class FleetServiceTest {
         assertEquals(scooter, result.get(0));
     }
 
+    // Scooter deletion tests
+
     @Test
     void deleteScooter_shouldDeleteSuccessfully() {
         when(scooterRepository.findById(1L))
@@ -880,6 +1193,25 @@ class FleetServiceTest {
 
         verify(scooterRepository, never()).deleteById(1L);
     }
+
+    @Test
+    void deleteScooter_shouldThrowException_whenScooterNotFound() {
+        when(scooterRepository.findById(99L))
+                .thenReturn(Optional.empty());
+
+        FleetEntityNotFoundException exception = assertThrows(
+                FleetEntityNotFoundException.class,
+                () -> fleetService.deleteScooter(99L)
+        );
+
+        assertEquals(
+                "Самокат с ID 99 не найден",
+                exception.getMessage()
+        );
+
+        verify(scooterRepository, never()).deleteById(99L);
+    }
+
 
     private void setId(Object entity, Long id) {
         try {

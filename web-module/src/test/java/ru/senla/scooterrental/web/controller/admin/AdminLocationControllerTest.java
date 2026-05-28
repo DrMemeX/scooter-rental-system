@@ -10,7 +10,7 @@ import ru.senla.scooterrental.fleet.entity.LocationNode;
 import ru.senla.scooterrental.fleet.enums.LocationType;
 import ru.senla.scooterrental.fleet.exceptions.FleetEntityNotFoundException;
 import ru.senla.scooterrental.fleet.exceptions.FleetValidationException;
-import ru.senla.scooterrental.fleet.service.FleetService;
+import ru.senla.scooterrental.fleet.service.impl.FleetServiceImpl;
 import ru.senla.scooterrental.web.dto.request.fleet.location.CreateLocationRequest;
 import ru.senla.scooterrental.web.dto.request.fleet.location.RenameLocationRequest;
 import ru.senla.scooterrental.web.error.GlobalExceptionHandler;
@@ -32,11 +32,11 @@ class AdminLocationControllerTest {
 
     private MockMvc mockMvc;
     private ObjectMapper objectMapper;
-    private FleetService fleetService;
+    private FleetServiceImpl fleetService;
 
     @BeforeEach
     void setUp() {
-        fleetService = mock(FleetService.class);
+        fleetService = mock(FleetServiceImpl.class);
 
         mockMvc = MockMvcBuilders
                 .standaloneSetup(new AdminLocationController(fleetService))

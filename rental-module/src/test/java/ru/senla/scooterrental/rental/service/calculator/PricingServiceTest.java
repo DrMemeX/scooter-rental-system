@@ -1,4 +1,4 @@
-package ru.senla.scooterrental.rental.service;
+package ru.senla.scooterrental.rental.service.calculator;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -14,8 +14,10 @@ import ru.senla.scooterrental.user.entity.User;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 class PricingServiceTest {
 
@@ -36,11 +38,13 @@ class PricingServiceTest {
         when(scooter.getModel()).thenReturn(scooterModel);
     }
 
+    // Validation tests
+
     @Test
     void calculate_shouldThrowException_whenRentalIsNull() {
         assertThrows(
                 RentalValidationException.class,
-                () -> pricingService.calculate(null, scooter)
+                () -> pricingService.calculate(null, scooter, null, 10)
         );
     }
 
@@ -50,7 +54,7 @@ class PricingServiceTest {
 
         assertThrows(
                 RentalValidationException.class,
-                () -> pricingService.calculate(rental, null)
+                () -> pricingService.calculate(rental, null, null, 10)
         );
     }
 
@@ -62,7 +66,7 @@ class PricingServiceTest {
 
         assertThrows(
                 RentalValidationException.class,
-                () -> pricingService.calculate(rental, scooter)
+                () -> pricingService.calculate(rental, scooter, null, 10)
         );
     }
 
@@ -74,7 +78,7 @@ class PricingServiceTest {
 
         assertThrows(
                 RentalValidationException.class,
-                () -> pricingService.calculate(rental, scooter)
+                () -> pricingService.calculate(rental, scooter, null, 10)
         );
     }
 
@@ -108,20 +112,21 @@ class PricingServiceTest {
         );
     }
 
+    // Minute tariff tests
+
     @Test
     void calculate_shouldCalculateMinutePrice() {
         Rental rental = new Rental(user, scooter, TariffType.MINUTE, null);
         rental.setMaxAllowedMinutes(20);
 
-        ReflectionTestUtils.setField(
-                rental,
-                "startTime",
-                LocalDateTime.now().minusMinutes(10)
-        );
-
         when(scooterModel.getPricePerMinute()).thenReturn(BigDecimal.TEN);
 
-        BigDecimal result = pricingService.calculate(rental, scooter);
+        BigDecimal result = pricingService.calculate(
+                rental,
+                scooter,
+                null,
+                10
+        );
 
         assertEquals(BigDecimal.valueOf(100), result);
     }
@@ -131,15 +136,14 @@ class PricingServiceTest {
         Rental rental = new Rental(user, scooter, TariffType.MINUTE, null);
         rental.setMaxAllowedMinutes(5);
 
-        ReflectionTestUtils.setField(
-                rental,
-                "startTime",
-                LocalDateTime.now().minusMinutes(10)
-        );
-
         when(scooterModel.getPricePerMinute()).thenReturn(BigDecimal.TEN);
 
-        BigDecimal result = pricingService.calculate(rental, scooter);
+        BigDecimal result = pricingService.calculate(
+                rental,
+                scooter,
+                null,
+                10
+        );
 
         assertEquals(BigDecimal.valueOf(50), result);
     }
@@ -168,7 +172,7 @@ class PricingServiceTest {
 
         assertThrows(
                 RentalValidationException.class,
-                () -> pricingService.calculate(rental, scooter)
+                () -> pricingService.calculate(rental, scooter, null, 10)
         );
     }
 
@@ -192,13 +196,20 @@ class PricingServiceTest {
         );
     }
 
+    // Hour tariff tests
+
     @Test
     void calculate_shouldCalculateHourPrice() {
         Rental rental = new Rental(user, scooter, TariffType.HOUR, 3);
 
         when(scooterModel.getPricePerHour()).thenReturn(BigDecimal.valueOf(100));
 
-        BigDecimal result = pricingService.calculate(rental, scooter);
+        BigDecimal result = pricingService.calculate(
+                rental,
+                scooter,
+                null,
+                60
+        );
 
         assertEquals(BigDecimal.valueOf(300), result);
     }
@@ -207,18 +218,13 @@ class PricingServiceTest {
     void calculate_shouldUseFullPackagePrice_whenHourRentalFinishedByUserInsidePlannedHours() {
         Rental rental = new Rental(user, scooter, TariffType.HOUR, 2);
 
-        ReflectionTestUtils.setField(
-                rental,
-                "startTime",
-                LocalDateTime.now().minusMinutes(80)
-        );
-
         when(scooterModel.getPricePerHour()).thenReturn(BigDecimal.valueOf(600));
 
         BigDecimal result = pricingService.calculate(
                 rental,
                 scooter,
-                TerminationReason.USER_FINISHED
+                TerminationReason.USER_FINISHED,
+                80
         );
 
         assertEquals(BigDecimal.valueOf(1200), result);
@@ -228,19 +234,14 @@ class PricingServiceTest {
     void calculate_shouldApplyOvertime_whenUserFinishedAfterPlannedHours() {
         Rental rental = new Rental(user, scooter, TariffType.HOUR, 2);
 
-        ReflectionTestUtils.setField(
-                rental,
-                "startTime",
-                LocalDateTime.now().minusMinutes(150)
-        );
-
         when(scooterModel.getPricePerHour()).thenReturn(BigDecimal.valueOf(600));
         when(scooterModel.getPricePerMinute()).thenReturn(BigDecimal.valueOf(12));
 
         BigDecimal result = pricingService.calculate(
                 rental,
                 scooter,
-                TerminationReason.USER_FINISHED
+                TerminationReason.USER_FINISHED,
+                150
         );
 
         assertEquals(BigDecimal.valueOf(1560), result);
@@ -250,32 +251,24 @@ class PricingServiceTest {
     void calculate_shouldCalculateBatteryDepletedHourPrice() {
         Rental rental = new Rental(user, scooter, TariffType.HOUR, 3);
 
-        ReflectionTestUtils.setField(
-                rental,
-                "startTime",
-                LocalDateTime.now().minusMinutes(80)
-        );
-
         when(scooterModel.getPricePerHour()).thenReturn(BigDecimal.valueOf(600));
 
         BigDecimal result = pricingService.calculate(
                 rental,
                 scooter,
-                TerminationReason.BATTERY_DEPLETED
+                TerminationReason.BATTERY_DEPLETED,
+                80
         );
 
-        assertEquals(BigDecimal.valueOf(800.00).setScale(2), result);
+        assertEquals(
+                BigDecimal.valueOf(800.00).setScale(2),
+                result.setScale(2)
+        );
     }
 
     @Test
     void calculate_shouldApplyOvertime_whenBatteryDepletedAfterPlannedHours() {
         Rental rental = new Rental(user, scooter, TariffType.HOUR, 2);
-
-        ReflectionTestUtils.setField(
-                rental,
-                "startTime",
-                LocalDateTime.now().minusMinutes(210)
-        );
 
         when(scooterModel.getPricePerHour()).thenReturn(BigDecimal.valueOf(600));
         when(scooterModel.getPricePerMinute()).thenReturn(BigDecimal.valueOf(12));
@@ -283,10 +276,31 @@ class PricingServiceTest {
         BigDecimal result = pricingService.calculate(
                 rental,
                 scooter,
-                TerminationReason.BATTERY_DEPLETED
+                TerminationReason.BATTERY_DEPLETED,
+                210
         );
 
         assertEquals(BigDecimal.valueOf(2280), result);
+    }
+
+    @Test
+    void calculate_shouldUsePartialHourPrice_whenMaxAllowedMinutesLessThanPlannedMinutes() {
+        Rental rental = new Rental(user, scooter, TariffType.HOUR, 2);
+        rental.setMaxAllowedMinutes(75);
+
+        when(scooterModel.getPricePerHour()).thenReturn(BigDecimal.valueOf(600));
+
+        BigDecimal result = pricingService.calculate(
+                rental,
+                scooter,
+                TerminationReason.USER_FINISHED,
+                100
+        );
+
+        assertEquals(
+                BigDecimal.valueOf(750.00).setScale(2),
+                result.setScale(2)
+        );
     }
 
     @Test
@@ -314,10 +328,29 @@ class PricingServiceTest {
     }
 
     @Test
+    void calculate_shouldThrowException_whenHourTariffHasInvalidPlannedHoursByReflection() {
+        Rental rental = new Rental(user, scooter, TariffType.HOUR, 1);
+
+        ReflectionTestUtils.setField(rental, "plannedHours", null);
+
+        assertThrows(
+                RentalValidationException.class,
+                () -> pricingService.calculate(rental, scooter, null, 60)
+        );
+    }
+
+    // Subscription tariff tests
+
+    @Test
     void calculate_shouldReturnZeroForSubscriptionTariff() {
         Rental rental = new Rental(user, scooter, TariffType.SUBSCRIPTION, null);
 
-        BigDecimal result = pricingService.calculate(rental, scooter);
+        BigDecimal result = pricingService.calculate(
+                rental,
+                scooter,
+                null,
+                100
+        );
 
         assertEquals(BigDecimal.ZERO, result);
     }

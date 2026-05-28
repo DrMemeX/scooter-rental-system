@@ -9,13 +9,21 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import ru.senla.scooterrental.discount.entity.PromoCode;
 import ru.senla.scooterrental.discount.exceptions.DiscountValidationException;
 import ru.senla.scooterrental.discount.repository.PromoCodeRepository;
+import ru.senla.scooterrental.discount.service.impl.DiscountServiceImpl;
 
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class DiscountServiceTest {
@@ -24,7 +32,7 @@ class DiscountServiceTest {
     private PromoCodeRepository promoCodeRepository;
 
     @InjectMocks
-    private DiscountService discountService;
+    private DiscountServiceImpl discountService;
 
     private PromoCode promoCode;
 
@@ -92,10 +100,23 @@ class DiscountServiceTest {
         when(promoCodeRepository.findByCode("SALE10"))
                 .thenReturn(Optional.of(promoCode));
 
-        PromoCode result = discountService.getByCodeOrThrow("sale10");
+        PromoCode result = discountService.getByCodeOrThrow("SALE10");
 
         assertNotNull(result);
         assertEquals("SALE10", result.getCode());
+    }
+
+    @Test
+    void getByCodeOrThrow_shouldNormalizeCodeBeforeSearch() {
+        when(promoCodeRepository.findByCode("SALE10"))
+                .thenReturn(Optional.of(promoCode));
+
+        PromoCode result = discountService.getByCodeOrThrow(" sale10 ");
+
+        assertNotNull(result);
+        assertEquals("SALE10", result.getCode());
+
+        verify(promoCodeRepository).findByCode("SALE10");
     }
 
     @Test
@@ -155,6 +176,16 @@ class DiscountServiceTest {
     }
 
     @Test
+    void getAllPromoCodes_shouldReturnEmptyList_whenNoPromoCodesExist() {
+        when(promoCodeRepository.findAll())
+                .thenReturn(List.of());
+
+        List<PromoCode> result = discountService.getAllPromoCodes();
+
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
     void getPromoCodeById_shouldReturnPromoCode_whenIdExists() {
         when(promoCodeRepository.findById(1L))
                 .thenReturn(Optional.of(promoCode));
@@ -180,11 +211,25 @@ class DiscountServiceTest {
     }
 
     @Test
-    void getPromoCodeById_shouldThrowException_whenIdInvalid() {
+    void getPromoCodeById_shouldThrowException_whenIdIsZero() {
         DiscountValidationException exception =
                 assertThrows(
                         DiscountValidationException.class,
                         () -> discountService.getPromoCodeById(0L)
+                );
+
+        assertEquals(
+                "ID промокода должен быть положительным",
+                exception.getMessage()
+        );
+    }
+
+    @Test
+    void getPromoCodeById_shouldThrowException_whenIdIsNegative() {
+        DiscountValidationException exception =
+                assertThrows(
+                        DiscountValidationException.class,
+                        () -> discountService.getPromoCodeById(-1L)
                 );
 
         assertEquals(
@@ -217,13 +262,31 @@ class DiscountServiceTest {
 
         BigDecimal result = discountService.applyDiscount(
                 BigDecimal.valueOf(100),
-                "sale10"
+                "SALE10"
         );
 
         assertEquals(
                 BigDecimal.valueOf(90.00).setScale(2),
                 result.setScale(2)
         );
+    }
+
+    @Test
+    void applyDiscount_shouldNormalizePromoCodeBeforeSearch() {
+        when(promoCodeRepository.findByCode("SALE10"))
+                .thenReturn(Optional.of(promoCode));
+
+        BigDecimal result = discountService.applyDiscount(
+                BigDecimal.valueOf(100),
+                " sale10 "
+        );
+
+        assertEquals(
+                BigDecimal.valueOf(90.00).setScale(2),
+                result.setScale(2)
+        );
+
+        verify(promoCodeRepository).findByCode("SALE10");
     }
 
     @Test
@@ -276,6 +339,22 @@ class DiscountServiceTest {
     }
 
     @Test
+    void applyDiscount_shouldReturnZero_whenPriceIsZero() {
+        when(promoCodeRepository.findByCode("SALE10"))
+                .thenReturn(Optional.of(promoCode));
+
+        BigDecimal result = discountService.applyDiscount(
+                BigDecimal.ZERO,
+                "SALE10"
+        );
+
+        assertEquals(
+                BigDecimal.ZERO.setScale(2),
+                result.setScale(2)
+        );
+    }
+
+    @Test
     void applyDiscount_shouldThrowException_whenPromoCodeIsBlank() {
         DiscountValidationException exception =
                 assertThrows(
@@ -288,6 +367,26 @@ class DiscountServiceTest {
 
         assertEquals(
                 "Код промокода не может быть пустым",
+                exception.getMessage()
+        );
+    }
+
+    @Test
+    void applyDiscount_shouldThrowException_whenPromoNotFound() {
+        when(promoCodeRepository.findByCode("UNKNOWN"))
+                .thenReturn(Optional.empty());
+
+        DiscountValidationException exception =
+                assertThrows(
+                        DiscountValidationException.class,
+                        () -> discountService.applyDiscount(
+                                BigDecimal.valueOf(100),
+                                "unknown"
+                        )
+                );
+
+        assertEquals(
+                "Промокод не найден",
                 exception.getMessage()
         );
     }
@@ -311,6 +410,27 @@ class DiscountServiceTest {
         assertEquals(
                 "Промокод не активен",
                 exception.getMessage()
+        );
+    }
+
+    @Test
+    void applyDiscount_shouldRoundDiscountToTwoDecimalPlaces() {
+        PromoCode percentPromoCode = new PromoCode(
+                "SALE15",
+                BigDecimal.valueOf(15)
+        );
+
+        when(promoCodeRepository.findByCode("SALE15"))
+                .thenReturn(Optional.of(percentPromoCode));
+
+        BigDecimal result = discountService.applyDiscount(
+                BigDecimal.valueOf(99.99),
+                "SALE15"
+        );
+
+        assertEquals(
+                BigDecimal.valueOf(84.99).setScale(2),
+                result.setScale(2)
         );
     }
 
@@ -346,6 +466,38 @@ class DiscountServiceTest {
     }
 
     @Test
+    void deactivate_shouldThrowException_whenCodeIsNull() {
+        DiscountValidationException exception =
+                assertThrows(
+                        DiscountValidationException.class,
+                        () -> discountService.deactivate(null)
+                );
+
+        assertEquals(
+                "Код промокода не задан",
+                exception.getMessage()
+        );
+
+        verify(promoCodeRepository, never()).save(any());
+    }
+
+    @Test
+    void deactivate_shouldThrowException_whenCodeIsBlank() {
+        DiscountValidationException exception =
+                assertThrows(
+                        DiscountValidationException.class,
+                        () -> discountService.deactivate("   ")
+                );
+
+        assertEquals(
+                "Код промокода не может быть пустым",
+                exception.getMessage()
+        );
+
+        verify(promoCodeRepository, never()).save(any());
+    }
+
+    @Test
     void activate_shouldActivatePromoCode() {
         promoCode.deactivate();
 
@@ -372,6 +524,38 @@ class DiscountServiceTest {
 
         assertEquals(
                 "Промокод не найден",
+                exception.getMessage()
+        );
+
+        verify(promoCodeRepository, never()).save(any());
+    }
+
+    @Test
+    void activate_shouldThrowException_whenCodeIsNull() {
+        DiscountValidationException exception =
+                assertThrows(
+                        DiscountValidationException.class,
+                        () -> discountService.activate(null)
+                );
+
+        assertEquals(
+                "Код промокода не задан",
+                exception.getMessage()
+        );
+
+        verify(promoCodeRepository, never()).save(any());
+    }
+
+    @Test
+    void activate_shouldThrowException_whenCodeIsBlank() {
+        DiscountValidationException exception =
+                assertThrows(
+                        DiscountValidationException.class,
+                        () -> discountService.activate("   ")
+                );
+
+        assertEquals(
+                "Код промокода не может быть пустым",
                 exception.getMessage()
         );
 

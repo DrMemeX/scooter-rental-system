@@ -8,7 +8,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import ru.senla.scooterrental.fleet.entity.LocationNode;
 import ru.senla.scooterrental.fleet.entity.RentalPoint;
-import ru.senla.scooterrental.fleet.service.FleetService;
+import ru.senla.scooterrental.fleet.service.impl.FleetServiceImpl;
 import ru.senla.scooterrental.web.dto.request.fleet.rentalpoint.CreateRentalPointRequest;
 import ru.senla.scooterrental.web.dto.request.fleet.rentalpoint.RenameRentalPointRequest;
 import ru.senla.scooterrental.web.error.GlobalExceptionHandler;
@@ -30,12 +30,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class AdminRentalPointControllerTest {
 
     private MockMvc mockMvc;
-    private FleetService fleetService;
+    private FleetServiceImpl fleetService;
     private ObjectMapper objectMapper;
 
     @BeforeEach
     void setUp() {
-        fleetService = mock(FleetService.class);
+        fleetService = mock(FleetServiceImpl.class);
 
         AdminRentalPointController controller =
                 new AdminRentalPointController(fleetService);

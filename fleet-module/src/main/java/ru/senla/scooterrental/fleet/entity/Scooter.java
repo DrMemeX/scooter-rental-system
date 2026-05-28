@@ -217,10 +217,6 @@ public class Scooter {
         }
 
         currentCharge = Math.max(0, currentCharge - amount);
-
-        if (currentCharge <= 0) {
-            status = ScooterStatus.RETURN_VERIFICATION_REQUIRED;
-        }
     }
 
     public void addMileage(double km) {

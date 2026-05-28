@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.web.servlet.MockMvc;
@@ -12,7 +11,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import ru.senla.scooterrental.rental.entity.Rental;
 import ru.senla.scooterrental.rental.enums.RentalStatus;
 import ru.senla.scooterrental.rental.enums.TariffType;
-import ru.senla.scooterrental.rental.service.RentalService;
+import ru.senla.scooterrental.rental.service.impl.RentalServiceImpl;
 import ru.senla.scooterrental.user.entity.User;
 import ru.senla.scooterrental.user.service.UserService;
 import ru.senla.scooterrental.web.dto.request.rental.FinishRentalRequest;
@@ -33,13 +32,13 @@ class UserRentalControllerTest {
 
     private MockMvc mockMvc;
     private ObjectMapper objectMapper;
-    private RentalService rentalService;
+    private RentalServiceImpl rentalService;
     private UserService userService;
     private Authentication authentication;
 
     @BeforeEach
     void setUp() {
-        rentalService = mock(RentalService.class);
+        rentalService = mock(RentalServiceImpl.class);
         userService = mock(UserService.class);
         authentication = mock(Authentication.class);
 

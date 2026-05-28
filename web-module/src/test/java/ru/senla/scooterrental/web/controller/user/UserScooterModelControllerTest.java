@@ -8,7 +8,7 @@ import ru.senla.scooterrental.common.enums.ScooterClass;
 import ru.senla.scooterrental.fleet.entity.ScooterModel;
 import ru.senla.scooterrental.fleet.exceptions.FleetEntityNotFoundException;
 import ru.senla.scooterrental.fleet.exceptions.FleetValidationException;
-import ru.senla.scooterrental.fleet.service.FleetService;
+import ru.senla.scooterrental.fleet.service.impl.FleetServiceImpl;
 import ru.senla.scooterrental.web.error.GlobalExceptionHandler;
 
 import java.math.BigDecimal;
@@ -26,11 +26,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class UserScooterModelControllerTest {
 
     private MockMvc mockMvc;
-    private FleetService fleetService;
+    private FleetServiceImpl fleetService;
 
     @BeforeEach
     void setUp() {
-        fleetService = mock(FleetService.class);
+        fleetService = mock(FleetServiceImpl.class);
 
         UserScooterModelController controller =
                 new UserScooterModelController(fleetService);

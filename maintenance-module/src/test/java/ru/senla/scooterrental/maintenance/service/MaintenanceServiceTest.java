@@ -14,11 +14,13 @@ import ru.senla.scooterrental.maintenance.entity.ScooterServiceEvent;
 import ru.senla.scooterrental.maintenance.enums.ServiceEventType;
 import ru.senla.scooterrental.maintenance.exceptions.MaintenanceValidationException;
 import ru.senla.scooterrental.maintenance.repository.ServiceEventRepository;
+import ru.senla.scooterrental.maintenance.service.impl.MaintenanceServiceImpl;
 
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -35,7 +37,7 @@ class MaintenanceServiceTest {
     private FleetService fleetService;
 
     @InjectMocks
-    private MaintenanceService maintenanceService;
+    private MaintenanceServiceImpl maintenanceService;
 
     private Scooter scooter;
 
@@ -54,9 +56,13 @@ class MaintenanceServiceTest {
         );
     }
 
+    // Event creation tests
+
     @Test
     void reportTechnicalBreakdown_shouldCreateEventSuccessfully() {
-        when(fleetService.getScooterById(1L)).thenReturn(scooter);
+        when(fleetService.getScooterById(1L))
+                .thenReturn(scooter);
+
         when(serviceEventRepository.save(any(ScooterServiceEvent.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -75,7 +81,9 @@ class MaintenanceServiceTest {
 
     @Test
     void reportUserDamage_shouldCreateEventSuccessfully() {
-        when(fleetService.getScooterById(1L)).thenReturn(scooter);
+        when(fleetService.getScooterById(1L))
+                .thenReturn(scooter);
+
         when(serviceEventRepository.save(any(ScooterServiceEvent.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -94,7 +102,9 @@ class MaintenanceServiceTest {
 
     @Test
     void sendToMaintenance_shouldCreateEventSuccessfully() {
-        when(fleetService.getScooterById(1L)).thenReturn(scooter);
+        when(fleetService.getScooterById(1L))
+                .thenReturn(scooter);
+
         when(serviceEventRepository.save(any(ScooterServiceEvent.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -113,7 +123,9 @@ class MaintenanceServiceTest {
 
     @Test
     void completeMaintenance_shouldCreateEventSuccessfully() {
-        when(fleetService.getScooterById(1L)).thenReturn(scooter);
+        when(fleetService.getScooterById(1L))
+                .thenReturn(scooter);
+
         when(serviceEventRepository.save(any(ScooterServiceEvent.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -132,7 +144,9 @@ class MaintenanceServiceTest {
 
     @Test
     void chargeScooter_shouldCreateEventSuccessfully() {
-        when(fleetService.getScooterById(1L)).thenReturn(scooter);
+        when(fleetService.getScooterById(1L))
+                .thenReturn(scooter);
+
         when(serviceEventRepository.save(any(ScooterServiceEvent.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -151,6 +165,29 @@ class MaintenanceServiceTest {
     }
 
     @Test
+    void markServiceRequired_shouldCreateEventSuccessfully() {
+        when(fleetService.getScooterById(1L))
+                .thenReturn(scooter);
+
+        when(serviceEventRepository.save(any(ScooterServiceEvent.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        ScooterServiceEvent event = maintenanceService.markServiceRequired(
+                1L,
+                "Проблема с аккумулятором"
+        );
+
+        assertEquals(ServiceEventType.SERVICE_REQUIRED, event.getType());
+        assertEquals("Проблема с аккумулятором", event.getDescription());
+
+        verify(fleetService).markServiceRequired(1L);
+        verify(fleetService).getScooterById(1L);
+        verify(serviceEventRepository).save(any(ScooterServiceEvent.class));
+    }
+
+    // Validation tests
+
+    @Test
     void chargeScooter_shouldThrowException_whenAmountIsNegative() {
         MaintenanceValidationException exception = assertThrows(
                 MaintenanceValidationException.class,
@@ -167,6 +204,7 @@ class MaintenanceServiceTest {
         );
 
         verify(fleetService, never()).chargeScooter(1L, -10.0);
+        verify(fleetService, never()).getScooterById(1L);
         verify(serviceEventRepository, never()).save(any(ScooterServiceEvent.class));
     }
 
@@ -187,27 +225,140 @@ class MaintenanceServiceTest {
         );
 
         verify(fleetService, never()).chargeScooter(1L, 0.0);
+        verify(fleetService, never()).getScooterById(1L);
         verify(serviceEventRepository, never()).save(any(ScooterServiceEvent.class));
     }
 
     @Test
-    void markServiceRequired_shouldCreateEventSuccessfully() {
-        when(fleetService.getScooterById(1L)).thenReturn(scooter);
-        when(serviceEventRepository.save(any(ScooterServiceEvent.class)))
-                .thenAnswer(invocation -> invocation.getArgument(0));
-
-        ScooterServiceEvent event = maintenanceService.markServiceRequired(
-                1L,
-                "Проблема с аккумулятором"
+    void getEventsByScooterId_shouldThrowException_whenIdIsNull() {
+        MaintenanceValidationException exception = assertThrows(
+                MaintenanceValidationException.class,
+                () -> maintenanceService.getEventsByScooterId(null)
         );
 
-        assertEquals(ServiceEventType.SERVICE_REQUIRED, event.getType());
-        assertEquals("Проблема с аккумулятором", event.getDescription());
+        assertEquals(
+                "ID самоката должен быть положительным",
+                exception.getMessage()
+        );
+
+        verify(serviceEventRepository, never()).findAllByScooterId(any());
+    }
+
+    @Test
+    void getEventsByScooterId_shouldThrowException_whenIdIsZero() {
+        MaintenanceValidationException exception = assertThrows(
+                MaintenanceValidationException.class,
+                () -> maintenanceService.getEventsByScooterId(0L)
+        );
+
+        assertEquals(
+                "ID самоката должен быть положительным",
+                exception.getMessage()
+        );
+
+        verify(serviceEventRepository, never()).findAllByScooterId(0L);
+    }
+
+    @Test
+    void getEventsByScooterId_shouldThrowException_whenIdIsNegative() {
+        MaintenanceValidationException exception = assertThrows(
+                MaintenanceValidationException.class,
+                () -> maintenanceService.getEventsByScooterId(-1L)
+        );
+
+        assertEquals(
+                "ID самоката должен быть положительным",
+                exception.getMessage()
+        );
+
+        verify(serviceEventRepository, never()).findAllByScooterId(-1L);
+    }
+
+    @Test
+    void getEventsByType_shouldThrowException_whenTypeIsNull() {
+        MaintenanceValidationException exception = assertThrows(
+                MaintenanceValidationException.class,
+                () -> maintenanceService.getEventsByType(null)
+        );
+
+        assertEquals(
+                "Тип сервисного события не может быть пустым",
+                exception.getMessage()
+        );
+
+        verify(serviceEventRepository, never()).findAllByType(any());
+    }
+
+    // Delegation failure tests
+
+    @Test
+    void reportTechnicalBreakdown_shouldNotCreateEvent_whenFleetServiceFails() {
+        RuntimeException fleetException = new RuntimeException("fleet error");
+
+        when(fleetService.markServiceRequired(1L))
+                .thenThrow(fleetException);
+
+        RuntimeException exception = assertThrows(
+                RuntimeException.class,
+                () -> maintenanceService.reportTechnicalBreakdown(
+                        1L,
+                        "Сломано колесо"
+                )
+        );
+
+        assertEquals("fleet error", exception.getMessage());
 
         verify(fleetService).markServiceRequired(1L);
-        verify(fleetService).getScooterById(1L);
-        verify(serviceEventRepository).save(any(ScooterServiceEvent.class));
+        verify(fleetService, never()).getScooterById(1L);
+        verify(serviceEventRepository, never()).save(any(ScooterServiceEvent.class));
     }
+
+    @Test
+    void sendToMaintenance_shouldNotCreateEvent_whenFleetServiceFails() {
+        RuntimeException fleetException = new RuntimeException("fleet error");
+
+        when(fleetService.sendToMaintenance(1L))
+                .thenThrow(fleetException);
+
+        RuntimeException exception = assertThrows(
+                RuntimeException.class,
+                () -> maintenanceService.sendToMaintenance(
+                        1L,
+                        "Передан в сервисный центр"
+                )
+        );
+
+        assertEquals("fleet error", exception.getMessage());
+
+        verify(fleetService).sendToMaintenance(1L);
+        verify(fleetService, never()).getScooterById(1L);
+        verify(serviceEventRepository, never()).save(any(ScooterServiceEvent.class));
+    }
+
+    @Test
+    void chargeScooter_shouldNotCreateEvent_whenFleetServiceFails() {
+        RuntimeException fleetException = new RuntimeException("fleet error");
+
+        when(fleetService.chargeScooter(1L, 50.0))
+                .thenThrow(fleetException);
+
+        RuntimeException exception = assertThrows(
+                RuntimeException.class,
+                () -> maintenanceService.chargeScooter(
+                        1L,
+                        50.0,
+                        "Самокат заряжен"
+                )
+        );
+
+        assertEquals("fleet error", exception.getMessage());
+
+        verify(fleetService).chargeScooter(1L, 50.0);
+        verify(fleetService, never()).getScooterById(1L);
+        verify(serviceEventRepository, never()).save(any(ScooterServiceEvent.class));
+    }
+
+    // Query tests
 
     @Test
     void getAllEvents_shouldReturnAllEventsSuccessfully() {
@@ -225,6 +376,19 @@ class MaintenanceServiceTest {
 
         assertEquals(1, events.size());
         assertEquals(ServiceEventType.CHARGED, events.get(0).getType());
+
+        verify(serviceEventRepository).findAll();
+    }
+
+    @Test
+    void getAllEvents_shouldReturnEmptyList_whenNoEventsExist() {
+        when(serviceEventRepository.findAll())
+                .thenReturn(List.of());
+
+        List<ScooterServiceEvent> events =
+                maintenanceService.getAllEvents();
+
+        assertTrue(events.isEmpty());
 
         verify(serviceEventRepository).findAll();
     }
@@ -250,33 +414,16 @@ class MaintenanceServiceTest {
     }
 
     @Test
-    void getEventsByScooterId_shouldThrowException_whenIdIsNull() {
-        MaintenanceValidationException exception = assertThrows(
-                MaintenanceValidationException.class,
-                () -> maintenanceService.getEventsByScooterId(null)
-        );
+    void getEventsByScooterId_shouldReturnEmptyList_whenNoEventsExist() {
+        when(serviceEventRepository.findAllByScooterId(1L))
+                .thenReturn(List.of());
 
-        assertEquals(
-                "ID самоката должен быть положительным",
-                exception.getMessage()
-        );
+        List<ScooterServiceEvent> events =
+                maintenanceService.getEventsByScooterId(1L);
 
-        verify(serviceEventRepository, never()).findAllByScooterId(any());
-    }
+        assertTrue(events.isEmpty());
 
-    @Test
-    void getEventsByScooterId_shouldThrowException_whenIdIsInvalid() {
-        MaintenanceValidationException exception = assertThrows(
-                MaintenanceValidationException.class,
-                () -> maintenanceService.getEventsByScooterId(0L)
-        );
-
-        assertEquals(
-                "ID самоката должен быть положительным",
-                exception.getMessage()
-        );
-
-        verify(serviceEventRepository, never()).findAllByScooterId(0L);
+        verify(serviceEventRepository).findAllByScooterId(1L);
     }
 
     @Test
@@ -300,17 +447,15 @@ class MaintenanceServiceTest {
     }
 
     @Test
-    void getEventsByType_shouldThrowException_whenTypeIsNull() {
-        MaintenanceValidationException exception = assertThrows(
-                MaintenanceValidationException.class,
-                () -> maintenanceService.getEventsByType(null)
-        );
+    void getEventsByType_shouldReturnEmptyList_whenNoEventsExist() {
+        when(serviceEventRepository.findAllByType(ServiceEventType.CHARGED))
+                .thenReturn(List.of());
 
-        assertEquals(
-                "Тип сервисного события не может быть пустым",
-                exception.getMessage()
-        );
+        List<ScooterServiceEvent> events =
+                maintenanceService.getEventsByType(ServiceEventType.CHARGED);
 
-        verify(serviceEventRepository, never()).findAllByType(any());
+        assertTrue(events.isEmpty());
+
+        verify(serviceEventRepository).findAllByType(ServiceEventType.CHARGED);
     }
 }

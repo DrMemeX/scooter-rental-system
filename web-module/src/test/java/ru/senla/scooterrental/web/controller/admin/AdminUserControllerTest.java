@@ -64,7 +64,7 @@ class AdminUserControllerTest {
 
         User admin = admin();
 
-        when(userService.registerManager(any(User.class)))
+        when(userService.registerAdmin(any(User.class)))
                 .thenReturn(admin);
 
         mockMvc.perform(
@@ -83,7 +83,7 @@ class AdminUserControllerTest {
                 .andExpect(jsonPath("$.balance").value(0))
                 .andExpect(jsonPath("$.verified").value(true));
 
-        verify(userService).registerManager(any(User.class));
+        verify(userService).registerAdmin(any(User.class));
     }
 
     @Test

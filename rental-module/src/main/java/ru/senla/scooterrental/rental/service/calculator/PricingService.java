@@ -1,4 +1,4 @@
-package ru.senla.scooterrental.rental.service;
+package ru.senla.scooterrental.rental.service.calculator;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,12 +20,16 @@ public class PricingService {
             LoggerFactory.getLogger(PricingService.class);
 
     public BigDecimal calculate(Rental rental, Scooter scooter) {
-        return calculate(rental, scooter, null);
+        long minutes = calculateRentalMinutes(rental.getStartTime());
+
+        return calculate(rental, scooter, null, minutes);
     }
 
     public BigDecimal calculate(Rental rental,
                                 Scooter scooter,
-                                TerminationReason reason) {
+                                TerminationReason reason,
+                                long minutes) {
+
         log.info("Starting rental price calculation");
 
         requireNonNull(rental, "Аренда");
@@ -33,20 +37,33 @@ public class PricingService {
         requireNonNull(scooter.getModel(), "Модель самоката");
         requireNonNull(rental.getTariffType(), "Тип тарифа");
 
-        long minutes = calculateRentalMinutes(rental.getStartTime());
-
         BigDecimal price = switch (rental.getTariffType()) {
-            case MINUTE -> calculateMinutePrice(minutes, rental, scooter);
-            case HOUR -> calculateHourPrice(minutes, rental, scooter, reason);
-            case SUBSCRIPTION -> BigDecimal.ZERO;
+            case MINUTE ->
+                    calculateMinutePrice(
+                            minutes,
+                            rental,
+                            scooter
+                    );
+
+            case HOUR ->
+                    calculateHourPrice(
+                            minutes,
+                            rental,
+                            scooter,
+                            reason
+                    );
+
+            case SUBSCRIPTION ->
+                    BigDecimal.ZERO;
         };
 
         log.info(
-                "Rental price calculated successfully: rentalId={}, scooterId={}, tariffType={}, reason={}, price={}",
+                "Rental price calculated successfully: rentalId={}, scooterId={}, tariffType={}, reason={}, minutes={}, price={}",
                 rental.getId(),
                 scooter.getId(),
                 rental.getTariffType(),
                 reason,
+                minutes,
                 price
         );
 
@@ -92,6 +109,15 @@ public class PricingService {
                                           Scooter scooter,
                                           TerminationReason reason) {
         validatePlannedHours(rental);
+
+        Integer maxAllowedMinutes = rental.getMaxAllowedMinutes();
+        long plannedMinutes = rental.getPlannedHours() * 60L;
+
+        if (maxAllowedMinutes != null
+                && maxAllowedMinutes > 0
+                && maxAllowedMinutes < plannedMinutes) {
+            return calculatePartialHourPrice(maxAllowedMinutes, scooter);
+        }
 
         if (reason == TerminationReason.BATTERY_DEPLETED) {
             return calculateBatteryDepletedHourPrice(
