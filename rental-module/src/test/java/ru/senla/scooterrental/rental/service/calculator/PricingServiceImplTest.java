@@ -9,6 +9,7 @@ import ru.senla.scooterrental.rental.entity.Rental;
 import ru.senla.scooterrental.rental.enums.TariffType;
 import ru.senla.scooterrental.rental.enums.TerminationReason;
 import ru.senla.scooterrental.rental.exceptions.RentalValidationException;
+import ru.senla.scooterrental.rental.service.impl.calculator.PricingServiceImpl;
 import ru.senla.scooterrental.user.entity.User;
 
 import java.math.BigDecimal;
@@ -21,7 +22,7 @@ import static org.mockito.Mockito.when;
 
 class PricingServiceTest {
 
-    private PricingService pricingService;
+    private PricingServiceImpl pricingServiceImpl;
 
     private User user;
     private Scooter scooter;
@@ -29,7 +30,7 @@ class PricingServiceTest {
 
     @BeforeEach
     void setUp() {
-        pricingService = new PricingService();
+        pricingServiceImpl = new PricingServiceImpl();
 
         user = mock(User.class);
         scooter = mock(Scooter.class);
@@ -44,7 +45,7 @@ class PricingServiceTest {
     void calculate_shouldThrowException_whenRentalIsNull() {
         assertThrows(
                 RentalValidationException.class,
-                () -> pricingService.calculate(null, scooter, null, 10)
+                () -> pricingServiceImpl.calculate(null, scooter, null, 10)
         );
     }
 
@@ -54,7 +55,7 @@ class PricingServiceTest {
 
         assertThrows(
                 RentalValidationException.class,
-                () -> pricingService.calculate(rental, null, null, 10)
+                () -> pricingServiceImpl.calculate(rental, null, null, 10)
         );
     }
 
@@ -66,7 +67,7 @@ class PricingServiceTest {
 
         assertThrows(
                 RentalValidationException.class,
-                () -> pricingService.calculate(rental, scooter, null, 10)
+                () -> pricingServiceImpl.calculate(rental, scooter, null, 10)
         );
     }
 
@@ -78,7 +79,7 @@ class PricingServiceTest {
 
         assertThrows(
                 RentalValidationException.class,
-                () -> pricingService.calculate(rental, scooter, null, 10)
+                () -> pricingServiceImpl.calculate(rental, scooter, null, 10)
         );
     }
 
@@ -91,7 +92,7 @@ class PricingServiceTest {
 
         assertThrows(
                 RentalValidationException.class,
-                () -> pricingService.calculate(rental, scooter)
+                () -> pricingServiceImpl.calculate(rental, scooter)
         );
     }
 
@@ -108,7 +109,7 @@ class PricingServiceTest {
 
         assertThrows(
                 RentalValidationException.class,
-                () -> pricingService.calculate(rental, scooter)
+                () -> pricingServiceImpl.calculate(rental, scooter)
         );
     }
 
@@ -121,7 +122,7 @@ class PricingServiceTest {
 
         when(scooterModel.getPricePerMinute()).thenReturn(BigDecimal.TEN);
 
-        BigDecimal result = pricingService.calculate(
+        BigDecimal result = pricingServiceImpl.calculate(
                 rental,
                 scooter,
                 null,
@@ -138,7 +139,7 @@ class PricingServiceTest {
 
         when(scooterModel.getPricePerMinute()).thenReturn(BigDecimal.TEN);
 
-        BigDecimal result = pricingService.calculate(
+        BigDecimal result = pricingServiceImpl.calculate(
                 rental,
                 scooter,
                 null,
@@ -161,7 +162,7 @@ class PricingServiceTest {
 
         when(scooterModel.getPricePerMinute()).thenReturn(BigDecimal.TEN);
 
-        BigDecimal result = pricingService.calculate(rental, scooter);
+        BigDecimal result = pricingServiceImpl.calculate(rental, scooter);
 
         assertEquals(BigDecimal.TEN, result);
     }
@@ -172,7 +173,7 @@ class PricingServiceTest {
 
         assertThrows(
                 RentalValidationException.class,
-                () -> pricingService.calculate(rental, scooter, null, 10)
+                () -> pricingServiceImpl.calculate(rental, scooter, null, 10)
         );
     }
 
@@ -204,7 +205,7 @@ class PricingServiceTest {
 
         when(scooterModel.getPricePerHour()).thenReturn(BigDecimal.valueOf(100));
 
-        BigDecimal result = pricingService.calculate(
+        BigDecimal result = pricingServiceImpl.calculate(
                 rental,
                 scooter,
                 null,
@@ -220,7 +221,7 @@ class PricingServiceTest {
 
         when(scooterModel.getPricePerHour()).thenReturn(BigDecimal.valueOf(600));
 
-        BigDecimal result = pricingService.calculate(
+        BigDecimal result = pricingServiceImpl.calculate(
                 rental,
                 scooter,
                 TerminationReason.USER_FINISHED,
@@ -237,7 +238,7 @@ class PricingServiceTest {
         when(scooterModel.getPricePerHour()).thenReturn(BigDecimal.valueOf(600));
         when(scooterModel.getPricePerMinute()).thenReturn(BigDecimal.valueOf(12));
 
-        BigDecimal result = pricingService.calculate(
+        BigDecimal result = pricingServiceImpl.calculate(
                 rental,
                 scooter,
                 TerminationReason.USER_FINISHED,
@@ -253,7 +254,7 @@ class PricingServiceTest {
 
         when(scooterModel.getPricePerHour()).thenReturn(BigDecimal.valueOf(600));
 
-        BigDecimal result = pricingService.calculate(
+        BigDecimal result = pricingServiceImpl.calculate(
                 rental,
                 scooter,
                 TerminationReason.BATTERY_DEPLETED,
@@ -273,7 +274,7 @@ class PricingServiceTest {
         when(scooterModel.getPricePerHour()).thenReturn(BigDecimal.valueOf(600));
         when(scooterModel.getPricePerMinute()).thenReturn(BigDecimal.valueOf(12));
 
-        BigDecimal result = pricingService.calculate(
+        BigDecimal result = pricingServiceImpl.calculate(
                 rental,
                 scooter,
                 TerminationReason.BATTERY_DEPLETED,
@@ -290,7 +291,7 @@ class PricingServiceTest {
 
         when(scooterModel.getPricePerHour()).thenReturn(BigDecimal.valueOf(600));
 
-        BigDecimal result = pricingService.calculate(
+        BigDecimal result = pricingServiceImpl.calculate(
                 rental,
                 scooter,
                 TerminationReason.USER_FINISHED,
@@ -335,7 +336,7 @@ class PricingServiceTest {
 
         assertThrows(
                 RentalValidationException.class,
-                () -> pricingService.calculate(rental, scooter, null, 60)
+                () -> pricingServiceImpl.calculate(rental, scooter, null, 60)
         );
     }
 
@@ -345,7 +346,7 @@ class PricingServiceTest {
     void calculate_shouldReturnZeroForSubscriptionTariff() {
         Rental rental = new Rental(user, scooter, TariffType.SUBSCRIPTION, null);
 
-        BigDecimal result = pricingService.calculate(
+        BigDecimal result = pricingServiceImpl.calculate(
                 rental,
                 scooter,
                 null,

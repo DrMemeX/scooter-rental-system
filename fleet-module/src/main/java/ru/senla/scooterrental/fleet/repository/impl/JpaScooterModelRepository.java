@@ -9,6 +9,7 @@ import ru.senla.scooterrental.fleet.entity.ScooterModel;
 import ru.senla.scooterrental.fleet.exceptions.FleetValidationException;
 import ru.senla.scooterrental.fleet.repository.ScooterModelRepository;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
@@ -93,6 +94,45 @@ public class JpaScooterModelRepository implements ScooterModelRepository {
                 )
                 .setParameter("scooterClass", scooterClass)
                 .getResultList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean existsByScooterClass(ScooterClass scooterClass) {
+        Long count = entityManager
+                .createQuery("""
+                    select count(model)
+                    from ScooterModel model
+                    where model.scooterClass = :scooterClass
+                    """, Long.class)
+                .setParameter("scooterClass", scooterClass)
+                .getSingleResult();
+
+        return count > 0;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean existsByTechnicalAndPriceParameters(double consumptionPerKm,
+                                                       BigDecimal pricePerMinute,
+                                                       BigDecimal pricePerHour,
+                                                       int batteryCapacity) {
+        Long count = entityManager
+                .createQuery("""
+                    select count(model)
+                    from ScooterModel model
+                    where model.consumptionPerKm = :consumptionPerKm
+                      and model.pricePerMinute = :pricePerMinute
+                      and model.pricePerHour = :pricePerHour
+                      and model.batteryCapacity = :batteryCapacity
+                    """, Long.class)
+                .setParameter("consumptionPerKm", consumptionPerKm)
+                .setParameter("pricePerMinute", pricePerMinute)
+                .setParameter("pricePerHour", pricePerHour)
+                .setParameter("batteryCapacity", batteryCapacity)
+                .getSingleResult();
+
+        return count > 0;
     }
 
     private void validateScooterModel(ScooterModel scooterModel) {

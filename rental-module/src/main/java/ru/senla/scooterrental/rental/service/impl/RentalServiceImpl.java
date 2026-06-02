@@ -6,18 +6,18 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.senla.scooterrental.discount.service.DiscountService;
 import ru.senla.scooterrental.fleet.entity.Scooter;
-import ru.senla.scooterrental.fleet.service.FleetService;
+import ru.senla.scooterrental.fleet.service.ScooterService;
 import ru.senla.scooterrental.rental.entity.Rental;
 import ru.senla.scooterrental.rental.enums.TariffType;
 import ru.senla.scooterrental.rental.enums.TerminationReason;
 import ru.senla.scooterrental.rental.exceptions.ActiveRentalAlreadyExistsException;
 import ru.senla.scooterrental.rental.exceptions.RentalNotFoundException;
 import ru.senla.scooterrental.rental.repository.RentalRepository;
+import ru.senla.scooterrental.rental.service.PricingService;
 import ru.senla.scooterrental.rental.service.RentalService;
-import ru.senla.scooterrental.rental.service.calculator.PricingService;
-import ru.senla.scooterrental.rental.service.calculator.RentalCalculationService;
-import ru.senla.scooterrental.rental.service.resolver.RentalTerminationResolver;
-import ru.senla.scooterrental.rental.service.validator.RentalValidator;
+import ru.senla.scooterrental.rental.service.RentalCalculationService;
+import ru.senla.scooterrental.rental.service.RentalTerminationResolver;
+import ru.senla.scooterrental.rental.service.RentalValidator;
 import ru.senla.scooterrental.user.entity.User;
 import ru.senla.scooterrental.user.service.UserService;
 
@@ -32,7 +32,7 @@ public class RentalServiceImpl implements RentalService {
             LoggerFactory.getLogger(RentalServiceImpl.class);
 
     private final RentalRepository rentalRepository;
-    private final FleetService fleetService;
+    private final ScooterService scooterService;
     private final PricingService pricingService;
     private final DiscountService discountService;
     private final UserService userService;
@@ -41,7 +41,7 @@ public class RentalServiceImpl implements RentalService {
     private final RentalValidator rentalValidator;
 
     public RentalServiceImpl(RentalRepository rentalRepository,
-                             FleetService fleetService,
+                             ScooterService scooterService,
                              PricingService pricingService,
                              DiscountService discountService,
                              UserService userService,
@@ -50,7 +50,7 @@ public class RentalServiceImpl implements RentalService {
                              RentalValidator rentalValidator) {
 
         this.rentalRepository = rentalRepository;
-        this.fleetService = fleetService;
+        this.scooterService = scooterService;
         this.pricingService = pricingService;
         this.discountService = discountService;
         this.userService = userService;
@@ -77,7 +77,7 @@ public class RentalServiceImpl implements RentalService {
         rentalValidator.requireNonNull(tariffType, "Тип тарифа");
 
         User user = userService.getById(userId);
-        Scooter scooter = fleetService.getScooterById(scooterId);
+        Scooter scooter = scooterService.getScooterById(scooterId);
 
         rentalValidator.ensureUserCanStartRental(user);
 
@@ -104,7 +104,7 @@ public class RentalServiceImpl implements RentalService {
                         plannedHours
                 );
 
-        fleetService.rentScooter(scooterId);
+        scooterService.rentScooter(scooterId);
 
         Rental rental = new Rental(user, scooter, tariffType, plannedHours);
 
@@ -260,7 +260,7 @@ public class RentalServiceImpl implements RentalService {
 
         rentalValidator.validateActiveRental(rental);
 
-        fleetService.requestReturnVerification(rental.getScooterId());
+        scooterService.requestReturnVerification(rental.getScooterId());
 
         rental.requestManualFinish();
 
@@ -360,7 +360,7 @@ public class RentalServiceImpl implements RentalService {
             rentalValidator.validateActiveRental(rental);
         }
 
-        Scooter scooter = fleetService.getScooterById(rental.getScooterId());
+        Scooter scooter = scooterService.getScooterById(rental.getScooterId());
 
         long actualMinutes = calculationService.calculateActualMinutes(rental);
 
@@ -438,13 +438,20 @@ public class RentalServiceImpl implements RentalService {
                             distanceKm
                     );
 
-            fleetService.addMileage(rental.getScooterId(), distanceKm);
-            fleetService.consumeCharge(
+            scooterService.addMileage(
+                    rental.getScooterId(),
+                    distanceKm
+            );
+
+            scooterService.consumeCharge(
                     rental.getScooterId(),
                     chargeConsumption
             );
         }
 
-        fleetService.returnScooter(rental.getScooterId(), rentalPointId);
+        scooterService.returnScooter(
+                rental.getScooterId(),
+                rentalPointId
+        );
     }
 }

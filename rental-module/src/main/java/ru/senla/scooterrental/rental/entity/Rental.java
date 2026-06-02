@@ -35,7 +35,7 @@ public class Rental {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     @JoinColumn(name = "scooter_id", nullable = false)
     private Scooter scooter;
 

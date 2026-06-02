@@ -10,7 +10,7 @@ import ru.senla.scooterrental.fleet.entity.LocationNode;
 import ru.senla.scooterrental.fleet.enums.LocationType;
 import ru.senla.scooterrental.fleet.exceptions.FleetEntityNotFoundException;
 import ru.senla.scooterrental.fleet.exceptions.FleetValidationException;
-import ru.senla.scooterrental.fleet.service.impl.FleetServiceImpl;
+import ru.senla.scooterrental.fleet.service.LocationService;
 import ru.senla.scooterrental.web.dto.request.fleet.location.CreateLocationRequest;
 import ru.senla.scooterrental.web.dto.request.fleet.location.RenameLocationRequest;
 import ru.senla.scooterrental.web.error.GlobalExceptionHandler;
@@ -32,14 +32,14 @@ class AdminLocationControllerTest {
 
     private MockMvc mockMvc;
     private ObjectMapper objectMapper;
-    private FleetServiceImpl fleetService;
+    private LocationService locationService;
 
     @BeforeEach
     void setUp() {
-        fleetService = mock(FleetServiceImpl.class);
+        locationService = mock(LocationService.class);
 
         mockMvc = MockMvcBuilders
-                .standaloneSetup(new AdminLocationController(fleetService))
+                .standaloneSetup(new AdminLocationController(locationService))
                 .setControllerAdvice(new GlobalExceptionHandler())
                 .build();
 
@@ -56,7 +56,7 @@ class AdminLocationControllerTest {
                 null
         );
 
-        when(fleetService.createLocation(
+        when(locationService.createLocation(
                 "Center",
                 LocationType.RENTAL_POINT,
                 null
@@ -73,7 +73,7 @@ class AdminLocationControllerTest {
                 .andExpect(jsonPath("$.type").value("RENTAL_POINT"))
                 .andExpect(jsonPath("$.active").value(true));
 
-        verify(fleetService).createLocation(
+        verify(locationService).createLocation(
                 "Center",
                 LocationType.RENTAL_POINT,
                 null
@@ -97,7 +97,7 @@ class AdminLocationControllerTest {
                 )
                 .andExpect(status().isBadRequest());
 
-        verifyNoInteractions(fleetService);
+        verifyNoInteractions(locationService);
     }
 
     @Test
@@ -110,7 +110,7 @@ class AdminLocationControllerTest {
                 )
                 .andExpect(status().isBadRequest());
 
-        verifyNoInteractions(fleetService);
+        verifyNoInteractions(locationService);
     }
 
     @Test
@@ -123,7 +123,7 @@ class AdminLocationControllerTest {
                 1L
         );
 
-        when(fleetService.createLocation(
+        when(locationService.createLocation(
                 "District",
                 LocationType.RENTAL_POINT,
                 1L
@@ -138,7 +138,7 @@ class AdminLocationControllerTest {
                 )
                 .andExpect(status().isBadRequest());
 
-        verify(fleetService).createLocation(
+        verify(locationService).createLocation(
                 "District",
                 LocationType.RENTAL_POINT,
                 1L
@@ -155,7 +155,7 @@ class AdminLocationControllerTest {
                 99L
         );
 
-        when(fleetService.createLocation(
+        when(locationService.createLocation(
                 "District",
                 LocationType.DISTRICT,
                 99L
@@ -170,7 +170,7 @@ class AdminLocationControllerTest {
                 )
                 .andExpect(status().isNotFound());
 
-        verify(fleetService).createLocation(
+        verify(locationService).createLocation(
                 "District",
                 LocationType.DISTRICT,
                 99L
@@ -181,7 +181,7 @@ class AdminLocationControllerTest {
     void getLocations_shouldReturnOk() throws Exception {
         LocationNode location = location();
 
-        when(fleetService.findAllLocations())
+        when(locationService.findAllLocations())
                 .thenReturn(List.of(location));
 
         mockMvc.perform(get("/api/v1/admin/locations"))
@@ -191,14 +191,14 @@ class AdminLocationControllerTest {
                 .andExpect(jsonPath("$[0].type").value("RENTAL_POINT"))
                 .andExpect(jsonPath("$[0].active").value(true));
 
-        verify(fleetService).findAllLocations();
+        verify(locationService).findAllLocations();
     }
 
     @Test
     void getLocations_shouldReturnOk_whenTypeProvided() throws Exception {
         LocationNode location = location();
 
-        when(fleetService.findLocationsByType(LocationType.RENTAL_POINT))
+        when(locationService.findLocationsByType(LocationType.RENTAL_POINT))
                 .thenReturn(List.of(location));
 
         mockMvc.perform(
@@ -208,7 +208,7 @@ class AdminLocationControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].type").value("RENTAL_POINT"));
 
-        verify(fleetService).findLocationsByType(LocationType.RENTAL_POINT);
+        verify(locationService).findLocationsByType(LocationType.RENTAL_POINT);
     }
 
     @Test
@@ -221,7 +221,55 @@ class AdminLocationControllerTest {
                 )
                 .andExpect(status().isBadRequest());
 
-        verifyNoInteractions(fleetService);
+        verifyNoInteractions(locationService);
+    }
+
+    @Test
+    void getChildLocations_shouldReturnChildrenSuccessfully() throws Exception {
+        LocationNode location = location();
+
+        when(locationService.findChildLocations(1L))
+                .thenReturn(List.of(location));
+
+        mockMvc.perform(get("/api/v1/admin/locations/1/children"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(1L))
+                .andExpect(jsonPath("$[0].name").value("Center"))
+                .andExpect(jsonPath("$[0].type").value("RENTAL_POINT"))
+                .andExpect(jsonPath("$[0].active").value(true));
+
+        verify(locationService).findChildLocations(1L);
+    }
+
+    @Test
+    void getChildLocations_shouldReturnActiveChildrenSuccessfully() throws Exception {
+        LocationNode location = location();
+
+        when(locationService.findActiveChildLocations(1L))
+                .thenReturn(List.of(location));
+
+        mockMvc.perform(
+                        get("/api/v1/admin/locations/1/children")
+                                .param("activeOnly", "true")
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(1L))
+                .andExpect(jsonPath("$[0].active").value(true));
+
+        verify(locationService).findActiveChildLocations(1L);
+    }
+
+    @Test
+    void getChildLocations_shouldReturnNotFound_whenParentNotFound() throws Exception {
+        when(locationService.findChildLocations(99L))
+                .thenThrow(new FleetEntityNotFoundException(
+                        "Локация с ID 99 не найдена"
+                ));
+
+        mockMvc.perform(get("/api/v1/admin/locations/99/children"))
+                .andExpect(status().isNotFound());
+
+        verify(locationService).findChildLocations(99L);
     }
 
     @Test
@@ -231,7 +279,7 @@ class AdminLocationControllerTest {
         RenameLocationRequest request =
                 new RenameLocationRequest("Новое название");
 
-        when(fleetService.renameLocation(1L, "Новое название"))
+        when(locationService.renameLocation(1L, "Новое название"))
                 .thenReturn(location);
 
         mockMvc.perform(
@@ -243,7 +291,7 @@ class AdminLocationControllerTest {
                 .andExpect(jsonPath("$.id").value(1L))
                 .andExpect(jsonPath("$.name").value("Center"));
 
-        verify(fleetService).renameLocation(1L, "Новое название");
+        verify(locationService).renameLocation(1L, "Новое название");
     }
 
     @Test
@@ -260,7 +308,7 @@ class AdminLocationControllerTest {
                 )
                 .andExpect(status().isBadRequest());
 
-        verifyNoInteractions(fleetService);
+        verifyNoInteractions(locationService);
     }
 
     @Test
@@ -270,7 +318,7 @@ class AdminLocationControllerTest {
         RenameLocationRequest request =
                 new RenameLocationRequest("Новое название");
 
-        when(fleetService.renameLocation(99L, "Новое название"))
+        when(locationService.renameLocation(99L, "Новое название"))
                 .thenThrow(new FleetEntityNotFoundException(
                         "Локация с ID 99 не найдена"
                 ));
@@ -282,14 +330,14 @@ class AdminLocationControllerTest {
                 )
                 .andExpect(status().isNotFound());
 
-        verify(fleetService).renameLocation(99L, "Новое название");
+        verify(locationService).renameLocation(99L, "Новое название");
     }
 
     @Test
     void activateLocation_shouldReturnOk() throws Exception {
         LocationNode location = location();
 
-        when(fleetService.activateLocation(1L))
+        when(locationService.activateLocation(1L))
                 .thenReturn(location);
 
         mockMvc.perform(patch("/api/v1/admin/locations/1/activate"))
@@ -297,14 +345,14 @@ class AdminLocationControllerTest {
                 .andExpect(jsonPath("$.id").value(1L))
                 .andExpect(jsonPath("$.active").value(true));
 
-        verify(fleetService).activateLocation(1L);
+        verify(locationService).activateLocation(1L);
     }
 
     @Test
     void activateLocation_shouldReturnNotFound_whenLocationNotFound()
             throws Exception {
 
-        when(fleetService.activateLocation(99L))
+        when(locationService.activateLocation(99L))
                 .thenThrow(new FleetEntityNotFoundException(
                         "Локация с ID 99 не найдена"
                 ));
@@ -312,28 +360,28 @@ class AdminLocationControllerTest {
         mockMvc.perform(patch("/api/v1/admin/locations/99/activate"))
                 .andExpect(status().isNotFound());
 
-        verify(fleetService).activateLocation(99L);
+        verify(locationService).activateLocation(99L);
     }
 
     @Test
     void deactivateLocation_shouldReturnOk() throws Exception {
         LocationNode location = location();
 
-        when(fleetService.deactivateLocation(1L))
+        when(locationService.deactivateLocation(1L))
                 .thenReturn(location);
 
         mockMvc.perform(patch("/api/v1/admin/locations/1/deactivate"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(1L));
 
-        verify(fleetService).deactivateLocation(1L);
+        verify(locationService).deactivateLocation(1L);
     }
 
     @Test
     void deactivateLocation_shouldReturnNotFound_whenLocationNotFound()
             throws Exception {
 
-        when(fleetService.deactivateLocation(99L))
+        when(locationService.deactivateLocation(99L))
                 .thenThrow(new FleetEntityNotFoundException(
                         "Локация с ID 99 не найдена"
                 ));
@@ -341,7 +389,7 @@ class AdminLocationControllerTest {
         mockMvc.perform(patch("/api/v1/admin/locations/99/deactivate"))
                 .andExpect(status().isNotFound());
 
-        verify(fleetService).deactivateLocation(99L);
+        verify(locationService).deactivateLocation(99L);
     }
 
     private LocationNode location() {

@@ -14,7 +14,8 @@ public record MaintenanceEventResponse(
 
         String description,
 
-        LocalDateTime createdAt
+        LocalDateTime createdAt,
 
+        Double currentCharge
 ) {
 }

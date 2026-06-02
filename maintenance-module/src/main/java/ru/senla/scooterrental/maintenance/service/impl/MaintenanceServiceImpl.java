@@ -5,7 +5,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.senla.scooterrental.fleet.entity.Scooter;
-import ru.senla.scooterrental.fleet.service.FleetService;
+import ru.senla.scooterrental.fleet.service.ScooterService;
 import ru.senla.scooterrental.maintenance.entity.ScooterServiceEvent;
 import ru.senla.scooterrental.maintenance.enums.ServiceEventType;
 import ru.senla.scooterrental.maintenance.exceptions.MaintenanceValidationException;
@@ -22,16 +22,16 @@ public class MaintenanceServiceImpl implements MaintenanceService {
             LoggerFactory.getLogger(MaintenanceServiceImpl.class);
 
     private final ServiceEventRepository serviceEventRepository;
-    private final FleetService fleetService;
+    private final ScooterService scooterService;
 
     public MaintenanceServiceImpl(ServiceEventRepository serviceEventRepository,
-                                  FleetService fleetService) {
+                                  ScooterService scooterService) {
         this.serviceEventRepository = requireNonNull(
                 serviceEventRepository,
                 "Репозиторий сервисных событий"
         );
-        this.fleetService = requireNonNull(
-                fleetService,
+        this.scooterService = requireNonNull(
+                scooterService,
                 "Сервис парка самокатов"
         );
     }
@@ -46,7 +46,7 @@ public class MaintenanceServiceImpl implements MaintenanceService {
                 description
         );
 
-        fleetService.markServiceRequired(scooterId);
+        scooterService.markServiceRequired(scooterId);
 
         ScooterServiceEvent event = createEvent(
                 scooterId,
@@ -73,7 +73,7 @@ public class MaintenanceServiceImpl implements MaintenanceService {
                 description
         );
 
-        fleetService.markServiceRequired(scooterId);
+        scooterService.markServiceRequired(scooterId);
 
         ScooterServiceEvent event = createEvent(
                 scooterId,
@@ -100,7 +100,7 @@ public class MaintenanceServiceImpl implements MaintenanceService {
                 description
         );
 
-        fleetService.sendToMaintenance(scooterId);
+        scooterService.sendToMaintenance(scooterId);
 
         ScooterServiceEvent event = createEvent(
                 scooterId,
@@ -127,7 +127,7 @@ public class MaintenanceServiceImpl implements MaintenanceService {
                 description
         );
 
-        fleetService.completeMaintenance(scooterId);
+        scooterService.completeMaintenance(scooterId);
 
         ScooterServiceEvent event = createEvent(
                 scooterId,
@@ -168,7 +168,7 @@ public class MaintenanceServiceImpl implements MaintenanceService {
             );
         }
 
-        fleetService.chargeScooter(scooterId, amount);
+        scooterService.chargeScooter(scooterId, amount);
 
         ScooterServiceEvent event = createEvent(
                 scooterId,
@@ -196,7 +196,7 @@ public class MaintenanceServiceImpl implements MaintenanceService {
                 description
         );
 
-        fleetService.markServiceRequired(scooterId);
+        scooterService.markServiceRequired(scooterId);
 
         ScooterServiceEvent event = createEvent(
                 scooterId,
@@ -244,7 +244,7 @@ public class MaintenanceServiceImpl implements MaintenanceService {
     private ScooterServiceEvent createEvent(Long scooterId,
                                             ServiceEventType type,
                                             String description) {
-        Scooter scooter = fleetService.getScooterById(scooterId);
+        Scooter scooter = scooterService.getScooterById(scooterId);
 
         ScooterServiceEvent event = new ScooterServiceEvent(
                 scooter,

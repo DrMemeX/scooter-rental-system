@@ -1,4 +1,4 @@
-package ru.senla.scooterrental.rental.service.validator;
+package ru.senla.scooterrental.rental.service.impl.validator;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -7,7 +7,8 @@ import ru.senla.scooterrental.fleet.entity.Scooter;
 import ru.senla.scooterrental.rental.enums.TariffType;
 import ru.senla.scooterrental.rental.exceptions.RentalValidationException;
 import ru.senla.scooterrental.rental.repository.RentalRepository;
-import ru.senla.scooterrental.rental.service.calculator.RentalCalculationService;
+import ru.senla.scooterrental.rental.service.RentalValidator;
+import ru.senla.scooterrental.rental.service.RentalCalculationService;
 import ru.senla.scooterrental.user.entity.User;
 import ru.senla.scooterrental.rental.entity.Rental;
 import ru.senla.scooterrental.rental.enums.RentalStatus;
@@ -15,15 +16,15 @@ import ru.senla.scooterrental.rental.enums.RentalStatus;
 import java.math.BigDecimal;
 
 @Service
-public class RentalValidator {
+public class RentalValidatorImpl implements RentalValidator {
 
     private static final Logger log =
-            LoggerFactory.getLogger(RentalValidator.class);
+            LoggerFactory.getLogger(RentalValidatorImpl.class);
 
     private final RentalRepository rentalRepository;
     private final RentalCalculationService calculationService;
 
-    public RentalValidator(RentalRepository rentalRepository,
+    public RentalValidatorImpl(RentalRepository rentalRepository,
                            RentalCalculationService calculationService) {
         this.rentalRepository = requireNonNull(
                 rentalRepository,
@@ -35,6 +36,7 @@ public class RentalValidator {
         );
     }
 
+    @Override
     public void validatePositiveId(Long id, String name) {
         if (id == null || id <= 0) {
             throw new RentalValidationException(
@@ -43,6 +45,7 @@ public class RentalValidator {
         }
     }
 
+    @Override
     public void ensureUserCanStartRental(User user) {
         requireNonNull(user, "Пользователь");
 
@@ -53,6 +56,7 @@ public class RentalValidator {
         }
     }
 
+    @Override
     public void ensureCanPayForRental(User user,
                                       Scooter scooter,
                                       TariffType tariffType,
@@ -80,6 +84,7 @@ public class RentalValidator {
         }
     }
 
+    @Override
     public void validatePromoCodeNotUsedByUser(Long userId, String promoCode) {
         if (promoCode == null || promoCode.isBlank()) {
             return;
@@ -97,6 +102,7 @@ public class RentalValidator {
         }
     }
 
+    @Override
     public void validateRideDistance(Scooter scooter,
                                      double distanceKm,
                                      long actualMinutes) {
@@ -134,6 +140,7 @@ public class RentalValidator {
         }
     }
 
+    @Override
     public void validateActiveRental(Rental rental) {
         requireNonNull(rental, "Аренда");
 
@@ -144,6 +151,7 @@ public class RentalValidator {
         }
     }
 
+    @Override
     public void validatePendingManualFinish(Rental rental) {
         requireNonNull(rental, "Аренда");
 
@@ -154,6 +162,7 @@ public class RentalValidator {
         }
     }
 
+    @Override
     public <T> T requireNonNull(T obj, String name) {
         if (obj == null) {
             throw new RentalValidationException(name + " не задан");

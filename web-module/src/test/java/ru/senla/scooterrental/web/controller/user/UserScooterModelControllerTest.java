@@ -8,7 +8,7 @@ import ru.senla.scooterrental.common.enums.ScooterClass;
 import ru.senla.scooterrental.fleet.entity.ScooterModel;
 import ru.senla.scooterrental.fleet.exceptions.FleetEntityNotFoundException;
 import ru.senla.scooterrental.fleet.exceptions.FleetValidationException;
-import ru.senla.scooterrental.fleet.service.impl.FleetServiceImpl;
+import ru.senla.scooterrental.fleet.service.ScooterModelService;
 import ru.senla.scooterrental.web.error.GlobalExceptionHandler;
 
 import java.math.BigDecimal;
@@ -26,14 +26,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class UserScooterModelControllerTest {
 
     private MockMvc mockMvc;
-    private FleetServiceImpl fleetService;
+    private ScooterModelService scooterModelService;
 
     @BeforeEach
     void setUp() {
-        fleetService = mock(FleetServiceImpl.class);
+        scooterModelService = mock(ScooterModelService.class);
 
         UserScooterModelController controller =
-                new UserScooterModelController(fleetService);
+                new UserScooterModelController(scooterModelService);
 
         mockMvc = MockMvcBuilders
                 .standaloneSetup(controller)
@@ -65,7 +65,7 @@ class UserScooterModelControllerTest {
                 1200
         );
 
-        when(fleetService.findAllScooterModels())
+        when(scooterModelService.findAllScooterModels())
                 .thenReturn(List.of(first, second));
 
         mockMvc.perform(get("/api/v1/scooter-models"))
@@ -100,14 +100,14 @@ class UserScooterModelControllerTest {
                 .andExpect(jsonPath("$[1].batteryCapacity")
                         .value(1200));
 
-        verify(fleetService).findAllScooterModels();
+        verify(scooterModelService).findAllScooterModels();
     }
 
     @Test
     void getScooterModels_shouldReturnEmptyListSuccessfully()
             throws Exception {
 
-        when(fleetService.findAllScooterModels())
+        when(scooterModelService.findAllScooterModels())
                 .thenReturn(List.of());
 
         mockMvc.perform(get("/api/v1/scooter-models"))
@@ -115,7 +115,7 @@ class UserScooterModelControllerTest {
                 .andExpect(jsonPath("$").isArray())
                 .andExpect(jsonPath("$").isEmpty());
 
-        verify(fleetService).findAllScooterModels();
+        verify(scooterModelService).findAllScooterModels();
     }
 
     @Test
@@ -132,7 +132,7 @@ class UserScooterModelControllerTest {
                 1000
         );
 
-        when(fleetService.getScooterModelById(1L))
+        when(scooterModelService.getScooterModelById(1L))
                 .thenReturn(model);
 
         mockMvc.perform(get("/api/v1/scooter-models/1"))
@@ -152,14 +152,14 @@ class UserScooterModelControllerTest {
                 .andExpect(jsonPath("$.batteryCapacity")
                         .value(1000));
 
-        verify(fleetService).getScooterModelById(1L);
+        verify(scooterModelService).getScooterModelById(1L);
     }
 
     @Test
     void getScooterModelById_shouldReturnNotFound()
             throws Exception {
 
-        when(fleetService.getScooterModelById(99L))
+        when(scooterModelService.getScooterModelById(99L))
                 .thenThrow(
                         new FleetEntityNotFoundException(
                                 "Модель не найдена"
@@ -171,7 +171,7 @@ class UserScooterModelControllerTest {
                 )
                 .andExpect(status().isNotFound());
 
-        verify(fleetService)
+        verify(scooterModelService)
                 .getScooterModelById(99L);
     }
 
@@ -179,7 +179,7 @@ class UserScooterModelControllerTest {
     void getScooterModelById_shouldReturnBadRequest_whenValidationFails()
             throws Exception {
 
-        when(fleetService.getScooterModelById(0L))
+        when(scooterModelService.getScooterModelById(0L))
                 .thenThrow(
                         new FleetValidationException(
                                 "ID должен быть положительным"
@@ -191,7 +191,7 @@ class UserScooterModelControllerTest {
                 )
                 .andExpect(status().isBadRequest());
 
-        verify(fleetService)
+        verify(scooterModelService)
                 .getScooterModelById(0L);
     }
 
@@ -204,7 +204,7 @@ class UserScooterModelControllerTest {
                 )
                 .andExpect(status().isBadRequest());
 
-        verifyNoInteractions(fleetService);
+        verifyNoInteractions(scooterModelService);
     }
 
     private ScooterModel scooterModel(Long id,

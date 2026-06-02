@@ -10,3 +10,4 @@ spring:
     hibernate:
       ddl-auto: none
     open-in-view: false
+    show-sql: true

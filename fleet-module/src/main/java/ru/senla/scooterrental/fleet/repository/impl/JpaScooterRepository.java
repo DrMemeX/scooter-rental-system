@@ -1,9 +1,9 @@
 package ru.senla.scooterrental.fleet.repository.impl;
 
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.LockModeType;
 import jakarta.persistence.PersistenceContext;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
 import ru.senla.scooterrental.fleet.entity.Scooter;
 import ru.senla.scooterrental.fleet.enums.ScooterStatus;
 import ru.senla.scooterrental.fleet.exceptions.FleetValidationException;
@@ -13,7 +13,6 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-@Transactional
 public class JpaScooterRepository implements ScooterRepository {
 
     @PersistenceContext
@@ -33,14 +32,12 @@ public class JpaScooterRepository implements ScooterRepository {
     }
 
     @Override
-    @Transactional(readOnly = true)
     public Optional<Scooter> findById(Long id) {
         validateId(id);
         return Optional.ofNullable(entityManager.find(Scooter.class, id));
     }
 
     @Override
-    @Transactional(readOnly = true)
     public List<Scooter> findAll() {
         return entityManager
                 .createQuery(
@@ -51,7 +48,6 @@ public class JpaScooterRepository implements ScooterRepository {
     }
 
     @Override
-    @Transactional(readOnly = true)
     public boolean existsById(Long id) {
         validateId(id);
 
@@ -78,7 +74,6 @@ public class JpaScooterRepository implements ScooterRepository {
     }
 
     @Override
-    @Transactional(readOnly = true)
     public List<Scooter> findAllByStatus(ScooterStatus status) {
         if (status == null) {
             throw new FleetValidationException(
@@ -96,13 +91,13 @@ public class JpaScooterRepository implements ScooterRepository {
     }
 
     @Override
-    @Transactional(readOnly = true)
     public List<Scooter> findAllAvailable() {
         return entityManager
                 .createQuery(
                         """
                         select scooter
                         from Scooter scooter
+                        join fetch scooter.currentRentalPoint
                         where scooter.status = :status
                         and scooter.currentCharge >= 20
                         """,
@@ -113,7 +108,6 @@ public class JpaScooterRepository implements ScooterRepository {
     }
 
     @Override
-    @Transactional(readOnly = true)
     public List<Scooter> findAllByRentalPointId(Long rentalPointId) {
         validateId(rentalPointId);
 
@@ -139,6 +133,19 @@ public class JpaScooterRepository implements ScooterRepository {
             """, Scooter.class)
                 .setParameter("modelId", modelId)
                 .getResultList();
+    }
+
+    @Override
+    public Optional<Scooter> findByIdForUpdate(Long id) {
+        validateId(id);
+
+        Scooter scooter = entityManager.find(
+                Scooter.class,
+                id,
+                LockModeType.PESSIMISTIC_WRITE
+        );
+
+        return Optional.ofNullable(scooter);
     }
 
     private void validateScooter(Scooter scooter) {

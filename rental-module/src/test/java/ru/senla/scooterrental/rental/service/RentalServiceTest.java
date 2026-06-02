@@ -9,7 +9,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import ru.senla.scooterrental.discount.service.DiscountService;
 import ru.senla.scooterrental.fleet.entity.Scooter;
 import ru.senla.scooterrental.fleet.entity.ScooterModel;
-import ru.senla.scooterrental.fleet.service.FleetService;
+import ru.senla.scooterrental.fleet.service.ScooterService;
 import ru.senla.scooterrental.rental.entity.Rental;
 import ru.senla.scooterrental.rental.enums.RentalStatus;
 import ru.senla.scooterrental.rental.enums.TariffType;
@@ -18,11 +18,7 @@ import ru.senla.scooterrental.rental.exceptions.ActiveRentalAlreadyExistsExcepti
 import ru.senla.scooterrental.rental.exceptions.RentalNotFoundException;
 import ru.senla.scooterrental.rental.exceptions.RentalValidationException;
 import ru.senla.scooterrental.rental.repository.RentalRepository;
-import ru.senla.scooterrental.rental.service.calculator.PricingService;
-import ru.senla.scooterrental.rental.service.calculator.RentalCalculationService;
 import ru.senla.scooterrental.rental.service.impl.RentalServiceImpl;
-import ru.senla.scooterrental.rental.service.resolver.RentalTerminationResolver;
-import ru.senla.scooterrental.rental.service.validator.RentalValidator;
 import ru.senla.scooterrental.user.entity.User;
 import ru.senla.scooterrental.user.service.UserService;
 
@@ -46,7 +42,7 @@ class RentalServiceTest {
     private RentalRepository rentalRepository;
 
     @Mock
-    private FleetService fleetService;
+    private ScooterService scooterService;
 
     @Mock
     private PricingService pricingService;
@@ -83,7 +79,7 @@ class RentalServiceTest {
     @Test
     void startRental_shouldStartMinuteRentalSuccessfully() {
         when(userService.getById(1L)).thenReturn(user);
-        when(fleetService.getScooterById(10L)).thenReturn(scooter);
+        when(scooterService.getScooterById(10L)).thenReturn(scooter);
         when(rentalRepository.findUnfinishedByUserId(1L))
                 .thenReturn(Optional.empty());
         when(calculationService.calculateMaxAllowedMinutesForStart(
@@ -116,14 +112,14 @@ class RentalServiceTest {
                 TariffType.MINUTE,
                 null
         );
-        verify(fleetService).rentScooter(10L);
+        verify(scooterService).rentScooter(10L);
         verify(rentalRepository).save(any(Rental.class));
     }
 
     @Test
     void startRental_shouldStartHourRentalSuccessfully() {
         when(userService.getById(1L)).thenReturn(user);
-        when(fleetService.getScooterById(10L)).thenReturn(scooter);
+        when(scooterService.getScooterById(10L)).thenReturn(scooter);
         when(rentalRepository.findUnfinishedByUserId(1L))
                 .thenReturn(Optional.empty());
         when(calculationService.calculateMaxAllowedMinutesForStart(
@@ -148,14 +144,14 @@ class RentalServiceTest {
         assertEquals(2, result.getPlannedHours());
         assertEquals(120, result.getMaxAllowedMinutes());
 
-        verify(fleetService).rentScooter(10L);
+        verify(scooterService).rentScooter(10L);
         verify(rentalRepository).save(any(Rental.class));
     }
 
     @Test
     void startRental_shouldStartSubscriptionRentalSuccessfully() {
         when(userService.getById(1L)).thenReturn(user);
-        when(fleetService.getScooterById(10L)).thenReturn(scooter);
+        when(scooterService.getScooterById(10L)).thenReturn(scooter);
         when(rentalRepository.findUnfinishedByUserId(1L))
                 .thenReturn(Optional.empty());
         when(calculationService.calculateMaxAllowedMinutesForStart(
@@ -178,7 +174,7 @@ class RentalServiceTest {
         assertEquals(TariffType.SUBSCRIPTION, result.getTariffType());
         assertEquals(null, result.getMaxAllowedMinutes());
 
-        verify(fleetService).rentScooter(10L);
+        verify(scooterService).rentScooter(10L);
         verify(rentalRepository).save(any(Rental.class));
     }
 
@@ -193,7 +189,7 @@ class RentalServiceTest {
                 () -> rentalService.startRental(null, 10L, TariffType.MINUTE)
         );
 
-        verifyNoInteractions(userService, fleetService);
+        verifyNoInteractions(userService, scooterService);
         verify(rentalRepository, never()).save(any());
     }
 
@@ -218,7 +214,7 @@ class RentalServiceTest {
         );
 
         verifyNoInteractions(userService);
-        verifyNoInteractions(fleetService);
+        verifyNoInteractions(scooterService);
         verify(rentalRepository, never()).save(any());
     }
 
@@ -233,14 +229,14 @@ class RentalServiceTest {
                 () -> rentalService.startRental(1L, 10L, null)
         );
 
-        verifyNoInteractions(userService, fleetService);
+        verifyNoInteractions(userService, scooterService);
         verify(rentalRepository, never()).save(any());
     }
 
     @Test
     void startRental_shouldThrowException_whenUserCannotStartRental() {
         when(userService.getById(1L)).thenReturn(user);
-        when(fleetService.getScooterById(10L)).thenReturn(scooter);
+        when(scooterService.getScooterById(10L)).thenReturn(scooter);
 
         doThrow(new RentalValidationException(
                 "Заблокированный пользователь не может начать аренду"
@@ -251,7 +247,7 @@ class RentalServiceTest {
                 () -> rentalService.startRental(1L, 10L, TariffType.MINUTE)
         );
 
-        verify(fleetService, never()).rentScooter(anyLong());
+        verify(scooterService, never()).rentScooter(anyLong());
         verify(rentalRepository, never()).save(any());
     }
 
@@ -265,7 +261,7 @@ class RentalServiceTest {
         );
 
         when(userService.getById(1L)).thenReturn(user);
-        when(fleetService.getScooterById(10L)).thenReturn(scooter);
+        when(scooterService.getScooterById(10L)).thenReturn(scooter);
         when(rentalRepository.findUnfinishedByUserId(1L))
                 .thenReturn(Optional.of(existingRental));
 
@@ -274,14 +270,14 @@ class RentalServiceTest {
                 () -> rentalService.startRental(1L, 10L, TariffType.MINUTE)
         );
 
-        verify(fleetService, never()).rentScooter(anyLong());
+        verify(scooterService, never()).rentScooter(anyLong());
         verify(rentalRepository, never()).save(any());
     }
 
     @Test
     void startRental_shouldThrowException_whenPaymentValidationFails() {
         when(userService.getById(1L)).thenReturn(user);
-        when(fleetService.getScooterById(10L)).thenReturn(scooter);
+        when(scooterService.getScooterById(10L)).thenReturn(scooter);
         when(rentalRepository.findUnfinishedByUserId(1L))
                 .thenReturn(Optional.empty());
 
@@ -299,14 +295,14 @@ class RentalServiceTest {
                 () -> rentalService.startRental(1L, 10L, TariffType.MINUTE)
         );
 
-        verify(fleetService, never()).rentScooter(anyLong());
+        verify(scooterService, never()).rentScooter(anyLong());
         verify(rentalRepository, never()).save(any());
     }
 
     @Test
     void startRental_shouldNotSaveRental_whenFleetRentFails() {
         when(userService.getById(1L)).thenReturn(user);
-        when(fleetService.getScooterById(10L)).thenReturn(scooter);
+        when(scooterService.getScooterById(10L)).thenReturn(scooter);
         when(rentalRepository.findUnfinishedByUserId(1L))
                 .thenReturn(Optional.empty());
         when(calculationService.calculateMaxAllowedMinutesForStart(
@@ -317,7 +313,7 @@ class RentalServiceTest {
         )).thenReturn(100);
 
         doThrow(new RuntimeException("scooter unavailable"))
-                .when(fleetService)
+                .when(scooterService)
                 .rentScooter(10L);
 
         RuntimeException exception = assertThrows(
@@ -350,7 +346,7 @@ class RentalServiceTest {
         assertEquals(TerminationReason.USER_FINISHED, result.getTerminationReason());
 
         verify(rentalValidator).validateActiveRental(rental);
-        verify(fleetService).returnScooter(10L, 5L);
+        verify(scooterService).returnScooter(10L, 5L);
         verify(userService).subtractBalance(1L, BigDecimal.valueOf(200));
         verify(rentalRepository).save(rental);
     }
@@ -360,7 +356,7 @@ class RentalServiceTest {
         Rental rental = activeRental(TariffType.HOUR, 2);
 
         when(rentalRepository.findById(100L)).thenReturn(Optional.of(rental));
-        when(fleetService.getScooterById(10L)).thenReturn(scooter);
+        when(scooterService.getScooterById(10L)).thenReturn(scooter);
         when(calculationService.calculateActualMinutes(rental)).thenReturn(80L);
         when(calculationService.resolveEffectiveMinutes(rental, 80L)).thenReturn(80L);
         when(terminationResolver.resolveTerminationReason(
@@ -396,9 +392,9 @@ class RentalServiceTest {
         assertEquals(0.2, result.getDistanceKm());
 
         verify(rentalValidator).validatePromoCodeNotUsedByUser(1L, "SALE10");
-        verify(fleetService).addMileage(10L, 0.2);
-        verify(fleetService).consumeCharge(10L, 1.0);
-        verify(fleetService).returnScooter(10L, 5L);
+        verify(scooterService).addMileage(10L, 0.2);
+        verify(scooterService).consumeCharge(10L, 1.0);
+        verify(scooterService).returnScooter(10L, 5L);
         verify(userService).subtractBalance(1L, BigDecimal.valueOf(180));
         verify(rentalRepository).save(rental);
     }
@@ -414,7 +410,7 @@ class RentalServiceTest {
                 () -> rentalService.finishRental(100L, null)
         );
 
-        verifyNoInteractions(fleetService, pricingService, discountService, userService);
+        verifyNoInteractions(scooterService, pricingService, discountService, userService);
         verify(rentalRepository, never()).save(any());
     }
 
@@ -427,7 +423,7 @@ class RentalServiceTest {
                 () -> rentalService.finishRental(100L, 5L)
         );
 
-        verify(fleetService, never()).returnScooter(anyLong(), anyLong());
+        verify(scooterService, never()).returnScooter(anyLong(), anyLong());
         verify(userService, never()).subtractBalance(anyLong(), any());
         verify(rentalRepository, never()).save(any());
     }
@@ -447,7 +443,7 @@ class RentalServiceTest {
                 () -> rentalService.finishRental(100L, 5L)
         );
 
-        verify(fleetService, never()).getScooterById(anyLong());
+        verify(scooterService, never()).getScooterById(anyLong());
         verify(rentalRepository, never()).save(any());
     }
 
@@ -456,7 +452,7 @@ class RentalServiceTest {
         Rental rental = activeRental(TariffType.HOUR, 2);
 
         when(rentalRepository.findById(100L)).thenReturn(Optional.of(rental));
-        when(fleetService.getScooterById(10L)).thenReturn(scooter);
+        when(scooterService.getScooterById(10L)).thenReturn(scooter);
         when(calculationService.calculateActualMinutes(rental)).thenReturn(80L);
         when(calculationService.resolveEffectiveMinutes(rental, 80L)).thenReturn(80L);
         when(terminationResolver.resolveTerminationReason(
@@ -478,7 +474,7 @@ class RentalServiceTest {
         );
 
         verify(pricingService, never()).calculate(any(), any(), any(), anyLong());
-        verify(fleetService, never()).returnScooter(anyLong(), anyLong());
+        verify(scooterService, never()).returnScooter(anyLong(), anyLong());
         verify(rentalRepository, never()).save(any());
     }
 
@@ -487,7 +483,7 @@ class RentalServiceTest {
         Rental rental = activeRental(TariffType.HOUR, 2);
 
         when(rentalRepository.findById(100L)).thenReturn(Optional.of(rental));
-        when(fleetService.getScooterById(10L)).thenReturn(scooter);
+        when(scooterService.getScooterById(10L)).thenReturn(scooter);
         when(calculationService.calculateActualMinutes(rental)).thenReturn(80L);
         when(calculationService.resolveEffectiveMinutes(rental, 80L)).thenReturn(80L);
         when(terminationResolver.resolveTerminationReason(
@@ -515,7 +511,7 @@ class RentalServiceTest {
         );
 
         verify(discountService, never()).applyDiscount(any(), anyString());
-        verify(fleetService, never()).returnScooter(anyLong(), anyLong());
+        verify(scooterService, never()).returnScooter(anyLong(), anyLong());
         verify(userService, never()).subtractBalance(anyLong(), any());
         verify(rentalRepository, never()).save(any());
     }
@@ -532,7 +528,7 @@ class RentalServiceTest {
         );
 
         doThrow(new RuntimeException("return failed"))
-                .when(fleetService)
+                .when(scooterService)
                 .returnScooter(10L, 5L);
 
         RuntimeException exception = assertThrows(
@@ -568,7 +564,7 @@ class RentalServiceTest {
 
         assertEquals("balance failed", exception.getMessage());
 
-        verify(fleetService).returnScooter(10L, 5L);
+        verify(scooterService).returnScooter(10L, 5L);
         verify(rentalRepository, never()).save(any());
     }
 
@@ -672,7 +668,7 @@ class RentalServiceTest {
         assertEquals(RentalStatus.PENDING_MANAGER_CONFIRMATION, result.getStatus());
 
         verify(rentalValidator).validateActiveRental(rental);
-        verify(fleetService).requestReturnVerification(10L);
+        verify(scooterService).requestReturnVerification(10L);
         verify(rentalRepository).save(rental);
     }
 
@@ -685,7 +681,7 @@ class RentalServiceTest {
                 () -> rentalService.requestManualFinish(100L)
         );
 
-        verify(fleetService, never()).requestReturnVerification(anyLong());
+        verify(scooterService, never()).requestReturnVerification(anyLong());
         verify(rentalRepository, never()).save(any());
     }
 
@@ -704,7 +700,7 @@ class RentalServiceTest {
                 () -> rentalService.requestManualFinish(100L)
         );
 
-        verify(fleetService, never()).requestReturnVerification(anyLong());
+        verify(scooterService, never()).requestReturnVerification(anyLong());
         verify(rentalRepository, never()).save(any());
     }
 
@@ -725,7 +721,7 @@ class RentalServiceTest {
         assertEquals(BigDecimal.valueOf(200), result.getTotalCost());
 
         verify(rentalValidator).validatePendingManualFinish(rental);
-        verify(fleetService).returnScooter(10L, 5L);
+        verify(scooterService).returnScooter(10L, 5L);
         verify(userService).subtractBalance(1L, BigDecimal.valueOf(200));
         verify(rentalRepository).save(rental);
     }
@@ -735,7 +731,7 @@ class RentalServiceTest {
         Rental rental = pendingManualFinishRental();
 
         when(rentalRepository.findById(100L)).thenReturn(Optional.of(rental));
-        when(fleetService.getScooterById(10L)).thenReturn(scooter);
+        when(scooterService.getScooterById(10L)).thenReturn(scooter);
         when(calculationService.calculateActualMinutes(rental)).thenReturn(80L);
         when(calculationService.resolveEffectiveMinutes(rental, 80L)).thenReturn(80L);
         when(terminationResolver.resolveTerminationReason(
@@ -773,9 +769,9 @@ class RentalServiceTest {
 
         verify(rentalValidator).validatePendingManualFinish(rental);
         verify(rentalValidator).validatePromoCodeNotUsedByUser(1L, "SALE10");
-        verify(fleetService).addMileage(10L, 0.2);
-        verify(fleetService).consumeCharge(10L, 1.0);
-        verify(fleetService).returnScooter(10L, 5L);
+        verify(scooterService).addMileage(10L, 0.2);
+        verify(scooterService).consumeCharge(10L, 1.0);
+        verify(scooterService).returnScooter(10L, 5L);
         verify(userService).subtractBalance(1L, BigDecimal.valueOf(180));
         verify(rentalRepository).save(rental);
     }
@@ -789,7 +785,7 @@ class RentalServiceTest {
                 () -> rentalService.approveManualFinish(100L, 5L)
         );
 
-        verify(fleetService, never()).returnScooter(anyLong(), anyLong());
+        verify(scooterService, never()).returnScooter(anyLong(), anyLong());
         verify(userService, never()).subtractBalance(anyLong(), any());
         verify(rentalRepository, never()).save(any());
     }
@@ -809,7 +805,7 @@ class RentalServiceTest {
                 () -> rentalService.approveManualFinish(100L, 5L)
         );
 
-        verify(fleetService, never()).getScooterById(anyLong());
+        verify(scooterService, never()).getScooterById(anyLong());
         verify(rentalRepository, never()).save(any());
     }
 
@@ -948,7 +944,7 @@ class RentalServiceTest {
                                          BigDecimal totalCost,
                                          BigDecimal finalCost) {
         when(rentalRepository.findById(100L)).thenReturn(Optional.of(rental));
-        when(fleetService.getScooterById(10L)).thenReturn(scooter);
+        when(scooterService.getScooterById(10L)).thenReturn(scooter);
         when(calculationService.calculateActualMinutes(rental)).thenReturn(80L);
         when(calculationService.resolveEffectiveMinutes(rental, 80L))
                 .thenReturn(80L);
@@ -972,7 +968,7 @@ class RentalServiceTest {
                                                  BigDecimal totalCost,
                                                  BigDecimal finalCost) {
         when(rentalRepository.findById(100L)).thenReturn(Optional.of(rental));
-        when(fleetService.getScooterById(10L)).thenReturn(scooter);
+        when(scooterService.getScooterById(10L)).thenReturn(scooter);
         when(calculationService.calculateActualMinutes(rental)).thenReturn(80L);
         when(calculationService.resolveEffectiveMinutes(rental, 80L))
                 .thenReturn(80L);
@@ -1001,7 +997,7 @@ class RentalServiceTest {
                                           BigDecimal totalCost,
                                           BigDecimal finalCost) {
         when(rentalRepository.findById(100L)).thenReturn(Optional.of(rental));
-        when(fleetService.getScooterById(10L)).thenReturn(scooter);
+        when(scooterService.getScooterById(10L)).thenReturn(scooter);
         when(calculationService.calculateActualMinutes(rental)).thenReturn(80L);
         when(calculationService.resolveEffectiveMinutes(rental, 80L))
                 .thenReturn(80L);
@@ -1027,7 +1023,7 @@ class RentalServiceTest {
         when(rentalRepository.findById(100L))
                 .thenReturn(Optional.of(rental));
 
-        when(fleetService.getScooterById(10L))
+        when(scooterService.getScooterById(10L))
                 .thenReturn(scooter);
 
         when(calculationService.calculateActualMinutes(rental))

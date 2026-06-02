@@ -8,7 +8,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import ru.senla.scooterrental.fleet.entity.LocationNode;
 import ru.senla.scooterrental.fleet.entity.RentalPoint;
-import ru.senla.scooterrental.fleet.service.impl.FleetServiceImpl;
+import ru.senla.scooterrental.fleet.service.RentalPointService;
 import ru.senla.scooterrental.web.dto.request.fleet.rentalpoint.CreateRentalPointRequest;
 import ru.senla.scooterrental.web.dto.request.fleet.rentalpoint.RenameRentalPointRequest;
 import ru.senla.scooterrental.web.error.GlobalExceptionHandler;
@@ -30,15 +30,15 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class AdminRentalPointControllerTest {
 
     private MockMvc mockMvc;
-    private FleetServiceImpl fleetService;
+    private RentalPointService rentalPointService;
     private ObjectMapper objectMapper;
 
     @BeforeEach
     void setUp() {
-        fleetService = mock(FleetServiceImpl.class);
+        rentalPointService = mock(RentalPointService.class);
 
         AdminRentalPointController controller =
-                new AdminRentalPointController(fleetService);
+                new AdminRentalPointController(rentalPointService);
 
         mockMvc = MockMvcBuilders
                 .standaloneSetup(controller)
@@ -61,7 +61,7 @@ class AdminRentalPointControllerTest {
         CreateRentalPointRequest request =
                 new CreateRentalPointRequest("Central Point", 10L);
 
-        when(fleetService.createRentalPoint("Central Point", 10L))
+        when(rentalPointService.createRentalPoint("Central Point", 10L))
                 .thenReturn(rentalPoint);
 
         mockMvc.perform(
@@ -75,7 +75,7 @@ class AdminRentalPointControllerTest {
                 .andExpect(jsonPath("$.locationNodeId").value(10L))
                 .andExpect(jsonPath("$.active").value(true));
 
-        verify(fleetService).createRentalPoint("Central Point", 10L);
+        verify(rentalPointService).createRentalPoint("Central Point", 10L);
     }
 
     @Test
@@ -90,7 +90,7 @@ class AdminRentalPointControllerTest {
                 )
                 .andExpect(status().isBadRequest());
 
-        verifyNoInteractions(fleetService);
+        verifyNoInteractions(rentalPointService);
     }
 
     @Test
@@ -105,7 +105,7 @@ class AdminRentalPointControllerTest {
                 )
                 .andExpect(status().isBadRequest());
 
-        verifyNoInteractions(fleetService);
+        verifyNoInteractions(rentalPointService);
     }
 
     @Test
@@ -125,7 +125,7 @@ class AdminRentalPointControllerTest {
                 false
         );
 
-        when(fleetService.findAllRentalPoints())
+        when(rentalPointService.findAllRentalPoints())
                 .thenReturn(List.of(first, second));
 
         mockMvc.perform(get("/api/v1/admin/rental-points"))
@@ -134,7 +134,7 @@ class AdminRentalPointControllerTest {
                 .andExpect(jsonPath("$[0].active").value(true))
                 .andExpect(jsonPath("$[1].locationNodeId").value(20L))
                 .andExpect(jsonPath("$[1].active").value(false));
-        verify(fleetService).findAllRentalPoints();
+        verify(rentalPointService).findAllRentalPoints();
     }
 
     @Test
@@ -147,7 +147,7 @@ class AdminRentalPointControllerTest {
                 true
         );
 
-        when(fleetService.findActiveRentalPoints())
+        when(rentalPointService.findActiveRentalPoints())
                 .thenReturn(List.of(rentalPoint));
 
         mockMvc.perform(get("/api/v1/admin/rental-points")
@@ -158,7 +158,7 @@ class AdminRentalPointControllerTest {
                 .andExpect(jsonPath("$[0].locationNodeId").value(10L))
                 .andExpect(jsonPath("$[0].active").value(true));
 
-        verify(fleetService).findActiveRentalPoints();
+        verify(rentalPointService).findActiveRentalPoints();
     }
 
     @Test
@@ -171,16 +171,63 @@ class AdminRentalPointControllerTest {
                 true
         );
 
-        when(fleetService.getRentalPointById(1L))
+        when(rentalPointService.getRentalPointById(1L))
                 .thenReturn(rentalPoint);
-        when(fleetService.getRentalPointScooters(1L))
+        when(rentalPointService.getRentalPointScooters(1L))
                 .thenReturn(List.of());
 
         mockMvc.perform(get("/api/v1/admin/rental-points/1"))
                 .andExpect(status().isOk());
 
-        verify(fleetService).getRentalPointById(1L);
-        verify(fleetService).getRentalPointScooters(1L);
+        verify(rentalPointService).getRentalPointById(1L);
+        verify(rentalPointService).getRentalPointScooters(1L);
+    }
+
+    @Test
+    void getRentalPointsByLocation_shouldReturnAllSuccessfully() throws Exception {
+        RentalPoint rentalPoint = rentalPoint(
+                1L,
+                "Central Point",
+                10L,
+                "Central District",
+                true
+        );
+
+        when(rentalPointService.findRentalPointsByLocationNode(10L))
+                .thenReturn(List.of(rentalPoint));
+
+        mockMvc.perform(get("/api/v1/admin/rental-points/by-location/10"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(1L))
+                .andExpect(jsonPath("$[0].name").value("Central Point"))
+                .andExpect(jsonPath("$[0].locationNodeId").value(10L))
+                .andExpect(jsonPath("$[0].active").value(true));
+
+        verify(rentalPointService).findRentalPointsByLocationNode(10L);
+    }
+
+    @Test
+    void getRentalPointsByLocation_shouldReturnActiveSuccessfully() throws Exception {
+        RentalPoint rentalPoint = rentalPoint(
+                1L,
+                "Central Point",
+                10L,
+                "Central District",
+                true
+        );
+
+        when(rentalPointService.findActiveRentalPointsByLocationNode(10L))
+                .thenReturn(List.of(rentalPoint));
+
+        mockMvc.perform(
+                        get("/api/v1/admin/rental-points/by-location/10")
+                                .param("activeOnly", "true")
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(1L))
+                .andExpect(jsonPath("$[0].active").value(true));
+
+        verify(rentalPointService).findActiveRentalPointsByLocationNode(10L);
     }
 
     @Test
@@ -196,7 +243,7 @@ class AdminRentalPointControllerTest {
         RenameRentalPointRequest request =
                 new RenameRentalPointRequest("New Point");
 
-        when(fleetService.renameRentalPoint(1L, "New Point"))
+        when(rentalPointService.renameRentalPoint(1L, "New Point"))
                 .thenReturn(rentalPoint);
 
         mockMvc.perform(
@@ -210,7 +257,7 @@ class AdminRentalPointControllerTest {
                 .andExpect(jsonPath("$.locationNodeId").value(10L))
                 .andExpect(jsonPath("$.active").value(true));
 
-        verify(fleetService).renameRentalPoint(1L, "New Point");
+        verify(rentalPointService).renameRentalPoint(1L, "New Point");
     }
 
     @Test
@@ -225,7 +272,7 @@ class AdminRentalPointControllerTest {
                 )
                 .andExpect(status().isBadRequest());
 
-        verifyNoInteractions(fleetService);
+        verifyNoInteractions(rentalPointService);
     }
 
     @Test
@@ -238,7 +285,7 @@ class AdminRentalPointControllerTest {
                 true
         );
 
-        when(fleetService.activateRentalPoint(1L))
+        when(rentalPointService.activateRentalPoint(1L))
                 .thenReturn(rentalPoint);
 
         mockMvc.perform(patch("/api/v1/admin/rental-points/1/activate"))
@@ -246,7 +293,7 @@ class AdminRentalPointControllerTest {
                 .andExpect(jsonPath("$.id").value(1L))
                 .andExpect(jsonPath("$.active").value(true));
 
-        verify(fleetService).activateRentalPoint(1L);
+        verify(rentalPointService).activateRentalPoint(1L);
     }
 
     @Test
@@ -259,7 +306,7 @@ class AdminRentalPointControllerTest {
                 false
         );
 
-        when(fleetService.deactivateRentalPoint(1L))
+        when(rentalPointService.deactivateRentalPoint(1L))
                 .thenReturn(rentalPoint);
 
         mockMvc.perform(patch("/api/v1/admin/rental-points/1/deactivate"))
@@ -267,7 +314,7 @@ class AdminRentalPointControllerTest {
                 .andExpect(jsonPath("$.id").value(1L))
                 .andExpect(jsonPath("$.active").value(false));
 
-        verify(fleetService).deactivateRentalPoint(1L);
+        verify(rentalPointService).deactivateRentalPoint(1L);
     }
 
     @Test
@@ -275,7 +322,7 @@ class AdminRentalPointControllerTest {
         mockMvc.perform(delete("/api/v1/admin/rental-points/1"))
                 .andExpect(status().isNoContent());
 
-        verify(fleetService).deleteRentalPoint(1L);
+        verify(rentalPointService).deleteRentalPoint(1L);
     }
 
     private RentalPoint rentalPoint(Long id,

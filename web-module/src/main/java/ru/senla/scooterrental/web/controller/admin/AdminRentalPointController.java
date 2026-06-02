@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import ru.senla.scooterrental.fleet.entity.RentalPoint;
 import ru.senla.scooterrental.fleet.entity.Scooter;
-import ru.senla.scooterrental.fleet.service.FleetService;
+import ru.senla.scooterrental.fleet.service.RentalPointService;
 import ru.senla.scooterrental.web.dto.request.fleet.rentalpoint.CreateRentalPointRequest;
 import ru.senla.scooterrental.web.dto.request.fleet.rentalpoint.RenameRentalPointRequest;
 import ru.senla.scooterrental.web.dto.response.fleet.rentalpoint.RentalPointDetailsResponse;
@@ -27,10 +27,10 @@ import java.util.List;
 @RequestMapping("/api/v1/admin/rental-points")
 public class AdminRentalPointController {
 
-    private final FleetService fleetService;
+    private final RentalPointService rentalPointService;
 
-    public AdminRentalPointController(FleetService fleetService) {
-        this.fleetService = fleetService;
+    public AdminRentalPointController(RentalPointService rentalPointService) {
+        this.rentalPointService = rentalPointService;
     }
 
     @PostMapping
@@ -38,7 +38,7 @@ public class AdminRentalPointController {
     public RentalPointResponse createRentalPoint(
             @Valid @RequestBody CreateRentalPointRequest request
     ) {
-        RentalPoint rentalPoint = fleetService.createRentalPoint(
+        RentalPoint rentalPoint = rentalPointService.createRentalPoint(
                 request.name(),
                 request.locationNodeId()
         );
@@ -51,8 +51,8 @@ public class AdminRentalPointController {
             @RequestParam(value = "activeOnly", required = false, defaultValue = "false") boolean activeOnly
     ) {
         List<RentalPoint> rentalPoints = activeOnly
-                ? fleetService.findActiveRentalPoints()
-                : fleetService.findAllRentalPoints();
+                ? rentalPointService.findActiveRentalPoints()
+                : rentalPointService.findAllRentalPoints();
 
         return rentalPoints.stream()
                 .map(FleetWebMapper::toRentalPointResponse)
@@ -63,10 +63,24 @@ public class AdminRentalPointController {
     public RentalPointDetailsResponse getRentalPointDetails(
             @PathVariable("rentalPointId") Long rentalPointId
     ) {
-        RentalPoint rentalPoint = fleetService.getRentalPointById(rentalPointId);
-        List<Scooter> scooters = fleetService.getRentalPointScooters(rentalPointId);
+        RentalPoint rentalPoint = rentalPointService.getRentalPointById(rentalPointId);
+        List<Scooter> scooters = rentalPointService.getRentalPointScooters(rentalPointId);
 
         return FleetWebMapper.toRentalPointDetailsResponse(rentalPoint, scooters);
+    }
+
+    @GetMapping("/by-location/{locationNodeId}")
+    public List<RentalPointResponse> getRentalPointsByLocation(
+            @PathVariable("locationNodeId") Long locationNodeId,
+            @RequestParam(value = "activeOnly", required = false, defaultValue = "false") boolean activeOnly
+    ) {
+        List<RentalPoint> rentalPoints = activeOnly
+                ? rentalPointService.findActiveRentalPointsByLocationNode(locationNodeId)
+                : rentalPointService.findRentalPointsByLocationNode(locationNodeId);
+
+        return rentalPoints.stream()
+                .map(FleetWebMapper::toRentalPointResponse)
+                .toList();
     }
 
     @PatchMapping("/{rentalPointId}/rename")
@@ -74,7 +88,7 @@ public class AdminRentalPointController {
             @PathVariable("rentalPointId") Long rentalPointId,
             @Valid @RequestBody RenameRentalPointRequest request
     ) {
-        RentalPoint rentalPoint = fleetService.renameRentalPoint(
+        RentalPoint rentalPoint = rentalPointService.renameRentalPoint(
                 rentalPointId,
                 request.name()
         );
@@ -86,7 +100,7 @@ public class AdminRentalPointController {
     public RentalPointResponse activateRentalPoint(
             @PathVariable("rentalPointId") Long rentalPointId
     ) {
-        RentalPoint rentalPoint = fleetService.activateRentalPoint(rentalPointId);
+        RentalPoint rentalPoint = rentalPointService.activateRentalPoint(rentalPointId);
 
         return FleetWebMapper.toRentalPointResponse(rentalPoint);
     }
@@ -95,7 +109,7 @@ public class AdminRentalPointController {
     public RentalPointResponse deactivateRentalPoint(
             @PathVariable("rentalPointId") Long rentalPointId
     ) {
-        RentalPoint rentalPoint = fleetService.deactivateRentalPoint(rentalPointId);
+        RentalPoint rentalPoint = rentalPointService.deactivateRentalPoint(rentalPointId);
 
         return FleetWebMapper.toRentalPointResponse(rentalPoint);
     }
@@ -105,6 +119,6 @@ public class AdminRentalPointController {
     public void deleteRentalPoint(
             @PathVariable("rentalPointId") Long rentalPointId
     ) {
-        fleetService.deleteRentalPoint(rentalPointId);
+        rentalPointService.deleteRentalPoint(rentalPointId);
     }
 }

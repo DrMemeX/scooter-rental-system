@@ -16,7 +16,8 @@ public final class MaintenanceWebMapper {
                 event.getScooter().getId(),
                 event.getType(),
                 event.getDescription(),
-                event.getCreatedAt()
+                event.getCreatedAt(),
+                event.getScooter().getCurrentCharge()
         );
     }
 }

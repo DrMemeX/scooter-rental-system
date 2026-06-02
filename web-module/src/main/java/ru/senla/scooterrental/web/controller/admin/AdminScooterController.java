@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import ru.senla.scooterrental.fleet.entity.Scooter;
 import ru.senla.scooterrental.fleet.enums.ScooterStatus;
-import ru.senla.scooterrental.fleet.service.FleetService;
+import ru.senla.scooterrental.fleet.service.ScooterService;
 import ru.senla.scooterrental.web.dto.request.fleet.scooter.CreateScooterRequest;
 import ru.senla.scooterrental.web.dto.request.fleet.scooter.MoveScooterRequest;
 import ru.senla.scooterrental.web.dto.response.fleet.scooter.ScooterResponse;
@@ -26,10 +26,10 @@ import java.util.List;
 @RequestMapping("/api/v1/admin/scooters")
 public class AdminScooterController {
 
-    private final FleetService fleetService;
+    private final ScooterService scooterService;
 
-    public AdminScooterController(FleetService fleetService) {
-        this.fleetService = fleetService;
+    public AdminScooterController(ScooterService scooterService) {
+        this.scooterService = scooterService;
     }
 
     @PostMapping
@@ -37,7 +37,7 @@ public class AdminScooterController {
     public ScooterResponse createScooter(
             @Valid @RequestBody CreateScooterRequest request
     ) {
-        Scooter scooter = fleetService.createScooter(
+        Scooter scooter = scooterService.createScooter(
                 request.modelId(),
                 request.rentalPointId(),
                 request.initialCharge()
@@ -55,13 +55,13 @@ public class AdminScooterController {
         List<Scooter> scooters;
 
         if (availableOnly) {
-            scooters = fleetService.findAvailableScooters();
+            scooters = scooterService.findAvailableScooters();
         } else if (status != null) {
-            scooters = fleetService.findScootersByStatus(status);
+            scooters = scooterService.findScootersByStatus(status);
         } else if (rentalPointId != null) {
-            scooters = fleetService.findScootersByRentalPoint(rentalPointId);
+            scooters = scooterService.findScootersByRentalPoint(rentalPointId);
         } else {
-            scooters = fleetService.findAllScooters();
+            scooters = scooterService.findAllScooters();
         }
 
         return scooters.stream()
@@ -73,7 +73,7 @@ public class AdminScooterController {
     public ScooterResponse getScooterById(
             @PathVariable("scooterId") Long scooterId
     ) {
-        Scooter scooter = fleetService.getScooterById(scooterId);
+        Scooter scooter = scooterService.getScooterById(scooterId);
 
         return FleetWebMapper.toScooterResponse(scooter);
     }
@@ -83,7 +83,7 @@ public class AdminScooterController {
             @PathVariable("scooterId") Long scooterId,
             @Valid @RequestBody MoveScooterRequest request
     ) {
-        Scooter scooter = fleetService.moveScooterToRentalPoint(
+        Scooter scooter = scooterService.moveScooterToRentalPoint(
                 scooterId,
                 request.rentalPointId()
         );
@@ -96,6 +96,6 @@ public class AdminScooterController {
     public void deleteScooter(
             @PathVariable("scooterId") Long scooterId
     ) {
-        fleetService.deleteScooter(scooterId);
+        scooterService.deleteScooter(scooterId);
     }
 }

@@ -1,10 +1,11 @@
-package ru.senla.scooterrental.rental.service.calculator;
+package ru.senla.scooterrental.rental.service.impl.calculator;
 
 import org.springframework.stereotype.Service;
 import ru.senla.scooterrental.fleet.entity.Scooter;
 import ru.senla.scooterrental.rental.entity.Rental;
 import ru.senla.scooterrental.rental.enums.TariffType;
 import ru.senla.scooterrental.rental.exceptions.RentalValidationException;
+import ru.senla.scooterrental.rental.service.RentalCalculationService;
 import ru.senla.scooterrental.user.entity.User;
 
 import java.math.BigDecimal;
@@ -13,8 +14,9 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 
 @Service
-public class RentalCalculationService {
+public class RentalCalculationServiceImpl implements RentalCalculationService {
 
+    @Override
     public long calculateActualMinutes(Rental rental) {
         requireNonNull(rental, "Аренда");
         requireNonNull(rental.getStartTime(), "Время начала аренды");
@@ -27,6 +29,7 @@ public class RentalCalculationService {
         return Math.max(minutes, 1);
     }
 
+    @Override
     public long resolveEffectiveMinutes(Rental rental, long actualMinutes) {
         requireNonNull(rental, "Аренда");
 
@@ -45,6 +48,7 @@ public class RentalCalculationService {
         return Math.min(actualMinutes, maxAllowedMinutes);
     }
 
+    @Override
     public double calculateChargeConsumption(Scooter scooter, double distanceKm) {
         requireNonNull(scooter, "Самокат");
         requireNonNull(scooter.getModel(), "Модель самоката");
@@ -52,6 +56,7 @@ public class RentalCalculationService {
         return Math.ceil(distanceKm * scooter.getModel().getConsumptionPerKm());
     }
 
+    @Override
     public int calculateMaxAllowedMinutes(User user, Scooter scooter) {
         requireNonNull(user, "Пользователь");
         requireNonNull(scooter, "Самокат");
@@ -78,6 +83,7 @@ public class RentalCalculationService {
         return maxAllowedMinutes;
     }
 
+    @Override
     public int calculateAvailableMinutesByBattery(Scooter scooter) {
         requireNonNull(scooter, "Самокат");
         requireNonNull(scooter.getModel(), "Модель самоката");
@@ -93,6 +99,7 @@ public class RentalCalculationService {
         return (int) Math.floor(maxHoursByCharge * 60);
     }
 
+    @Override
     public int calculateAvailableMinutesByMoneyForHour(User user,
                                                        Scooter scooter) {
         requireNonNull(user, "Пользователь");
@@ -113,6 +120,7 @@ public class RentalCalculationService {
                 .intValue();
     }
 
+    @Override
     public Integer calculateMaxAllowedMinutesForStart(User user,
                                                       Scooter scooter,
                                                       TariffType tariffType,

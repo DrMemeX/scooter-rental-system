@@ -9,7 +9,7 @@ import ru.senla.scooterrental.fleet.entity.RentalPoint;
 import ru.senla.scooterrental.fleet.entity.Scooter;
 import ru.senla.scooterrental.fleet.entity.ScooterModel;
 import ru.senla.scooterrental.fleet.enums.ScooterStatus;
-import ru.senla.scooterrental.fleet.service.impl.FleetServiceImpl;
+import ru.senla.scooterrental.fleet.service.ScooterService;
 import ru.senla.scooterrental.web.error.GlobalExceptionHandler;
 
 import java.math.BigDecimal;
@@ -26,14 +26,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class UserScooterControllerTest {
 
     private MockMvc mockMvc;
-    private FleetServiceImpl fleetService;
+    private ScooterService scooterService;
 
     @BeforeEach
     void setUp() {
-        fleetService = mock(FleetServiceImpl.class);
+        scooterService = mock(ScooterService.class);
 
         UserScooterController controller =
-                new UserScooterController(fleetService);
+                new UserScooterController(scooterService);
 
         mockMvc = MockMvcBuilders
                 .standaloneSetup(controller)
@@ -77,7 +77,7 @@ class UserScooterControllerTest {
                 "North Point"
         );
 
-        when(fleetService.findAvailableScooters())
+        when(scooterService.findAvailableScooters())
                 .thenReturn(List.of(first, second));
 
         mockMvc.perform(get("/api/v1/scooters/available"))
@@ -114,14 +114,14 @@ class UserScooterControllerTest {
                 .andExpect(jsonPath("$[1].rentalPointName")
                         .value("North Point"));
 
-        verify(fleetService).findAvailableScooters();
+        verify(scooterService).findAvailableScooters();
     }
 
     @Test
     void getAvailableScooters_shouldReturnEmptyListSuccessfully()
             throws Exception {
 
-        when(fleetService.findAvailableScooters())
+        when(scooterService.findAvailableScooters())
                 .thenReturn(List.of());
 
         mockMvc.perform(get("/api/v1/scooters/available"))
@@ -129,7 +129,7 @@ class UserScooterControllerTest {
                 .andExpect(jsonPath("$").isArray())
                 .andExpect(jsonPath("$").isEmpty());
 
-        verify(fleetService).findAvailableScooters();
+        verify(scooterService).findAvailableScooters();
     }
 
     @Test
@@ -152,7 +152,7 @@ class UserScooterControllerTest {
                 null
         );
 
-        when(fleetService.findAvailableScooters())
+        when(scooterService.findAvailableScooters())
                 .thenReturn(List.of(scooter));
 
         mockMvc.perform(get("/api/v1/scooters/available"))
@@ -162,7 +162,7 @@ class UserScooterControllerTest {
                 .andExpect(jsonPath("$[0].rentalPointId").doesNotExist())
                 .andExpect(jsonPath("$[0].rentalPointName").doesNotExist());
 
-        verify(fleetService).findAvailableScooters();
+        verify(scooterService).findAvailableScooters();
     }
 
     private Scooter scooter(Long id,

@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import ru.senla.scooterrental.fleet.entity.ScooterModel;
-import ru.senla.scooterrental.fleet.service.FleetService;
+import ru.senla.scooterrental.fleet.service.ScooterModelService;
 import ru.senla.scooterrental.web.dto.request.fleet.scootermodel.CreateScooterModelRequest;
 import ru.senla.scooterrental.web.dto.request.fleet.scootermodel.UpdateScooterModelPricesRequest;
 import ru.senla.scooterrental.web.dto.response.fleet.scootermodel.ScooterModelResponse;
@@ -24,10 +24,10 @@ import java.util.List;
 @RequestMapping("/api/v1/admin/scooter-models")
 public class AdminScooterModelController {
 
-    private final FleetService fleetService;
+    private final ScooterModelService scooterModelService;
 
-    public AdminScooterModelController(FleetService fleetService) {
-        this.fleetService = fleetService;
+    public AdminScooterModelController(ScooterModelService scooterModelService) {
+        this.scooterModelService = scooterModelService;
     }
 
     @PostMapping
@@ -35,7 +35,7 @@ public class AdminScooterModelController {
     public ScooterModelResponse createScooterModel(
             @Valid @RequestBody CreateScooterModelRequest request
     ) {
-        ScooterModel model = fleetService.createScooterModel(
+        ScooterModel model = scooterModelService.createScooterModel(
                 request.scooterClass(),
                 request.maxSpeedKmPerHour(),
                 request.consumptionPerKm(),
@@ -49,7 +49,7 @@ public class AdminScooterModelController {
 
     @GetMapping
     public List<ScooterModelResponse> getScooterModels() {
-        return fleetService.findAllScooterModels()
+        return scooterModelService.findAllScooterModels()
                 .stream()
                 .map(FleetWebMapper::toScooterModelResponse)
                 .toList();
@@ -59,7 +59,7 @@ public class AdminScooterModelController {
     public ScooterModelResponse getScooterModelById(
             @PathVariable("modelId") Long modelId
     ) {
-        ScooterModel model = fleetService.getScooterModelById(modelId);
+        ScooterModel model = scooterModelService.getScooterModelById(modelId);
 
         return FleetWebMapper.toScooterModelResponse(model);
     }
@@ -69,7 +69,7 @@ public class AdminScooterModelController {
             @PathVariable("modelId") Long modelId,
             @Valid @RequestBody UpdateScooterModelPricesRequest request
     ) {
-        ScooterModel model = fleetService.updateScooterModelPrices(
+        ScooterModel model = scooterModelService.updateScooterModelPrices(
                 modelId,
                 request.pricePerMinute(),
                 request.pricePerHour()
@@ -83,6 +83,6 @@ public class AdminScooterModelController {
     public void deleteScooterModel(
             @PathVariable("modelId") Long modelId
     ) {
-        fleetService.deleteScooterModel(modelId);
+        scooterModelService.deleteScooterModel(modelId);
     }
 }

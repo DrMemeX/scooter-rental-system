@@ -1,4 +1,4 @@
-package ru.senla.scooterrental.rental.service.calculator;
+package ru.senla.scooterrental.rental.service.impl.calculator;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -7,6 +7,7 @@ import ru.senla.scooterrental.fleet.entity.Scooter;
 import ru.senla.scooterrental.rental.entity.Rental;
 import ru.senla.scooterrental.rental.enums.TerminationReason;
 import ru.senla.scooterrental.rental.exceptions.RentalValidationException;
+import ru.senla.scooterrental.rental.service.PricingService;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -14,17 +15,19 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 
 @Service
-public class PricingService {
+public class PricingServiceImpl implements PricingService {
 
     private static final Logger log =
-            LoggerFactory.getLogger(PricingService.class);
+            LoggerFactory.getLogger(PricingServiceImpl.class);
 
+    @Override
     public BigDecimal calculate(Rental rental, Scooter scooter) {
         long minutes = calculateRentalMinutes(rental.getStartTime());
 
         return calculate(rental, scooter, null, minutes);
     }
 
+    @Override
     public BigDecimal calculate(Rental rental,
                                 Scooter scooter,
                                 TerminationReason reason,

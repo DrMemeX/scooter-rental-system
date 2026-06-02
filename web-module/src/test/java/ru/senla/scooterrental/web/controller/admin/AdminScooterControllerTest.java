@@ -11,7 +11,7 @@ import ru.senla.scooterrental.fleet.entity.RentalPoint;
 import ru.senla.scooterrental.fleet.entity.Scooter;
 import ru.senla.scooterrental.fleet.entity.ScooterModel;
 import ru.senla.scooterrental.fleet.enums.ScooterStatus;
-import ru.senla.scooterrental.fleet.service.impl.FleetServiceImpl;
+import ru.senla.scooterrental.fleet.service.ScooterService;
 import ru.senla.scooterrental.web.dto.request.fleet.scooter.CreateScooterRequest;
 import ru.senla.scooterrental.web.dto.request.fleet.scooter.MoveScooterRequest;
 import ru.senla.scooterrental.web.error.GlobalExceptionHandler;
@@ -34,15 +34,15 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class AdminScooterControllerTest {
 
     private MockMvc mockMvc;
-    private FleetServiceImpl fleetService;
+    private ScooterService scooterService;
     private ObjectMapper objectMapper;
 
     @BeforeEach
     void setUp() {
-        fleetService = mock(FleetServiceImpl.class);
+        scooterService = mock(ScooterService.class);
 
         AdminScooterController controller =
-                new AdminScooterController(fleetService);
+                new AdminScooterController(scooterService);
 
         mockMvc = MockMvcBuilders
                 .standaloneSetup(controller)
@@ -67,7 +67,7 @@ class AdminScooterControllerTest {
         CreateScooterRequest request =
                 new CreateScooterRequest(1L, 2L, 100.0);
 
-        when(fleetService.createScooter(1L, 2L, 100.0))
+        when(scooterService.createScooter(1L, 2L, 100.0))
                 .thenReturn(scooter);
 
         mockMvc.perform(
@@ -90,7 +90,7 @@ class AdminScooterControllerTest {
                 .andExpect(jsonPath("$.rentalPointId").value(2L))
                 .andExpect(jsonPath("$.rentalPointName").value("Central Point"));
 
-        verify(fleetService).createScooter(1L, 2L, 100.0);
+        verify(scooterService).createScooter(1L, 2L, 100.0);
     }
 
     @Test
@@ -114,7 +114,7 @@ class AdminScooterControllerTest {
                 ScooterStatus.RENTED
         );
 
-        when(fleetService.findAllScooters())
+        when(scooterService.findAllScooters())
                 .thenReturn(List.of(first, second));
 
         mockMvc.perform(get("/api/v1/admin/scooters"))
@@ -134,7 +134,7 @@ class AdminScooterControllerTest {
                 .andExpect(jsonPath("$[1].rentalPointId").value(2L))
                 .andExpect(jsonPath("$[1].rentalPointName").value("Central Point"));
 
-        verify(fleetService).findAllScooters();
+        verify(scooterService).findAllScooters();
     }
 
     @Test
@@ -149,7 +149,7 @@ class AdminScooterControllerTest {
                 ScooterStatus.AVAILABLE
         );
 
-        when(fleetService.findAvailableScooters())
+        when(scooterService.findAvailableScooters())
                 .thenReturn(List.of(scooter));
 
         mockMvc.perform(get("/api/v1/admin/scooters")
@@ -158,7 +158,7 @@ class AdminScooterControllerTest {
                 .andExpect(jsonPath("$[0].id").value(1L))
                 .andExpect(jsonPath("$[0].status").value("AVAILABLE"));
 
-        verify(fleetService).findAvailableScooters();
+        verify(scooterService).findAvailableScooters();
     }
 
     @Test
@@ -173,7 +173,7 @@ class AdminScooterControllerTest {
                 ScooterStatus.MAINTENANCE
         );
 
-        when(fleetService.findScootersByStatus(ScooterStatus.MAINTENANCE))
+        when(scooterService.findScootersByStatus(ScooterStatus.MAINTENANCE))
                 .thenReturn(List.of(scooter));
 
         mockMvc.perform(get("/api/v1/admin/scooters")
@@ -182,7 +182,7 @@ class AdminScooterControllerTest {
                 .andExpect(jsonPath("$[0].id").value(1L))
                 .andExpect(jsonPath("$[0].status").value("MAINTENANCE"));
 
-        verify(fleetService).findScootersByStatus(ScooterStatus.MAINTENANCE);
+        verify(scooterService).findScootersByStatus(ScooterStatus.MAINTENANCE);
     }
 
     @Test
@@ -197,7 +197,7 @@ class AdminScooterControllerTest {
                 ScooterStatus.AVAILABLE
         );
 
-        when(fleetService.findScootersByRentalPoint(2L))
+        when(scooterService.findScootersByRentalPoint(2L))
                 .thenReturn(List.of(scooter));
 
         mockMvc.perform(get("/api/v1/admin/scooters")
@@ -207,7 +207,7 @@ class AdminScooterControllerTest {
                 .andExpect(jsonPath("$[0].rentalPointId").value(2L))
                 .andExpect(jsonPath("$[0].rentalPointName").value("Central Point"));
 
-        verify(fleetService).findScootersByRentalPoint(2L);
+        verify(scooterService).findScootersByRentalPoint(2L);
     }
 
     @Test
@@ -224,7 +224,7 @@ class AdminScooterControllerTest {
                 ScooterStatus.AVAILABLE
         );
 
-        when(fleetService.findAvailableScooters())
+        when(scooterService.findAvailableScooters())
                 .thenReturn(List.of(scooter));
 
         mockMvc.perform(get("/api/v1/admin/scooters")
@@ -234,7 +234,7 @@ class AdminScooterControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].status").value("AVAILABLE"));
 
-        verify(fleetService).findAvailableScooters();
+        verify(scooterService).findAvailableScooters();
     }
 
     @Test
@@ -249,7 +249,7 @@ class AdminScooterControllerTest {
                 ScooterStatus.RENTED
         );
 
-        when(fleetService.findScootersByStatus(ScooterStatus.RENTED))
+        when(scooterService.findScootersByStatus(ScooterStatus.RENTED))
                 .thenReturn(List.of(scooter));
 
         mockMvc.perform(get("/api/v1/admin/scooters")
@@ -258,7 +258,7 @@ class AdminScooterControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].status").value("RENTED"));
 
-        verify(fleetService).findScootersByStatus(ScooterStatus.RENTED);
+        verify(scooterService).findScootersByStatus(ScooterStatus.RENTED);
     }
 
     @Test
@@ -273,7 +273,7 @@ class AdminScooterControllerTest {
                 ScooterStatus.AVAILABLE
         );
 
-        when(fleetService.getScooterById(1L))
+        when(scooterService.getScooterById(1L))
                 .thenReturn(scooter);
 
         mockMvc.perform(get("/api/v1/admin/scooters/1"))
@@ -286,7 +286,7 @@ class AdminScooterControllerTest {
                 .andExpect(jsonPath("$.rentalPointId").value(2L))
                 .andExpect(jsonPath("$.rentalPointName").value("Central Point"));
 
-        verify(fleetService).getScooterById(1L);
+        verify(scooterService).getScooterById(1L);
     }
 
     @Test
@@ -304,7 +304,7 @@ class AdminScooterControllerTest {
         MoveScooterRequest request =
                 new MoveScooterRequest(3L);
 
-        when(fleetService.moveScooterToRentalPoint(1L, 3L))
+        when(scooterService.moveScooterToRentalPoint(1L, 3L))
                 .thenReturn(scooter);
 
         mockMvc.perform(
@@ -317,7 +317,7 @@ class AdminScooterControllerTest {
                 .andExpect(jsonPath("$.rentalPointId").value(3L))
                 .andExpect(jsonPath("$.rentalPointName").value("North Point"));
 
-        verify(fleetService).moveScooterToRentalPoint(1L, 3L);
+        verify(scooterService).moveScooterToRentalPoint(1L, 3L);
     }
 
     @Test
@@ -334,7 +334,7 @@ class AdminScooterControllerTest {
                 )
                 .andExpect(status().isBadRequest());
 
-        verifyNoInteractions(fleetService);
+        verifyNoInteractions(scooterService);
     }
 
     @Test
@@ -342,7 +342,7 @@ class AdminScooterControllerTest {
         mockMvc.perform(delete("/api/v1/admin/scooters/1"))
                 .andExpect(status().isNoContent());
 
-        verify(fleetService).deleteScooter(1L);
+        verify(scooterService).deleteScooter(1L);
     }
 
     private Scooter scooter(Long id,

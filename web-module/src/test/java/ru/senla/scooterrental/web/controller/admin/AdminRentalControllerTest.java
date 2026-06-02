@@ -12,7 +12,7 @@ import ru.senla.scooterrental.rental.enums.RentalStatus;
 import ru.senla.scooterrental.rental.enums.TariffType;
 import ru.senla.scooterrental.rental.exceptions.RentalNotFoundException;
 import ru.senla.scooterrental.rental.exceptions.RentalValidationException;
-import ru.senla.scooterrental.rental.service.impl.RentalServiceImpl;
+import ru.senla.scooterrental.rental.service.RentalService;
 import ru.senla.scooterrental.user.entity.User;
 import ru.senla.scooterrental.web.dto.request.rental.ApproveManualFinishRequest;
 import ru.senla.scooterrental.web.error.GlobalExceptionHandler;
@@ -33,12 +33,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class AdminRentalControllerTest {
 
     private MockMvc mockMvc;
-    private RentalServiceImpl rentalService;
+    private RentalService rentalService;
     private ObjectMapper objectMapper;
 
     @BeforeEach
     void setUp() {
-        rentalService = mock(RentalServiceImpl.class);
+        rentalService = mock(RentalService.class);
 
         AdminRentalController controller =
                 new AdminRentalController(rentalService);

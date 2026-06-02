@@ -10,7 +10,7 @@ import ru.senla.scooterrental.common.enums.ScooterClass;
 import ru.senla.scooterrental.fleet.entity.ScooterModel;
 import ru.senla.scooterrental.fleet.exceptions.FleetEntityNotFoundException;
 import ru.senla.scooterrental.fleet.exceptions.FleetValidationException;
-import ru.senla.scooterrental.fleet.service.impl.FleetServiceImpl;
+import ru.senla.scooterrental.fleet.service.ScooterModelService;
 import ru.senla.scooterrental.web.dto.request.fleet.scootermodel.CreateScooterModelRequest;
 import ru.senla.scooterrental.web.dto.request.fleet.scootermodel.UpdateScooterModelPricesRequest;
 import ru.senla.scooterrental.web.error.GlobalExceptionHandler;
@@ -33,15 +33,15 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class AdminScooterModelControllerTest {
 
     private MockMvc mockMvc;
-    private FleetServiceImpl fleetService;
+    private ScooterModelService scooterModelService;
     private ObjectMapper objectMapper;
 
     @BeforeEach
     void setUp() {
-        fleetService = mock(FleetServiceImpl.class);
+        scooterModelService = mock(ScooterModelService.class);
 
         AdminScooterModelController controller =
-                new AdminScooterModelController(fleetService);
+                new AdminScooterModelController(scooterModelService);
 
         mockMvc = MockMvcBuilders
                 .standaloneSetup(controller)
@@ -72,7 +72,7 @@ class AdminScooterModelControllerTest {
                 1000
         );
 
-        when(fleetService.createScooterModel(
+        when(scooterModelService.createScooterModel(
                 ScooterClass.BASIC,
                 20.0,
                 2.0,
@@ -95,7 +95,7 @@ class AdminScooterModelControllerTest {
                 .andExpect(jsonPath("$.pricePerHour").value(400))
                 .andExpect(jsonPath("$.batteryCapacity").value(1000));
 
-        verify(fleetService).createScooterModel(
+        verify(scooterModelService).createScooterModel(
                 ScooterClass.BASIC,
                 20.0,
                 2.0,
@@ -125,7 +125,7 @@ class AdminScooterModelControllerTest {
                 )
                 .andExpect(status().isBadRequest());
 
-        verifyNoInteractions(fleetService);
+        verifyNoInteractions(scooterModelService);
     }
 
     @Test
@@ -138,7 +138,7 @@ class AdminScooterModelControllerTest {
                 )
                 .andExpect(status().isBadRequest());
 
-        verifyNoInteractions(fleetService);
+        verifyNoInteractions(scooterModelService);
     }
 
     @Test
@@ -163,7 +163,7 @@ class AdminScooterModelControllerTest {
                 )
                 .andExpect(status().isBadRequest());
 
-        verifyNoInteractions(fleetService);
+        verifyNoInteractions(scooterModelService);
     }
 
     @Test
@@ -179,7 +179,7 @@ class AdminScooterModelControllerTest {
                 1000
         );
 
-        when(fleetService.createScooterModel(
+        when(scooterModelService.createScooterModel(
                 ScooterClass.BASIC,
                 20.0,
                 2.0,
@@ -197,7 +197,7 @@ class AdminScooterModelControllerTest {
                 )
                 .andExpect(status().isBadRequest());
 
-        verify(fleetService).createScooterModel(
+        verify(scooterModelService).createScooterModel(
                 ScooterClass.BASIC,
                 20.0,
                 2.0,
@@ -228,7 +228,7 @@ class AdminScooterModelControllerTest {
                 1200
         );
 
-        when(fleetService.findAllScooterModels())
+        when(scooterModelService.findAllScooterModels())
                 .thenReturn(List.of(first, second));
 
         mockMvc.perform(get("/api/v1/admin/scooter-models"))
@@ -248,12 +248,12 @@ class AdminScooterModelControllerTest {
                 .andExpect(jsonPath("$[1].pricePerHour").value(600))
                 .andExpect(jsonPath("$[1].batteryCapacity").value(1200));
 
-        verify(fleetService).findAllScooterModels();
+        verify(scooterModelService).findAllScooterModels();
     }
 
     @Test
     void getScooterModels_shouldReturnEmptyListSuccessfully() throws Exception {
-        when(fleetService.findAllScooterModels())
+        when(scooterModelService.findAllScooterModels())
                 .thenReturn(List.of());
 
         mockMvc.perform(get("/api/v1/admin/scooter-models"))
@@ -261,7 +261,7 @@ class AdminScooterModelControllerTest {
                 .andExpect(jsonPath("$").isArray())
                 .andExpect(jsonPath("$").isEmpty());
 
-        verify(fleetService).findAllScooterModels();
+        verify(scooterModelService).findAllScooterModels();
     }
 
     @Test
@@ -276,7 +276,7 @@ class AdminScooterModelControllerTest {
                 1000
         );
 
-        when(fleetService.getScooterModelById(1L))
+        when(scooterModelService.getScooterModelById(1L))
                 .thenReturn(model);
 
         mockMvc.perform(get("/api/v1/admin/scooter-models/1"))
@@ -289,14 +289,14 @@ class AdminScooterModelControllerTest {
                 .andExpect(jsonPath("$.pricePerHour").value(400))
                 .andExpect(jsonPath("$.batteryCapacity").value(1000));
 
-        verify(fleetService).getScooterModelById(1L);
+        verify(scooterModelService).getScooterModelById(1L);
     }
 
     @Test
     void getScooterModelById_shouldReturnNotFound_whenModelDoesNotExist()
             throws Exception {
 
-        when(fleetService.getScooterModelById(99L))
+        when(scooterModelService.getScooterModelById(99L))
                 .thenThrow(new FleetEntityNotFoundException(
                         "Модель самоката с ID 99 не найдена"
                 ));
@@ -304,14 +304,14 @@ class AdminScooterModelControllerTest {
         mockMvc.perform(get("/api/v1/admin/scooter-models/99"))
                 .andExpect(status().isNotFound());
 
-        verify(fleetService).getScooterModelById(99L);
+        verify(scooterModelService).getScooterModelById(99L);
     }
 
     @Test
     void getScooterModelById_shouldReturnBadRequest_whenModelIdIsInvalid()
             throws Exception {
 
-        when(fleetService.getScooterModelById(0L))
+        when(scooterModelService.getScooterModelById(0L))
                 .thenThrow(new FleetValidationException(
                         "ID модели должен быть положительным"
                 ));
@@ -319,7 +319,7 @@ class AdminScooterModelControllerTest {
         mockMvc.perform(get("/api/v1/admin/scooter-models/0"))
                 .andExpect(status().isBadRequest());
 
-        verify(fleetService).getScooterModelById(0L);
+        verify(scooterModelService).getScooterModelById(0L);
     }
 
     @Test
@@ -329,7 +329,7 @@ class AdminScooterModelControllerTest {
         mockMvc.perform(get("/api/v1/admin/scooter-models/abc"))
                 .andExpect(status().isBadRequest());
 
-        verifyNoInteractions(fleetService);
+        verifyNoInteractions(scooterModelService);
     }
 
     @Test
@@ -352,7 +352,7 @@ class AdminScooterModelControllerTest {
                         BigDecimal.valueOf(500)
                 );
 
-        when(fleetService.updateScooterModelPrices(
+        when(scooterModelService.updateScooterModelPrices(
                 1L,
                 BigDecimal.valueOf(10),
                 BigDecimal.valueOf(500)
@@ -369,7 +369,7 @@ class AdminScooterModelControllerTest {
                 .andExpect(jsonPath("$.pricePerMinute").value(10))
                 .andExpect(jsonPath("$.pricePerHour").value(500));
 
-        verify(fleetService).updateScooterModelPrices(
+        verify(scooterModelService).updateScooterModelPrices(
                 1L,
                 BigDecimal.valueOf(10),
                 BigDecimal.valueOf(500)
@@ -393,7 +393,7 @@ class AdminScooterModelControllerTest {
                 )
                 .andExpect(status().isBadRequest());
 
-        verifyNoInteractions(fleetService);
+        verifyNoInteractions(scooterModelService);
     }
 
     @Test
@@ -406,7 +406,7 @@ class AdminScooterModelControllerTest {
                 )
                 .andExpect(status().isBadRequest());
 
-        verifyNoInteractions(fleetService);
+        verifyNoInteractions(scooterModelService);
     }
 
     @Test
@@ -419,7 +419,7 @@ class AdminScooterModelControllerTest {
                         BigDecimal.valueOf(500)
                 );
 
-        when(fleetService.updateScooterModelPrices(
+        when(scooterModelService.updateScooterModelPrices(
                 99L,
                 BigDecimal.valueOf(10),
                 BigDecimal.valueOf(500)
@@ -434,7 +434,7 @@ class AdminScooterModelControllerTest {
                 )
                 .andExpect(status().isNotFound());
 
-        verify(fleetService).updateScooterModelPrices(
+        verify(scooterModelService).updateScooterModelPrices(
                 99L,
                 BigDecimal.valueOf(10),
                 BigDecimal.valueOf(500)
@@ -451,7 +451,7 @@ class AdminScooterModelControllerTest {
                         BigDecimal.valueOf(500)
                 );
 
-        when(fleetService.updateScooterModelPrices(
+        when(scooterModelService.updateScooterModelPrices(
                 0L,
                 BigDecimal.valueOf(10),
                 BigDecimal.valueOf(500)
@@ -466,7 +466,7 @@ class AdminScooterModelControllerTest {
                 )
                 .andExpect(status().isBadRequest());
 
-        verify(fleetService).updateScooterModelPrices(
+        verify(scooterModelService).updateScooterModelPrices(
                 0L,
                 BigDecimal.valueOf(10),
                 BigDecimal.valueOf(500)
@@ -490,7 +490,7 @@ class AdminScooterModelControllerTest {
                 )
                 .andExpect(status().isBadRequest());
 
-        verifyNoInteractions(fleetService);
+        verifyNoInteractions(scooterModelService);
     }
 
     @Test
@@ -498,7 +498,7 @@ class AdminScooterModelControllerTest {
         mockMvc.perform(delete("/api/v1/admin/scooter-models/1"))
                 .andExpect(status().isNoContent());
 
-        verify(fleetService).deleteScooterModel(1L);
+        verify(scooterModelService).deleteScooterModel(1L);
     }
 
     @Test
@@ -507,12 +507,12 @@ class AdminScooterModelControllerTest {
 
         org.mockito.Mockito.doThrow(new FleetEntityNotFoundException(
                 "Модель самоката с ID 99 не найдена"
-        )).when(fleetService).deleteScooterModel(99L);
+        )).when(scooterModelService).deleteScooterModel(99L);
 
         mockMvc.perform(delete("/api/v1/admin/scooter-models/99"))
                 .andExpect(status().isNotFound());
 
-        verify(fleetService).deleteScooterModel(99L);
+        verify(scooterModelService).deleteScooterModel(99L);
     }
 
     @Test
@@ -521,12 +521,12 @@ class AdminScooterModelControllerTest {
 
         org.mockito.Mockito.doThrow(new FleetValidationException(
                 "ID модели должен быть положительным"
-        )).when(fleetService).deleteScooterModel(0L);
+        )).when(scooterModelService).deleteScooterModel(0L);
 
         mockMvc.perform(delete("/api/v1/admin/scooter-models/0"))
                 .andExpect(status().isBadRequest());
 
-        verify(fleetService).deleteScooterModel(0L);
+        verify(scooterModelService).deleteScooterModel(0L);
     }
 
     @Test
@@ -536,7 +536,7 @@ class AdminScooterModelControllerTest {
         mockMvc.perform(delete("/api/v1/admin/scooter-models/abc"))
                 .andExpect(status().isBadRequest());
 
-        verifyNoInteractions(fleetService);
+        verifyNoInteractions(scooterModelService);
     }
 
     private ScooterModel scooterModel(Long id,

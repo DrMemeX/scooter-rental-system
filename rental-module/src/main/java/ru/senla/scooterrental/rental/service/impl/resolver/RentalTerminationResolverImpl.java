@@ -1,4 +1,4 @@
-package ru.senla.scooterrental.rental.service.resolver;
+package ru.senla.scooterrental.rental.service.impl.resolver;
 
 import org.springframework.stereotype.Service;
 import ru.senla.scooterrental.fleet.entity.Scooter;
@@ -6,21 +6,23 @@ import ru.senla.scooterrental.rental.entity.Rental;
 import ru.senla.scooterrental.rental.enums.TariffType;
 import ru.senla.scooterrental.rental.enums.TerminationReason;
 import ru.senla.scooterrental.rental.exceptions.RentalValidationException;
-import ru.senla.scooterrental.rental.service.calculator.RentalCalculationService;
+import ru.senla.scooterrental.rental.service.RentalTerminationResolver;
+import ru.senla.scooterrental.rental.service.RentalCalculationService;
 import ru.senla.scooterrental.user.entity.User;
 
 @Service
-public class RentalTerminationResolver {
+public class RentalTerminationResolverImpl implements RentalTerminationResolver {
 
     private final RentalCalculationService calculationService;
 
-    public RentalTerminationResolver(RentalCalculationService calculationService) {
+    public RentalTerminationResolverImpl(RentalCalculationService calculationService) {
         this.calculationService = requireNonNull(
                 calculationService,
                 "Сервис расчётов аренды"
         );
     }
 
+    @Override
     public TerminationReason resolveTerminationReason(Rental rental,
                                                       User user,
                                                       Scooter scooter,

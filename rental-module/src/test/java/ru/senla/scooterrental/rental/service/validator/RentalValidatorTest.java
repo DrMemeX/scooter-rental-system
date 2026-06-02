@@ -11,7 +11,8 @@ import ru.senla.scooterrental.rental.enums.RentalStatus;
 import ru.senla.scooterrental.rental.enums.TariffType;
 import ru.senla.scooterrental.rental.exceptions.RentalValidationException;
 import ru.senla.scooterrental.rental.repository.RentalRepository;
-import ru.senla.scooterrental.rental.service.calculator.RentalCalculationService;
+import ru.senla.scooterrental.rental.service.impl.calculator.RentalCalculationServiceImpl;
+import ru.senla.scooterrental.rental.service.impl.validator.RentalValidatorImpl;
 import ru.senla.scooterrental.user.entity.User;
 
 import java.math.BigDecimal;
@@ -30,9 +31,9 @@ class RentalValidatorTest {
     private RentalRepository rentalRepository;
 
     @Mock
-    private RentalCalculationService calculationService;
+    private RentalCalculationServiceImpl calculationService;
 
-    private RentalValidator validator;
+    private RentalValidatorImpl validator;
 
     private User user;
     private Scooter scooter;
@@ -42,7 +43,7 @@ class RentalValidatorTest {
     void setUp() {
         MockitoAnnotations.openMocks(this);
 
-        validator = new RentalValidator(
+        validator = new RentalValidatorImpl(
                 rentalRepository,
                 calculationService
         );

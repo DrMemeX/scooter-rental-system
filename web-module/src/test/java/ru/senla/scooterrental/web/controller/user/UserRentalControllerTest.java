@@ -11,7 +11,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import ru.senla.scooterrental.rental.entity.Rental;
 import ru.senla.scooterrental.rental.enums.RentalStatus;
 import ru.senla.scooterrental.rental.enums.TariffType;
-import ru.senla.scooterrental.rental.service.impl.RentalServiceImpl;
+import ru.senla.scooterrental.rental.service.RentalService;
 import ru.senla.scooterrental.user.entity.User;
 import ru.senla.scooterrental.user.service.UserService;
 import ru.senla.scooterrental.web.dto.request.rental.FinishRentalRequest;
@@ -32,13 +32,13 @@ class UserRentalControllerTest {
 
     private MockMvc mockMvc;
     private ObjectMapper objectMapper;
-    private RentalServiceImpl rentalService;
+    private RentalService rentalService;
     private UserService userService;
     private Authentication authentication;
 
     @BeforeEach
     void setUp() {
-        rentalService = mock(RentalServiceImpl.class);
+        rentalService = mock(RentalService.class);
         userService = mock(UserService.class);
         authentication = mock(Authentication.class);
 

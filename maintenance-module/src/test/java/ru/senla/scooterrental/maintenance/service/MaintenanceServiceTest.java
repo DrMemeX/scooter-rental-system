@@ -9,7 +9,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import ru.senla.scooterrental.fleet.entity.RentalPoint;
 import ru.senla.scooterrental.fleet.entity.Scooter;
 import ru.senla.scooterrental.fleet.entity.ScooterModel;
-import ru.senla.scooterrental.fleet.service.FleetService;
+import ru.senla.scooterrental.fleet.service.ScooterService;
 import ru.senla.scooterrental.maintenance.entity.ScooterServiceEvent;
 import ru.senla.scooterrental.maintenance.enums.ServiceEventType;
 import ru.senla.scooterrental.maintenance.exceptions.MaintenanceValidationException;
@@ -34,7 +34,7 @@ class MaintenanceServiceTest {
     private ServiceEventRepository serviceEventRepository;
 
     @Mock
-    private FleetService fleetService;
+    private ScooterService scooterService;
 
     @InjectMocks
     private MaintenanceServiceImpl maintenanceService;
@@ -60,7 +60,7 @@ class MaintenanceServiceTest {
 
     @Test
     void reportTechnicalBreakdown_shouldCreateEventSuccessfully() {
-        when(fleetService.getScooterById(1L))
+        when(scooterService.getScooterById(1L))
                 .thenReturn(scooter);
 
         when(serviceEventRepository.save(any(ScooterServiceEvent.class)))
@@ -74,14 +74,14 @@ class MaintenanceServiceTest {
         assertEquals(ServiceEventType.TECHNICAL_BREAKDOWN, event.getType());
         assertEquals("Сломано колесо", event.getDescription());
 
-        verify(fleetService).markServiceRequired(1L);
-        verify(fleetService).getScooterById(1L);
+        verify(scooterService).markServiceRequired(1L);
+        verify(scooterService).getScooterById(1L);
         verify(serviceEventRepository).save(any(ScooterServiceEvent.class));
     }
 
     @Test
     void reportUserDamage_shouldCreateEventSuccessfully() {
-        when(fleetService.getScooterById(1L))
+        when(scooterService.getScooterById(1L))
                 .thenReturn(scooter);
 
         when(serviceEventRepository.save(any(ScooterServiceEvent.class)))
@@ -95,14 +95,14 @@ class MaintenanceServiceTest {
         assertEquals(ServiceEventType.USER_DAMAGE, event.getType());
         assertEquals("Пользователь повредил руль", event.getDescription());
 
-        verify(fleetService).markServiceRequired(1L);
-        verify(fleetService).getScooterById(1L);
+        verify(scooterService).markServiceRequired(1L);
+        verify(scooterService).getScooterById(1L);
         verify(serviceEventRepository).save(any(ScooterServiceEvent.class));
     }
 
     @Test
     void sendToMaintenance_shouldCreateEventSuccessfully() {
-        when(fleetService.getScooterById(1L))
+        when(scooterService.getScooterById(1L))
                 .thenReturn(scooter);
 
         when(serviceEventRepository.save(any(ScooterServiceEvent.class)))
@@ -116,14 +116,14 @@ class MaintenanceServiceTest {
         assertEquals(ServiceEventType.SENT_TO_MAINTENANCE, event.getType());
         assertEquals("Передан в сервисный центр", event.getDescription());
 
-        verify(fleetService).sendToMaintenance(1L);
-        verify(fleetService).getScooterById(1L);
+        verify(scooterService).sendToMaintenance(1L);
+        verify(scooterService).getScooterById(1L);
         verify(serviceEventRepository).save(any(ScooterServiceEvent.class));
     }
 
     @Test
     void completeMaintenance_shouldCreateEventSuccessfully() {
-        when(fleetService.getScooterById(1L))
+        when(scooterService.getScooterById(1L))
                 .thenReturn(scooter);
 
         when(serviceEventRepository.save(any(ScooterServiceEvent.class)))
@@ -137,14 +137,14 @@ class MaintenanceServiceTest {
         assertEquals(ServiceEventType.MAINTENANCE_COMPLETED, event.getType());
         assertEquals("Техническое обслуживание завершено", event.getDescription());
 
-        verify(fleetService).completeMaintenance(1L);
-        verify(fleetService).getScooterById(1L);
+        verify(scooterService).completeMaintenance(1L);
+        verify(scooterService).getScooterById(1L);
         verify(serviceEventRepository).save(any(ScooterServiceEvent.class));
     }
 
     @Test
     void chargeScooter_shouldCreateEventSuccessfully() {
-        when(fleetService.getScooterById(1L))
+        when(scooterService.getScooterById(1L))
                 .thenReturn(scooter);
 
         when(serviceEventRepository.save(any(ScooterServiceEvent.class)))
@@ -159,14 +159,14 @@ class MaintenanceServiceTest {
         assertEquals(ServiceEventType.CHARGED, event.getType());
         assertEquals("Самокат заряжен", event.getDescription());
 
-        verify(fleetService).chargeScooter(1L, 50.0);
-        verify(fleetService).getScooterById(1L);
+        verify(scooterService).chargeScooter(1L, 50.0);
+        verify(scooterService).getScooterById(1L);
         verify(serviceEventRepository).save(any(ScooterServiceEvent.class));
     }
 
     @Test
     void markServiceRequired_shouldCreateEventSuccessfully() {
-        when(fleetService.getScooterById(1L))
+        when(scooterService.getScooterById(1L))
                 .thenReturn(scooter);
 
         when(serviceEventRepository.save(any(ScooterServiceEvent.class)))
@@ -180,8 +180,8 @@ class MaintenanceServiceTest {
         assertEquals(ServiceEventType.SERVICE_REQUIRED, event.getType());
         assertEquals("Проблема с аккумулятором", event.getDescription());
 
-        verify(fleetService).markServiceRequired(1L);
-        verify(fleetService).getScooterById(1L);
+        verify(scooterService).markServiceRequired(1L);
+        verify(scooterService).getScooterById(1L);
         verify(serviceEventRepository).save(any(ScooterServiceEvent.class));
     }
 
@@ -203,8 +203,8 @@ class MaintenanceServiceTest {
                 exception.getMessage()
         );
 
-        verify(fleetService, never()).chargeScooter(1L, -10.0);
-        verify(fleetService, never()).getScooterById(1L);
+        verify(scooterService, never()).chargeScooter(1L, -10.0);
+        verify(scooterService, never()).getScooterById(1L);
         verify(serviceEventRepository, never()).save(any(ScooterServiceEvent.class));
     }
 
@@ -224,8 +224,8 @@ class MaintenanceServiceTest {
                 exception.getMessage()
         );
 
-        verify(fleetService, never()).chargeScooter(1L, 0.0);
-        verify(fleetService, never()).getScooterById(1L);
+        verify(scooterService, never()).chargeScooter(1L, 0.0);
+        verify(scooterService, never()).getScooterById(1L);
         verify(serviceEventRepository, never()).save(any(ScooterServiceEvent.class));
     }
 
@@ -292,10 +292,10 @@ class MaintenanceServiceTest {
     // Delegation failure tests
 
     @Test
-    void reportTechnicalBreakdown_shouldNotCreateEvent_whenFleetServiceFails() {
+    void reportTechnicalBreakdown_shouldNotCreateEvent_whenscooterServiceFails() {
         RuntimeException fleetException = new RuntimeException("fleet error");
 
-        when(fleetService.markServiceRequired(1L))
+        when(scooterService.markServiceRequired(1L))
                 .thenThrow(fleetException);
 
         RuntimeException exception = assertThrows(
@@ -308,16 +308,16 @@ class MaintenanceServiceTest {
 
         assertEquals("fleet error", exception.getMessage());
 
-        verify(fleetService).markServiceRequired(1L);
-        verify(fleetService, never()).getScooterById(1L);
+        verify(scooterService).markServiceRequired(1L);
+        verify(scooterService, never()).getScooterById(1L);
         verify(serviceEventRepository, never()).save(any(ScooterServiceEvent.class));
     }
 
     @Test
-    void sendToMaintenance_shouldNotCreateEvent_whenFleetServiceFails() {
+    void sendToMaintenance_shouldNotCreateEvent_whenscooterServiceFails() {
         RuntimeException fleetException = new RuntimeException("fleet error");
 
-        when(fleetService.sendToMaintenance(1L))
+        when(scooterService.sendToMaintenance(1L))
                 .thenThrow(fleetException);
 
         RuntimeException exception = assertThrows(
@@ -330,16 +330,16 @@ class MaintenanceServiceTest {
 
         assertEquals("fleet error", exception.getMessage());
 
-        verify(fleetService).sendToMaintenance(1L);
-        verify(fleetService, never()).getScooterById(1L);
+        verify(scooterService).sendToMaintenance(1L);
+        verify(scooterService, never()).getScooterById(1L);
         verify(serviceEventRepository, never()).save(any(ScooterServiceEvent.class));
     }
 
     @Test
-    void chargeScooter_shouldNotCreateEvent_whenFleetServiceFails() {
+    void chargeScooter_shouldNotCreateEvent_whenscooterServiceFails() {
         RuntimeException fleetException = new RuntimeException("fleet error");
 
-        when(fleetService.chargeScooter(1L, 50.0))
+        when(scooterService.chargeScooter(1L, 50.0))
                 .thenThrow(fleetException);
 
         RuntimeException exception = assertThrows(
@@ -353,8 +353,8 @@ class MaintenanceServiceTest {
 
         assertEquals("fleet error", exception.getMessage());
 
-        verify(fleetService).chargeScooter(1L, 50.0);
-        verify(fleetService, never()).getScooterById(1L);
+        verify(scooterService).chargeScooter(1L, 50.0);
+        verify(scooterService, never()).getScooterById(1L);
         verify(serviceEventRepository, never()).save(any(ScooterServiceEvent.class));
     }
 

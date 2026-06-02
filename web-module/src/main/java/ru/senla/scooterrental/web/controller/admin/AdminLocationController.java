@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import ru.senla.scooterrental.fleet.entity.LocationNode;
 import ru.senla.scooterrental.fleet.enums.LocationType;
-import ru.senla.scooterrental.fleet.service.FleetService;
+import ru.senla.scooterrental.fleet.service.LocationService;
 import ru.senla.scooterrental.web.dto.request.fleet.location.CreateLocationRequest;
 import ru.senla.scooterrental.web.dto.request.fleet.location.RenameLocationRequest;
 import ru.senla.scooterrental.web.dto.response.fleet.location.LocationResponse;
@@ -25,10 +25,10 @@ import java.util.List;
 @RequestMapping("/api/v1/admin/locations")
 public class AdminLocationController {
 
-    private final FleetService fleetService;
+    private final LocationService locationService;
 
-    public AdminLocationController(FleetService fleetService) {
-        this.fleetService = fleetService;
+    public AdminLocationController(LocationService locationService) {
+        this.locationService = locationService;
     }
 
     @PostMapping
@@ -36,7 +36,7 @@ public class AdminLocationController {
     public LocationResponse createLocation(
             @Valid @RequestBody CreateLocationRequest request
     ) {
-        LocationNode location = fleetService.createLocation(
+        LocationNode location = locationService.createLocation(
                 request.name(),
                 request.type(),
                 request.parentId()
@@ -50,8 +50,22 @@ public class AdminLocationController {
             @RequestParam(value = "type", required = false) LocationType type
     ) {
         List<LocationNode> locations = type == null
-                ? fleetService.findAllLocations()
-                : fleetService.findLocationsByType(type);
+                ? locationService.findAllLocations()
+                : locationService.findLocationsByType(type);
+
+        return locations.stream()
+                .map(FleetWebMapper::toLocationResponse)
+                .toList();
+    }
+
+    @GetMapping("/{locationId}/children")
+    public List<LocationResponse> getChildLocations(
+            @PathVariable("locationId") Long locationId,
+            @RequestParam(value = "activeOnly", required = false, defaultValue = "false") boolean activeOnly
+    ) {
+        List<LocationNode> locations = activeOnly
+                ? locationService.findActiveChildLocations(locationId)
+                : locationService.findChildLocations(locationId);
 
         return locations.stream()
                 .map(FleetWebMapper::toLocationResponse)
@@ -63,7 +77,7 @@ public class AdminLocationController {
             @PathVariable("locationId") Long locationId,
             @Valid @RequestBody RenameLocationRequest request
     ) {
-        LocationNode location = fleetService.renameLocation(
+        LocationNode location = locationService.renameLocation(
                 locationId,
                 request.name()
         );
@@ -75,7 +89,7 @@ public class AdminLocationController {
     public LocationResponse activateLocation(
             @PathVariable("locationId") Long locationId
     ) {
-        LocationNode location = fleetService.activateLocation(locationId);
+        LocationNode location = locationService.activateLocation(locationId);
 
         return FleetWebMapper.toLocationResponse(location);
     }
@@ -84,7 +98,7 @@ public class AdminLocationController {
     public LocationResponse deactivateLocation(
             @PathVariable("locationId") Long locationId
     ) {
-        LocationNode location = fleetService.deactivateLocation(locationId);
+        LocationNode location = locationService.deactivateLocation(locationId);
 
         return FleetWebMapper.toLocationResponse(location);
     }

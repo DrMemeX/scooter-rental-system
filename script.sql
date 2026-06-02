@@ -1,0 +1,69 @@
+
+ INSERT INTO users (id, email, password, first_name, last_name, phone, role, status, balance, verified)
+ VALUES
+   (1, 'admin1@test.com', '$2a$10$JgdSqeFdALNU0cmZVfmu8uunCYgJonVq0CvkJIDn.HGQJfNZfKEeO', 'Admin', 'One', '+79000000001', 'ADMIN', 'ACTIVE', 0, true),
+   (2, 'admin2@test.com', '$2a$10$AErLlV1Vg7X5hzDg4OwMMOm5dOOT1hU2scxfHE3dXz81AAiDcE57K', 'Admin', 'Two', '+79000000002', 'ADMIN', 'ACTIVE', 0, true),
+   (3, 'user1@test.com', '$2a$10$1eNbxfBm10FV7oOWmGM74uzIS.s6MBYEtTv.0sAkILzcyLQK6ztqi', 'User', 'One', '+79000000003', 'USER', 'ACTIVE', 5000, true),
+   (4, 'user2@test.com', '$2a$10$S0WWB0lSPlOHImITsBZt8O2QEJM9YtcleeUt0wGUSqqfG6PbQ/7Fq', 'User', 'Two', '+79000000004', 'USER', 'ACTIVE', 5000, true),
+   (5, 'user3@test.com', '$2a$10$6tjHZuhOyUpJ9QYryf.YHeZI7vUkFfABkLCmlOACw237MWlo4h/Fm', 'User', 'Three', '+79000000005', 'USER', 'ACTIVE', 5000, true),
+   (6, 'user4@test.com', '$2a$10$t2GofE/lwJmlXbya75Wne.N9myJZMyWjxPeqOw5GrIlHCTUzry/qe', 'User', 'Four', '+79000000006', 'USER', 'ACTIVE', 5000, true),
+   (7, 'user5@test.com', '$2a$10$pRj6ypwW8pYPbC59F5kKQuRPuAgUfoX4YkacNc0ty3kvznzNPkvVm', 'User', 'Five', '+79000000007', 'USER', 'ACTIVE', 5000, true),
+   (8, 'user6@test.com', '$2a$10$l52g85m29Aeb4xH52x1aSu/avLedQvqlCAh1YRIr7m2wvS8NAqZi.', 'User', 'Six', '+79000000008', 'USER', 'ACTIVE', 5000, true),
+   (9, 'user7@test.com', '$2a$10$5dQ4uMpV/9QFr6YsqxZLmesglCCEcX4Muuk3/51xlII3QQmSxRBmW', 'User', 'Seven', '+79000000009', 'USER', 'ACTIVE', 5000, true),
+   (10, 'user8@test.com', '$2a$10$Mwhl0jVPEA1bryavoGgj3ec.kveJdvq5ELkh.B05FdiVk8OOiaHtW', 'User', 'Eight', '+79000000010', 'USER', 'ACTIVE', 5000, true);
+
+
+ INSERT INTO scooter_models (id, scooter_class, max_speed_km_per_hour, consumption_per_km, price_per_minute, price_per_hour, battery_capacity)
+ VALUES
+   (1, 'SLOW', 10.00, 1.00, 4.00, 200.00, 1000),
+   (2, 'BASIC', 20.00, 2.00, 8.00, 400.00, 1000),
+   (3, 'SPEEDY', 30.00, 3.00, 12.00, 600.00, 1000);
+
+ INSERT INTO location_nodes (id, name, type, parent_id, active)
+ VALUES
+   (1, 'Orel', 'CITY', NULL, true),
+   (2, 'Central District', 'DISTRICT', 1, true),
+   (3, 'North District', 'DISTRICT', 1, true),
+   (4, 'Central Point 1', 'RENTAL_POINT', 2, true),
+   (5, 'Central Point 2', 'RENTAL_POINT', 2, true),
+   (6, 'North Point 1', 'RENTAL_POINT', 3, true),
+   (7, 'North Point 2', 'RENTAL_POINT', 3, true);
+
+ INSERT INTO rental_points (id, name, location_node_id, active)
+ VALUES
+   (1, 'Central Point 1', 4, true),
+   (2, 'Central Point 2', 5, true),
+   (3, 'North Point 1', 6, true),
+   (4, 'North Point 2', 7, true);
+
+ INSERT INTO scooters (id, model_id, rental_point_id, status, current_charge, total_mileage_km)
+ VALUES
+   (1, 1, 1, 'AVAILABLE', 1000, 0),
+   (2, 1, 1, 'AVAILABLE', 900, 0),
+   (3, 2, 1, 'AVAILABLE', 850, 0),
+   (4, 2, 1, 'AVAILABLE', 800, 0),
+   (5, 3, 1, 'AVAILABLE', 750, 0),
+
+   (6, 1, 2, 'AVAILABLE', 1000, 0),
+   (7, 2, 2, 'AVAILABLE', 900, 0),
+   (8, 2, 2, 'AVAILABLE', 850, 0),
+   (9, 3, 2, 'AVAILABLE', 800, 0),
+   (10, 3, 2, 'AVAILABLE', 750, 0),
+
+   (11, 1, 3, 'AVAILABLE', 1000, 0),
+   (12, 1, 3, 'AVAILABLE', 900, 0),
+   (13, 2, 3, 'AVAILABLE', 850, 0),
+   (14, 3, 3, 'AVAILABLE', 800, 0),
+   (15, 3, 3, 'AVAILABLE', 750, 0),
+
+   (16, 1, 4, 'AVAILABLE', 1000, 0),
+   (17, 2, 4, 'AVAILABLE', 900, 0),
+   (18, 2, 4, 'AVAILABLE', 850, 0),
+   (19, 3, 4, 'AVAILABLE', 800, 0),
+   (20, 3, 4, 'AVAILABLE', 750, 0);
+
+SELECT setval('users_id_seq', (SELECT MAX(id) FROM users));
+SELECT setval('scooter_models_id_seq', (SELECT MAX(id) FROM scooter_models));
+SELECT setval('location_nodes_id_seq', (SELECT MAX(id) FROM location_nodes));
+SELECT setval('rental_points_id_seq', (SELECT MAX(id) FROM rental_points));
+SELECT setval('scooters_id_seq', (SELECT MAX(id) FROM scooters));

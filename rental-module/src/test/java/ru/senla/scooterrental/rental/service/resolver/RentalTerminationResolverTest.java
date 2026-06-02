@@ -7,7 +7,8 @@ import ru.senla.scooterrental.rental.entity.Rental;
 import ru.senla.scooterrental.rental.enums.TariffType;
 import ru.senla.scooterrental.rental.enums.TerminationReason;
 import ru.senla.scooterrental.rental.exceptions.RentalValidationException;
-import ru.senla.scooterrental.rental.service.calculator.RentalCalculationService;
+import ru.senla.scooterrental.rental.service.RentalCalculationService;
+import ru.senla.scooterrental.rental.service.impl.resolver.RentalTerminationResolverImpl;
 import ru.senla.scooterrental.user.entity.User;
 
 import java.math.BigDecimal;
@@ -20,7 +21,7 @@ import static org.mockito.Mockito.when;
 class RentalTerminationResolverTest {
 
     private RentalCalculationService calculationService;
-    private RentalTerminationResolver resolver;
+    private RentalTerminationResolverImpl resolver;
 
     private Rental rental;
     private User user;
@@ -29,7 +30,7 @@ class RentalTerminationResolverTest {
     @BeforeEach
     void setUp() {
         calculationService = mock(RentalCalculationService.class);
-        resolver = new RentalTerminationResolver(calculationService);
+        resolver = new RentalTerminationResolverImpl(calculationService);
 
         rental = mock(Rental.class);
         user = mock(User.class);

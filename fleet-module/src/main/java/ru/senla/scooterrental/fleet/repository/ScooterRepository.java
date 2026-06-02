@@ -5,6 +5,7 @@ import ru.senla.scooterrental.fleet.entity.Scooter;
 import ru.senla.scooterrental.fleet.enums.ScooterStatus;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface ScooterRepository extends CrudRepository<Scooter, Long> {
 
@@ -15,4 +16,6 @@ public interface ScooterRepository extends CrudRepository<Scooter, Long> {
     List<Scooter> findAllByRentalPointId(Long rentalPointId);
 
     List<Scooter> findAllByModelId(Long modelId);
+
+    Optional<Scooter> findByIdForUpdate(Long id);
 }

@@ -3,8 +3,8 @@ package ru.senla.scooterrental.web.controller.user;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import ru.senla.scooterrental.fleet.service.ScooterService;
 import ru.senla.scooterrental.web.dto.response.fleet.scooter.ScooterResponse;
-import ru.senla.scooterrental.fleet.service.FleetService;
 import ru.senla.scooterrental.web.mapper.FleetWebMapper;
 
 import java.util.List;
@@ -13,15 +13,15 @@ import java.util.List;
 @RequestMapping("/api/v1/scooters")
 public class UserScooterController {
 
-    private final FleetService fleetService;
+    private final ScooterService scooterService;
 
-    public UserScooterController(FleetService fleetService) {
-        this.fleetService = fleetService;
+    public UserScooterController(ScooterService scooterService) {
+        this.scooterService = scooterService;
     }
 
     @GetMapping("/available")
     public List<ScooterResponse> getAvailableScooters() {
-        return fleetService.findAvailableScooters()
+        return scooterService.findAvailableScooters()
                 .stream()
                 .map(FleetWebMapper::toScooterResponse)
                 .toList();

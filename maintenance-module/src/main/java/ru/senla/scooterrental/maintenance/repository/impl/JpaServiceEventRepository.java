@@ -47,7 +47,11 @@ public class JpaServiceEventRepository implements ServiceEventRepository {
     public List<ScooterServiceEvent> findAll() {
         return entityManager
                 .createQuery(
-                        "select event from ScooterServiceEvent event",
+                        """
+                        select event
+                        from ScooterServiceEvent event
+                        join fetch event.scooter
+                        """,
                         ScooterServiceEvent.class
                 )
                 .getResultList();
@@ -93,6 +97,7 @@ public class JpaServiceEventRepository implements ServiceEventRepository {
                         """
                         select event
                         from ScooterServiceEvent event
+                        join fetch event.scooter
                         where event.scooter.id = :scooterId
                         """,
                         ScooterServiceEvent.class
@@ -115,6 +120,7 @@ public class JpaServiceEventRepository implements ServiceEventRepository {
                         """
                         select event
                         from ScooterServiceEvent event
+                        join fetch event.scooter
                         where event.type = :type
                         """,
                         ScooterServiceEvent.class
